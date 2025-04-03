@@ -3,6 +3,51 @@
 //
 
 #include <math.h>
+#include <string.h>
+
+enum FunctionType
+{
+    LOTKA_VOLTERRA = 0,
+    ALPHA_PINENE = 1,
+    LOGISTIC = 2
+};
+
+struct Problem
+{
+    enum FunctionType function_type;
+    double *lower_bounds;
+    double *upper_bounds;
+    double *parameters;
+};
+
+struct Problem create_problem(enum FunctionType function_type, double *lower_bounds, double *upper_bounds, double *parameters)
+{
+    struct Problem problem;
+    problem.function_type = function_type;
+    problem.lower_bounds = lower_bounds;
+    problem.upper_bounds = upper_bounds;
+    problem.parameters = parameters;
+    return problem;
+}
+
+
+struct Options
+{
+    int max_iterations;
+    double *log_var_index;
+    int should_save;
+    char solver[];
+};
+
+struct Options create_options(const int max_iterations, double *log_var_index, const int should_save, char solver[])
+{
+    struct Options options;
+    options.max_iterations = max_iterations;
+    options.log_var_index = log_var_index;
+    options.should_save = should_save;
+    strcpy(options.solver, solver);
+    return options;
+}
 
 /* Original MATLAB code
  *
@@ -26,9 +71,19 @@
  * times: data_matrix(:,1);
  * parameters: Result from meigo ESS in the original code
  */
-void solve_ode(struct Matrix initial_values, struct Matrix times, struct Matrix parameters)
+struct Matrix solve_ode(struct Vector initial_values, struct Vector times, struct Vector parameters)
 {
 
+}
+
+struct Results
+{
+    struct Vector best;
+};
+
+struct Results meigo(struct Problem, struct Options, struct Vector t, struct Matrix x)
+{
+    // TODO: Calls MEIGO in the MATLAB code --> MEIGO(problem,opts,'ESS',texp,yexp);
 }
 
 /* Original MATLAB code

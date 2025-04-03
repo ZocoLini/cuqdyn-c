@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <lib.h>
 
 void solve_lotka_volterra()
 {
@@ -81,29 +82,81 @@ void solve_lotka_volterra()
     /* Original MATLAB code
      * % Initialization
      *
-     * % Object problem
-     * problem.f='prob_mod_lv';
-     * problem.x_L=0.001*ones(1,4); % Lower bounds of the variables
-     * problem.x_U=ones(1,4); % Upper bounds of the variables
-     * problem.x_0=[0.3, 0.3, 0.3, 0.3]; % Initial points
+     *     % Object problem
+     *     problem.f='prob_mod_lv';
+     *     problem.x_L=0.001*ones(1,4); % Lower bounds of the variables
+     *     problem.x_U=ones(1,4); % Upper bounds of the variables
+     *     problem.x_0=[0.3, 0.3, 0.3, 0.3]; % Initial points
      *
-     * % Object options
-     * opts.maxeval=3e3; % Maximum number of function evaluations (default 1000)
-     * opts.log_var=[1:4]; % Indexes of the variables which will be analyzed using a logarithmic distribution instead of an uniform one
-     * opts.local.solver='nl2sol'; % Local solver to perform the local search
-     * opts.inter_save=1; %  Saves results of intermediate iterations in eSS_report.mat
-     * %opts.plot=1;
-     * texp = times;
-     * yexp = observed_data;
+     *     % Object options
+     *     opts.maxeval=3e3; % Maximum number of function evaluations (default 1000)
+     *     opts.log_var=[1:4]; % Indexes of the variables which will be analyzed using a logarithmic distribution instead of
+     *     an uniform one opts.local.solver='nl2sol'; % Local solver to perform the local search opts.inter_save=1; %  Saves
+     *     results of intermediate iterations in eSS_report.mat %opts.plot=1; texp = times; yexp = observed_data;
      *
-     * % Call to MEIGO
-     * Results_tot=MEIGO(problem,opts,'ESS',texp,yexp);
-     * parameters_init = Results_tot.xbest; % Optimal parameters
-     * solution_tot = ODE_solve_LV(initial_values,times,parameters_init);
-     * media_tot = solution_tot(:, 2:end);
+     *     % Call to MEIGO
+     *     Results_tot=MEIGO(problem,opts,'ESS',texp,yexp);
+     *     parameters_init = Results_tot.xbest; % Optimal parameters
+     *     solution_tot = ODE_solve_LV(initial_values,times,parameters_init);
+     *     media_tot = solution_tot(:, 2:end); % NOTE: This look unused
      *
-     * problem.x_0=parameters_init;
-     * parpool('local', 20);
-     *
+     *     problem.x_0=parameters_init;
      */
+
+    // TODO: This both problem and options should be passed as parameters
+    struct Problem problem = create_problem(LOTKA_VOLTERRA, NULL, NULL, NULL);
+    const struct Options options = create_options(3000, NULL, 0, "nl2sol");
+
+    struct Vector texp = times;
+    struct Matrix yexp = observed_data;
+
+    const struct Results results_tot = meigo(problem, options, texp, yexp);
+    struct Vector parameters_init = results_tot.best; // Optimal parameters
+    problem.parameters = parameters_init;
+
+    /* Original MATLAB code
+     *     parfor i=2:m
+     *         texp = times([1:i-1,i+1:end]);
+     *         yexp = observed_data([1:i-1,i+1:end],:);
+     *         Results=MEIGO(problem,opts,'ESS',texp,yexp);
+     *         parameters = Results.xbest; % Optimal parameters
+     *         solution = ODE_solve_LV(initial_values,times,parameters);
+     *         media = solution(:, 2:end);
+     *         resid_loo(i,:) = abs(observed_data(i,:) - media(i,:)); % Residuals
+     *         media_matrix(:,:,i) = media;
+     *     end
+     */
+
+    // Starting from one because the first one is already done to assign parameters_init
+    for (int i = 1; i < m; ++i)
+    {
+        texp = ?;
+        yexp = ?;
+
+        struct Matrix media = media(problem, options, texp, yexp, initial_values, times);
+
+        // resid_loo
+        // media_matrix
+    }
+}
+
+/* This function encapsulates the following MATLAB logic:
+ *
+ *     Results=MEIGO(problem,opts,'ESS',texp,yexp);
+ *     parameters = Results.xbest; % Optimal parameters
+ *     solution = ODE_solve_LV(initial_values,times,parameters);
+ *     media = solution(:, 2:end);
+ *
+ * The original function, despite being called "media", it takes the result of the ODE solver
+ * and returns it without the first column, which I guess is the time.
+ */
+struct Matrix media(struct Problem problem, struct Options options, struct Vector texp,
+    struct Matrix yexp, struct Vector initial_values, struct Vector times)
+{
+    struct Results results = meigo(problem, options, texp, yexp);
+    struct Vector parameters = results.best; // Optimal parameters
+    struct Matrix solution = solve_ode(initial_values, times, parameters);
+    struct Matrix media; // TODO: Remove first column of solutions
+
+    return media;
 }
