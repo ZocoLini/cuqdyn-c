@@ -2,8 +2,9 @@
 // Created by borja on 03/04/25.
 //
 
-#include <math.h>
 #include <string.h>
+#include <sundials/sundials_matrix.h>
+#include <sundials/sundials_nvector.h>
 
 enum FunctionType
 {
@@ -15,12 +16,12 @@ enum FunctionType
 struct Problem
 {
     enum FunctionType function_type;
-    double *lower_bounds;
-    double *upper_bounds;
-    double *parameters;
+    N_Vector lower_bounds;
+    N_Vector upper_bounds;
+    N_Vector parameters;
 };
 
-struct Problem create_problem(enum FunctionType function_type, double *lower_bounds, double *upper_bounds, double *parameters)
+struct Problem create_problem(enum FunctionType function_type, N_Vector lower_bounds, N_Vector upper_bounds, N_Vector parameters)
 {
     struct Problem problem;
     problem.function_type = function_type;
@@ -66,10 +67,10 @@ struct Options create_options(const int max_iterations, double *log_var_index, c
 
 struct Results
 {
-    struct Vector best;
+    N_Vector best;
 };
 
-struct Results meigo(struct Problem, struct Options, struct Vector t, struct Matrix x)
+struct Results meigo(struct Problem, struct Options, N_Vector t, SUNMatrix x)
 {
     // TODO: Calls MEIGO in the MATLAB code --> MEIGO(problem,opts,'ESS',texp,yexp);
 }

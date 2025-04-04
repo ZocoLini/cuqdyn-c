@@ -19,12 +19,12 @@ enum FunctionType
 struct Problem
 {
     enum FunctionType function_type;
-    double *lower_bounds;
-    double *upper_bounds;
-    double *parameters;
+    N_Vector lower_bounds;
+    N_Vector upper_bounds;
+    N_Vector parameters;
 };
 
-struct Problem create_problem(enum FunctionType, double *, double *, double *);
+struct Problem create_problem(enum FunctionType, N_Vector, N_Vector, N_Vector);
 
 struct Options
 {
@@ -38,10 +38,10 @@ struct Options create_options(int, double *, int, char[]);
 
 struct Results
 {
-    struct Vector best;
+    N_Vector best;
 };
 
-struct Results meigo(struct Problem, struct Options, struct Vector, struct Matrix);
+struct Results meigo(struct Problem, struct Options, N_Vector, SUNMatrix);
 
 void prob_mod_dynamics_ap(double*, double*, double*);
 void prob_mod_dynamics_log(double*, double*, double*);

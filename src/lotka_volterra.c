@@ -2,13 +2,27 @@
 // Created by borja on 03/04/25.
 //
 
+#include <cvode/cvode.h>
+#include <lib.h>
 #include <math.h>
+#include <nvector/nvector_serial.h>
 #include <stdio.h>
 #include <string.h>
-#include <lib.h>
+#include <sundials/sundials_context.h>
+#include <sundials/sundials_matrix.h>
+#include <sundials/sundials_nvector.h>
+
+static SUNMatrix calc_media(struct Problem problem, struct Options options, N_Vector texp, SUNMatrix yexp,
+                            N_Vector initial_values, N_Vector times);
 
 void solve_lotka_volterra()
 {
+    int retval; // TODO: Handle the error. See cvRoberts_dns.c for example inside cvode src
+    SUNContext sunctx;
+
+    retval = SUNContext_Create(SUN_COMM_NULL, &sunctx);
+
+
     const char dataDir[] = "Data_LV";
     const char resultDir[] = "Results_LV_CUQDyn1";
 
@@ -39,17 +53,18 @@ void solve_lotka_volterra()
     // Loaded previously and returned from load.
     // Original implementation returned a data_matrix and created the variables.
     // We will obtain the variables directly from the specified file
-    struct Vector initial_values;
-    struct Vector times;
-    struct Matrix observed_data;
+
+    N_Vector initial_values = N_VNew_Serial(0, sunctx);
+    N_Vector times = N_VNew_Serial(0, sunctx);
+    SUNMatrix observed_data = SUNDenseMatrix(0, 0, sunctx);
 
     /* Original MATLAB code
      * n = size(data_matrix,2) - 1;  % Number of observables - columns - 1
      * m = size(data_matrix,1);    % Number of time points - rows
      */
 
-    int n = initial_values.len;
-    int m = times.len;
+    int n = NV_LENGTH_S(initial_values);
+    int m = NV_LENGTH_S(times);
 
     /* Orignal MATLAB code - % True model
      * NOTE: This doens't look to be neccesary in the C implementation
@@ -67,11 +82,11 @@ void solve_lotka_volterra()
      * data_true = x_true;
      */
 
-     /* Original MATLAB code
-      * nstate = 2; % Number of states
-      * alp = 0.05; %Predictive region level
-      * media_matrix = NaN(sz, nstate, sz);
-      */
+    /* Original MATLAB code
+     * nstate = 2; % Number of states
+     * alp = 0.05; %Predictive region level
+     * media_matrix = NaN(sz, nstate, sz);
+     */
 
     // NOTE: This looks like something that we should receive as a parameter
     const int number_of_states = 2; // No se que carajos es esto
@@ -90,9 +105,10 @@ void solve_lotka_volterra()
      *
      *     % Object options
      *     opts.maxeval=3e3; % Maximum number of function evaluations (default 1000)
-     *     opts.log_var=[1:4]; % Indexes of the variables which will be analyzed using a logarithmic distribution instead of
-     *     an uniform one opts.local.solver='nl2sol'; % Local solver to perform the local search opts.inter_save=1; %  Saves
-     *     results of intermediate iterations in eSS_report.mat %opts.plot=1; texp = times; yexp = observed_data;
+     *     opts.log_var=[1:4]; % Indexes of the variables which will be analyzed using a logarithmic distribution
+     * instead of an uniform one opts.local.solver='nl2sol'; % Local solver to perform the local search
+     * opts.inter_save=1; %  Saves results of intermediate iterations in eSS_report.mat %opts.plot=1; texp = times; yexp
+     * = observed_data;
      *
      *     % Call to MEIGO
      *     Results_tot=MEIGO(problem,opts,'ESS',texp,yexp);
@@ -107,11 +123,11 @@ void solve_lotka_volterra()
     struct Problem problem = create_problem(LOTKA_VOLTERRA, NULL, NULL, NULL);
     const struct Options options = create_options(3000, NULL, 0, "nl2sol");
 
-    struct Vector texp = times;
-    struct Matrix yexp = observed_data;
+    N_Vector texp = times;
+    SUNMatrix yexp = observed_data;
 
     const struct Results results_tot = meigo(problem, options, texp, yexp);
-    struct Vector parameters_init = results_tot.best; // Optimal parameters
+    N_Vector parameters_init = results_tot.best; // Optimal parameters
     problem.parameters = parameters_init;
 
     /* Original MATLAB code
@@ -130,10 +146,10 @@ void solve_lotka_volterra()
     // Starting from one because the first one is already done to assign parameters_init
     for (int i = 1; i < m; ++i)
     {
-        texp = ?;
-        yexp = ?;
+        texp;
+        yexp;
 
-        struct Matrix media = media(problem, options, texp, yexp, initial_values, times);
+        SUNMatrix media = calc_media(problem, options, texp, yexp, initial_values, times);
 
         // resid_loo
         // media_matrix
@@ -150,13 +166,13 @@ void solve_lotka_volterra()
  * The original function, despite being called "media", it takes the result of the ODE solver
  * and returns it without the first column, which I guess is the time.
  */
-struct Matrix media(struct Problem problem, struct Options options, struct Vector texp,
-    struct Matrix yexp, struct Vector initial_values, struct Vector times)
+static SUNMatrix calc_media(struct Problem problem, struct Options options, N_Vector texp, SUNMatrix yexp,
+                            N_Vector initial_values, N_Vector times)
 {
     struct Results results = meigo(problem, options, texp, yexp);
-    struct Vector parameters = results.best; // Optimal parameters
-    struct Matrix solution = solve_ode(initial_values, times, parameters);
-    struct Matrix media; // TODO: Remove first column of solutions
+    N_Vector parameters = results.best; // Optimal parameters
+    SUNMatrix solution = solve_ode(initial_values, times, parameters);
+    SUNMatrix media; // TODO: Remove first column of solutions
 
     return media;
 }
