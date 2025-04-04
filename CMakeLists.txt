@@ -3,7 +3,10 @@ project(conformal_prediction_dbs C)
 
 set(CMAKE_C_STANDARD 11)
 
-include_directories(includes)
+include_directories(include)
+include_directories(
+        /home/borja/sundials/instdir/include
+)
 
 add_executable(
         conformal_prediction_dbs

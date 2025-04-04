@@ -3,6 +3,10 @@
 //
 
 #include <stdlib.h>
+#include <cvode/cvode.h>
+#include <sunmatrix/sunmatrix_dense.h>
+#include <nvector/nvector_serial.h>
+#include <sundials/sundials_types.h>
 
 struct Matrix
 {
@@ -62,4 +66,16 @@ struct Vector new_vector(const int capacity)
     vector.capacity = capacity;
     vector.data = (double *) malloc(capacity * sizeof(double));
     return vector;
+}
+
+/*
+ * Solves the ODE system using the ode45 solver
+ *
+ * initial_values: data_matrix(1,2:end);
+ * times: data_matrix(:,1);
+ * parameters: Result from meigo ESS in the original code
+ */
+struct Matrix solve_ode(struct Vector initial_values, struct Vector times, struct Vector parameters)
+{
+
 }

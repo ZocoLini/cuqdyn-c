@@ -36,8 +36,6 @@ struct Options
 
 struct Options create_options(int, double *, int, char[]);
 
-struct Matrix solve_ode(struct Vector, struct Vector, struct Vector);
-
 struct Results
 {
     struct Vector best;

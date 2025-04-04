@@ -36,4 +36,6 @@ struct Vector
 struct Vector create_vector(int);
 double get_vector_value(struct Vector, int);
 
+struct Matrix solve_ode(struct Vector, struct Vector, struct Vector);
+
 #endif // MATH_H

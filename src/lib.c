@@ -64,18 +64,6 @@ struct Options create_options(const int max_iterations, double *log_var_index, c
  *      - logisticGrowth_comp
  */
 
-/*
- * Solves the ODE system using the ode45 solver
- *
- * initial_values: data_matrix(1,2:end);
- * times: data_matrix(:,1);
- * parameters: Result from meigo ESS in the original code
- */
-struct Matrix solve_ode(struct Vector initial_values, struct Vector times, struct Vector parameters)
-{
-
-}
-
 struct Results
 {
     struct Vector best;
