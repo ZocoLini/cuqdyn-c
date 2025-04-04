@@ -7,7 +7,9 @@ find_package(SUNDIALS REQUIRED)
 
 set(CMAKE_C_STANDARD 11)
 
-link_directories(${SUNDIALS_LIB_DIR})
+link_directories(
+        /home/borja/sundials/instdir/lib
+)
 
 include_directories(
         include
@@ -23,4 +25,10 @@ add_executable(
         src/matlab.c
 )
 
-target_link_libraries(conformal_prediction_dbs ${SUNDIALS_LIBRARIES} -lm)
+target_link_libraries(
+        conformal_prediction_dbs
+        sundials_cvode
+        sundials_nvecserial
+        sundials_core
+        m
+)
