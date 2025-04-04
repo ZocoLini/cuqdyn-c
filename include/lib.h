@@ -31,10 +31,10 @@ struct Options
     int max_iterations;
     double *log_var_index;
     int should_save;
-    char solver[];
+    char solver[5];
 };
 
-struct Options create_options(int, double *, int, char[]);
+struct Options create_options(int, double *, int, char[5]);
 
 struct Results
 {

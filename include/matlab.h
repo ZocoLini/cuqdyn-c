@@ -5,4 +5,11 @@
 #ifndef MATLAB_H
 #define MATLAB_H
 
+#include <nvector/nvector_serial.h>
+#include <sunmatrix/sunmatrix_dense.h>
+
+N_Vector copy_vector_remove_indices(N_Vector, int *, SUNContext);
+SUNMatrix copy_matrix_remove_rows(SUNMatrix, int *, SUNContext);
+SUNMatrix copy_matrix_remove_columns(SUNMatrix, int *, SUNContext);
+
 #endif //MATLAB_H

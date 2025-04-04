@@ -84,7 +84,7 @@ void solve_lotka_volterra()
 
     /* Original MATLAB code
      * nstate = 2; % Number of states
-     * alp = 0.05; %Predictive region level
+     * alp = 0.05; %Predictive region level NOTE: This is used
      * media_matrix = NaN(sz, nstate, sz);
      */
 

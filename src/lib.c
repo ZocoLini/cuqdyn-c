@@ -37,10 +37,10 @@ struct Options
     int max_iterations;
     double *log_var_index;
     int should_save;
-    char solver[];
+    char solver[5];
 };
 
-struct Options create_options(const int max_iterations, double *log_var_index, const int should_save, char solver[])
+struct Options create_options(const int max_iterations, double *log_var_index, const int should_save, char solver[5])
 {
     struct Options options;
     options.max_iterations = max_iterations;
