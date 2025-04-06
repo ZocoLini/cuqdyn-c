@@ -1,16 +1,10 @@
-set(SUNDIALS_DIR "/home/borja/sundials/instdir/lib/cmake/sundials")
-
-find_package(SUNDIALS REQUIRED)
-
-set(CMAKE_C_STANDARD 11)
-
 link_directories(
-        /home/borja/sundials/instdir/lib
+        ${PROJECT_SOURCE_DIR}/sundials/instdir/lib
 )
 
 include_directories(
         ../include
-        /home/borja/sundials/instdir/include
+        ${PROJECT_SOURCE_DIR}/sundials/instdir/include
 )
 
 add_executable(
