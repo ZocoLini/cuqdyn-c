@@ -21,4 +21,4 @@ target_link_libraries(
         m
 )
 
-add_test(NAME test_matlab COMMAND test_stack)
+add_test(NAME test_matlab COMMAND test_matlab)
