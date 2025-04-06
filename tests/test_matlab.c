@@ -12,17 +12,14 @@ void test_copy_matrix_remove_rows(SUNContext);
 
 int main(void)
 {
-    printf("Testing matlab\n");
     SUNContext sunctx;
     SUNContext_Create(SUN_COMM_NULL, &sunctx);
 
     test_copy_vector_remove_indices(sunctx);
-    printf("Test 1 passed\n");
+    printf("\tTest 1 passed\n");
 
     test_copy_matrix_remove_rows(sunctx);
-    printf("Test 2 passed\n");
-
-    printf("All tests passed\n");
+    printf("\tTest 2 passed\n");
     return 0;
 }
 
