@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <cvode/cvode.h>
 
-struct Matrix3D create_matrix3d(const int x, const int y, const int z)
+Matrix3D create_matrix3d(const int x, const int y, const int z)
 {
-    struct Matrix3D matrix;
+    Matrix3D matrix;
     matrix.x = x;
     matrix.y = y;
     matrix.z = z;
@@ -15,7 +15,7 @@ struct Matrix3D create_matrix3d(const int x, const int y, const int z)
     return matrix;
 }
 
-double get_matrix3d_value(const struct Matrix3D matrix, const int x, const int y, const int z)
+double get_matrix3d_value(const Matrix3D matrix, const int x, const int y, const int z)
 {
     return matrix.data[x * matrix.y * matrix.z + y * matrix.z + z]; // Unchecked
 }

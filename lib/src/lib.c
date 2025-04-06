@@ -2,28 +2,14 @@
 // Created by borja on 03/04/25.
 //
 
+#include "lib.h"
 #include <string.h>
 #include <sundials/sundials_matrix.h>
 #include <sundials/sundials_nvector.h>
 
-enum FunctionType
+Problem create_problem(FunctionType function_type, N_Vector lower_bounds, N_Vector upper_bounds, N_Vector parameters)
 {
-    LOTKA_VOLTERRA = 0,
-    ALPHA_PINENE = 1,
-    LOGISTIC = 2
-};
-
-struct Problem
-{
-    enum FunctionType function_type;
-    N_Vector lower_bounds;
-    N_Vector upper_bounds;
-    N_Vector parameters;
-};
-
-struct Problem create_problem(enum FunctionType function_type, N_Vector lower_bounds, N_Vector upper_bounds, N_Vector parameters)
-{
-    struct Problem problem;
+    Problem problem;
     problem.function_type = function_type;
     problem.lower_bounds = lower_bounds;
     problem.upper_bounds = upper_bounds;
@@ -31,18 +17,9 @@ struct Problem create_problem(enum FunctionType function_type, N_Vector lower_bo
     return problem;
 }
 
-
-struct Options
+Options create_options(const int max_iterations, double *log_var_index, const int should_save, char solver[5])
 {
-    int max_iterations;
-    double *log_var_index;
-    int should_save;
-    char solver[5];
-};
-
-struct Options create_options(const int max_iterations, double *log_var_index, const int should_save, char solver[5])
-{
-    struct Options options;
+    Options options;
     options.max_iterations = max_iterations;
     options.log_var_index = log_var_index;
     options.should_save = should_save;
@@ -65,12 +42,7 @@ struct Options create_options(const int max_iterations, double *log_var_index, c
  *      - logisticGrowth_comp
  */
 
-struct Results
-{
-    N_Vector best;
-};
-
-struct Results meigo(struct Problem, struct Options, N_Vector t, SUNMatrix x)
+Results meigo(Problem problem, Options options, N_Vector t, SUNMatrix x)
 {
     // TODO: Calls MEIGO in the MATLAB code --> MEIGO(problem,opts,'ESS',texp,yexp);
 }
@@ -110,23 +82,37 @@ struct Results meigo(struct Problem, struct Options, N_Vector t, SUNMatrix x)
  * optimal_parameters is a vector of predefined values --> p = [0.5,0.02,0.02,0.5]; % Optimal parameters
  */
 
-void prob_mod_dynamics_ap(double* _t, double* x, double* optimal_parameters)
+void prob_mod_dynamics_ap(double *_t, double *x, double *optimal_parameters) {}
+
+void prob_mod_dynamics_log(double *_t, double *x, double *optimal_parameters) {}
+
+void prob_mod_dynamics_lv(double *_t, double *x, double *optimal_parameters)
 {
-
-}
-
-void prob_mod_dynamics_log(double* _t, double* x, double* optimal_parameters)
-{
-
-}
-
-void prob_mod_dynamics_lv(double* _t, const double* x, const double* optimal_parameters)
-{
-    // TODO: Allocate memory for dy and return a pointer to it (Maybe use Matrix or create Vector as a wrapper for matrix(1,n))
+    // TODO: Allocate memory for dy and return a pointer to it (Maybe use Matrix or create Vector as a wrapper for
+    // matrix(1,n))
     double dy[] = {0, 0};
 
     dy[0] = x[0] * (optimal_parameters[0] - optimal_parameters[1] * x[1]);
     dy[1] = -1 * (optimal_parameters[3] - optimal_parameters[2] * x[0]) * x[1];
 }
 
+Array create_array(long *data, const long len)
+{
+    Array array;
+    array.data = data;
+    array.len = len;
+    return array;
+}
 
+Array create_empty_array()
+{
+    Array array;
+    array.data = NULL;
+    array.len = 0;
+    return array;
+}
+
+long array_get_index(Array array, long i)
+{
+    return array.data[i];
+}

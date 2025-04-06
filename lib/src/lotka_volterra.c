@@ -12,7 +12,7 @@
 #include <sundials/sundials_matrix.h>
 #include <sundials/sundials_nvector.h>
 
-static SUNMatrix calc_media(struct Problem problem, struct Options options, N_Vector texp, SUNMatrix yexp,
+static SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix yexp,
                             N_Vector initial_values, N_Vector times);
 
 void solve_lotka_volterra()
@@ -92,7 +92,7 @@ void solve_lotka_volterra()
     const int number_of_states = 2; // No se que carajos es esto
     const double alp = 0.05; // Predictive region level
 
-    struct Matrix3D media_matrix = create_matrix3d(data_size, number_of_states, data_size);
+    Matrix3D media_matrix = create_matrix3d(data_size, number_of_states, data_size);
 
     /* Original MATLAB code
      * % Initialization
@@ -120,13 +120,13 @@ void solve_lotka_volterra()
      */
 
     // TODO: This both problem and options should be passed as parameters
-    struct Problem problem = create_problem(LOTKA_VOLTERRA, NULL, NULL, NULL);
-    const struct Options options = create_options(3000, NULL, 0, "nl2sol");
+    Problem problem = create_problem(LOTKA_VOLTERRA, NULL, NULL, NULL);
+    const Options options = create_options(3000, NULL, 0, "nl2sol");
 
     N_Vector texp = times;
     SUNMatrix yexp = observed_data;
 
-    const struct Results results_tot = meigo(problem, options, texp, yexp);
+    const Results results_tot = meigo(problem, options, texp, yexp);
     N_Vector parameters_init = results_tot.best; // Optimal parameters
     problem.parameters = parameters_init;
 
@@ -166,10 +166,10 @@ void solve_lotka_volterra()
  * The original function, despite being called "media", it takes the result of the ODE solver
  * and returns it without the first column, which I guess is the time.
  */
-static SUNMatrix calc_media(struct Problem problem, struct Options options, N_Vector texp, SUNMatrix yexp,
+static SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix yexp,
                             N_Vector initial_values, N_Vector times)
 {
-    struct Results results = meigo(problem, options, texp, yexp);
+    Results results = meigo(problem, options, texp, yexp);
     N_Vector parameters = results.best; // Optimal parameters
     SUNMatrix solution = solve_ode(initial_values, times, parameters);
     SUNMatrix media; // TODO: Remove first column of solutions

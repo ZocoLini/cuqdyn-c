@@ -6,24 +6,26 @@
 #include <sundials/sundials_types.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
+#include "lib.h"
+
 // num_indices are the indices to be removed from the original vector. Should be sorted in ascending order.
 // the indices are 1-based, so the first element is 1, not 0.
-N_Vector copy_vector_remove_indices(N_Vector original, const int *indices, SUNContext sunctx)
+N_Vector copy_vector_remove_indices(N_Vector original, Array indices, SUNContext sunctx)
 {
     sunrealtype *original_data = N_VGetArrayPointer(original);
     sunindextype N = N_VGetLength(original);
-    long indices_len = sizeof(indices) / sizeof(indices[0]);
 
-    N_Vector new_vector = N_VNew_Serial(N - indices_len, sunctx);
-
+    N_Vector new_vector = N_VNew_Serial(N - indices.len, sunctx);
 
     sunrealtype *new_data = N_VGetArrayPointer(new_vector);
 
     long new_index = 0; // Index to track the current index in the new vector
     long skip_index = 0; // Index to track the current index in the indices array
 
-    for (long i = 0; i < N; i++) {
-        if (skip_index < indices_len && i == indices[skip_index] - 1) {
+    for (long i = 0; i < N; i++)
+    {
+        if (skip_index < indices.len && i == array_get_index(indices, skip_index) - 1)
+        {
             skip_index++;
             continue;
         }
@@ -35,32 +37,41 @@ N_Vector copy_vector_remove_indices(N_Vector original, const int *indices, SUNCo
 }
 
 // the indices are 1-based
-SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix, const int *row_indices, const int *col_indices, SUNContext sunctx)
-{
-
-}
-
-// the indices are 1-based
-SUNMatrix copy_matrix_remove_rows(SUNMatrix matrix, const int *indices, SUNContext sunctx)
+SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix matrix, Array row_indices, Array col_indices,
+                                              SUNContext sunctx)
 {
     const sunindextype rows = SM_ROWS_D(matrix);
     const sunindextype cols = SM_COLUMNS_D(matrix);
-    long indices_len = sizeof(indices) / sizeof(indices[0]);
 
-    SUNMatrix copy = SUNDenseMatrix(rows - indices_len, cols, sunctx);
+    SUNMatrix copy = SUNDenseMatrix(rows - row_indices.len, cols - col_indices.len, sunctx);
 
     sunrealtype *original_data = SM_DATA_D(matrix);
     sunrealtype *copy_data = SM_DATA_D(copy);
 
-    long copy_index = 0; // Index to track the current index in the copy matrix
-    long skip_index = 0; // Index to track the current index in the indices array
+    // copy_index: Index to track the current index in the copy matrix
+    // row_skip_index: Index to track the current index in the row_indices array
+    // col_skip_index: Index to track the current index in the col_indices array
 
-    for (long i = 0; i < rows * cols; i++)
+    for (long i = 0, copy_index = 0, row_skip_index = 0, col_skip_index = 0; i < rows * cols; i++)
     {
-        if (skip_index < indices_len && (i / cols) == indices[skip_index] - 1)
+        if (row_skip_index < row_indices.len && (i / cols) == array_get_index(row_indices, row_skip_index) - 1)
         {
             i += cols - 1; // Skip the entire row (-1 because the for loop will increment i by 1 after the continue)
-            skip_index++;
+            row_skip_index++;
+            continue;
+        }
+
+        if (col_skip_index < col_indices.len && i % cols == array_get_index(col_indices, col_skip_index) - 1)
+        {
+            col_skip_index++;
+
+            // We reset the iteration over col_indices once we reach the end because that mean that we
+            // need to eventually iterate over a new row in the original matrix
+            if (col_skip_index == col_indices.len)
+            {
+                col_skip_index = 0;
+            }
+
             continue;
         }
 
@@ -72,7 +83,13 @@ SUNMatrix copy_matrix_remove_rows(SUNMatrix matrix, const int *indices, SUNConte
 }
 
 // the indices are 1-based
-SUNMatrix copy_matrix_remove_columns(SUNMatrix matrix, const int *indices, SUNContext sunctx)
+SUNMatrix copy_matrix_remove_rows(SUNMatrix matrix, Array indices, SUNContext sunctx)
 {
-    return copy_matrix_remove_rows_and_columns(matrix, (int[]){}, indices, sunctx);
+    return copy_matrix_remove_rows_and_columns(matrix, indices, create_empty_array(), sunctx);
+}
+
+// the indices are 1-based
+SUNMatrix copy_matrix_remove_columns(SUNMatrix matrix, Array indices, SUNContext sunctx)
+{
+    return copy_matrix_remove_rows_and_columns(matrix, create_empty_array(), indices, sunctx);
 }

@@ -9,42 +9,52 @@
 
 // function
 
-enum FunctionType
+typedef enum
 {
     LOTKA_VOLTERRA = 0,
     ALPHA_PINENE = 1,
     LOGISTIC = 2
-};
+} FunctionType;
 
-struct Problem
+typedef struct
 {
-    enum FunctionType function_type;
+    FunctionType function_type;
     N_Vector lower_bounds;
     N_Vector upper_bounds;
     N_Vector parameters;
-};
+} Problem;
 
-struct Problem create_problem(enum FunctionType, N_Vector, N_Vector, N_Vector);
+Problem create_problem(FunctionType, N_Vector, N_Vector, N_Vector);
 
-struct Options
+typedef struct
 {
     int max_iterations;
     double *log_var_index;
     int should_save;
     char solver[5];
-};
+} Options;
 
-struct Options create_options(int, double *, int, char[5]);
+Options create_options(int, double *, int, char[5]);
 
-struct Results
+typedef struct
 {
     N_Vector best;
-};
+} Results;
 
-struct Results meigo(struct Problem, struct Options, N_Vector, SUNMatrix);
+Results meigo(Problem, Options, N_Vector, SUNMatrix);
 
-void prob_mod_dynamics_ap(double*, double*, double*);
-void prob_mod_dynamics_log(double*, double*, double*);
-void prob_mod_dynamics_lv(double*, double*, double*);
+void prob_mod_dynamics_ap(double *, double *, double *);
+void prob_mod_dynamics_log(double *, double *, double *);
+void prob_mod_dynamics_lv(double *, double *, double *);
 
-#endif //LIB_H
+typedef struct
+{
+    long *data;
+    long len;
+} Array;
+
+Array create_array(long *, long);
+Array create_empty_array();
+long array_get_index(Array, long);
+
+#endif // LIB_H
