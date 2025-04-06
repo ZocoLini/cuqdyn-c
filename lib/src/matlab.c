@@ -54,19 +54,22 @@ SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix matrix, Array row_indice
 
     for (long i = 0, copy_index = 0, row_skip_index = 0, col_skip_index = 0; i < rows * cols; i++)
     {
-        if (row_skip_index < row_indices.len && (i / cols) == array_get_index(row_indices, row_skip_index) - 1)
+        long row = i / cols; // Row index in the original matrix
+        long col = i % cols; // Column index in the original matrix
+
+        if (row_skip_index < row_indices.len && row == array_get_index(row_indices, row_skip_index) - 1)
         {
             i += cols - 1; // Skip the entire row (-1 because the for loop will increment i by 1 after the continue)
             row_skip_index++;
             continue;
         }
 
-        if (col_skip_index < col_indices.len && i % cols == array_get_index(col_indices, col_skip_index) - 1)
+        if (col_skip_index < col_indices.len && col == array_get_index(col_indices, col_skip_index) - 1)
         {
             col_skip_index++;
 
-            // We reset the iteration over col_indices once we reach the end because that mean that we
-            // need to eventually iterate over a new row in the original matrix
+            // We reset the iteration over col_indices once we reach the end. we
+            // probably need to iterate over a new row in the original matrix if there is some left
             if (col_skip_index == col_indices.len)
             {
                 col_skip_index = 0;
