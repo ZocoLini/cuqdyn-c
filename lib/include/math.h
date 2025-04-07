@@ -20,6 +20,16 @@ typedef struct
 Matrix3D create_matrix3d(int, int, int);
 double get_matrix3d_value(Matrix3D, int, int, int);
 
-SUNMatrix solve_ode(N_Vector, N_Vector, N_Vector, int, SUNContext, void*);
+typedef struct
+{
+    int number_eq;
+    void *f;
+    N_Vector initial_values;
+    N_Vector times;
+} ODEModel;
+
+ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, N_Vector times);
+
+SUNMatrix solve_ode(N_Vector, ODEModel, SUNContext);
 
 #endif // MATH_H

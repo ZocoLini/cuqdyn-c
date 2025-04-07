@@ -173,7 +173,7 @@ SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix 
 {
     Results results = meigo(problem, options, texp, yexp);
     N_Vector parameters = results.best; // Optimal parameters
-    SUNMatrix solution = solve_ode(initial_values, times, parameters, 2, sunctx, f);
+    SUNMatrix solution;// = solve_ode(initial_values, times, parameters, create_ode_model(2, f), sunctx);
     SUNMatrix media = copy_matrix_remove_columns(solution, create_array((long[]){1}, 1), sunctx);
 
     return media;
