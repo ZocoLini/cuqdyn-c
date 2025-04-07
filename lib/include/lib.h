@@ -5,6 +5,10 @@
 #ifndef LIB_H
 #define LIB_H
 
+#include <sundials/sundials_nvector.h>
+#include <sundials/sundials_matrix.h>
+
+
 #include "math.h"
 
 #define Ith(v, i) NV_Ith_S(v, i - 1) /* i-th vector component i=1..n */

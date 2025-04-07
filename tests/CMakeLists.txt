@@ -6,13 +6,13 @@ target_link_libraries(test_matlab
         PRIVATE lib
 )
 
-add_executable(test_sundials_ode
-        test_sundials_ode.c
+add_executable(test_ode_solver
+        test_ode_solver.c
 )
 
-target_link_libraries(test_sundials_ode
+target_link_libraries(test_ode_solver
         PRIVATE lib
 )
 
 add_test(NAME test_matlab COMMAND test_matlab)
-add_test(NAME test_sundials_ode COMMAND test_sundials_ode)
+add_test(NAME test_ode_solver COMMAND test_ode_solver)

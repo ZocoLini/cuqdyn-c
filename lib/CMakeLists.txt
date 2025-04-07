@@ -3,6 +3,7 @@ file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c)
 add_library(
         lib
         ${LIB_SRC}
+        src/edo_solver.c
 )
 
 target_include_directories(lib
