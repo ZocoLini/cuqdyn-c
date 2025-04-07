@@ -53,9 +53,9 @@ void test_basic_ode()
 
 int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
-    sunrealtype yx = NV_Ith_S(y, 0);
-    sunrealtype *data = N_VGetArrayPointer(user_data);
-    NV_Ith_S(ydot, 0) = (data[0] / t) * yx;
+    N_Vector parameters = user_data;
+
+    NV_Ith_S(ydot, 0) = (Ith(parameters, 1) / t) * Ith(y, 1);
 
     return 0;
 }
