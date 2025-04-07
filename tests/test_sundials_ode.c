@@ -15,7 +15,7 @@ int main(void)
     return 0;
 }
 
-/* f => dy/dx = 2/x * y; y(3) = 30*/
+/* f => dy/dx = 3/x * y; y(3) = 54*/
 
 void test_basic_ode()
 {
