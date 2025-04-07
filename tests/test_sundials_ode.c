@@ -12,10 +12,11 @@ void test_basic_ode();
 int main(void)
 {
     test_basic_ode();
+    printf("\tTest 1 (dy/dx = 3/x * y; y(3) = 54) passed\n");
     return 0;
 }
 
-/* f => dy/dx = 3/x * y; y(3) = 54*/
+/* f => dy/dx = 3/x * y; y(3) = 54 */
 
 void test_basic_ode()
 {

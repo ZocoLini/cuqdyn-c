@@ -137,14 +137,11 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
 
         // We are adding the time (t) as the first column but maybe we don't need it
         result_data[result_cols * actual_result_matrix_row] = t;
-        printf("%f", t);
 
         for (int i = 0; i < ode_model.number_eq; i++)
         {
             result_data[result_cols * actual_result_matrix_row + i + 1] = y_result[i];
-            printf("\t%f", y_result[i]);
         }
-        printf("\n");
 
         actual_result_matrix_row++;
     }
