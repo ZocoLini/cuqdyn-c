@@ -18,8 +18,6 @@ static SUNContext sunctx;
 SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix yexp,
                             N_Vector initial_values, N_Vector times);
 
-int f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data);
-
 void solve_lotka_volterra()
 {
     SUNContext_Create(SUN_COMM_NULL, &sunctx);
@@ -180,7 +178,7 @@ SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix 
 }
 
 
-int f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+int lotka_volterra_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     sunrealtype y1, y2;
 

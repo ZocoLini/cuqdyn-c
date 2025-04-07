@@ -108,7 +108,7 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
 
         if (check_retval(&retval, "CVode", 1))
         {
-            break;
+            return NULL;
         }
         if (retval == CV_SUCCESS)
         {
