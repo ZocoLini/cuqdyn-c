@@ -30,6 +30,24 @@ typedef struct
 
 ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, N_Vector times);
 
-SUNMatrix solve_ode(N_Vector, ODEModel, SUNContext);
+typedef struct
+{
+    sunrealtype tf;
+    sunrealtype tinc;
+    sunrealtype first_output_time;
+} TimeConstraints;
+
+TimeConstraints create_time_constraints(sunrealtype, sunrealtype, sunrealtype);
+int time_constraints_steps(TimeConstraints);
+
+typedef struct
+{
+    sunrealtype scalar_rtol;
+    N_Vector abs_tol;
+} Tolerances;
+
+Tolerances create_tolerances(sunrealtype, sunrealtype *, ODEModel, SUNContext sunctx);
+
+SUNMatrix solve_ode(N_Vector, ODEModel, TimeConstraints, Tolerances, SUNContext);
 
 #endif // MATH_H

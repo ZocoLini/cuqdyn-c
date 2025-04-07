@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
+#include <time.h>
 
 
 Matrix3D create_matrix3d(const int x, const int y, const int z)
@@ -35,12 +36,33 @@ ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, N_Vec
     return ode_model;
 }
 
-// TODO: This lines shouldn't be hardcoded
-#define RTOL  SUN_RCONST(1.0e-4) /* scalar relative tolerance            */
-#define ATOL1 SUN_RCONST(1.0e-8) /* vector absolute tolerance components */
-#define ATOL2 SUN_RCONST(1.0e-14)
+TimeConstraints create_time_constraints(sunrealtype first_output_time, sunrealtype tf, sunrealtype tinc)
+{
+    TimeConstraints time_constraints;
+    time_constraints.tf = tf;
+    time_constraints.tinc = tinc;
+    time_constraints.first_output_time = first_output_time;
+    return time_constraints;
+}
 
-static int check_retval(void*, const char*, int);
+int time_constraints_steps(TimeConstraints constraints)
+{
+    return (constraints.tf - constraints.first_output_time) / constraints.tinc;
+}
+
+Tolerances create_tolerances(sunrealtype scalar_rtol, sunrealtype * atol, ODEModel ode_model, SUNContext sunctx)
+{
+    Tolerances tolerances;
+    tolerances.scalar_rtol = scalar_rtol;
+
+    N_Vector atol_vec = N_VNew_Serial(ode_model.number_eq, sunctx);
+    N_VSetArrayPointer(atol, atol_vec);
+
+    tolerances.abs_tol = atol_vec;
+    return tolerances;
+}
+
+static int check_retval(void *, const char *, int);
 
 /*
  * Solves the ODE system using the ode45 solver
@@ -56,19 +78,12 @@ static int check_retval(void*, const char*, int);
  *   - Columns 1-n: Solution components (y1, y2, ..., yn)
  *
  */
-SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, SUNContext sunctx)
+SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances, SUNContext sunctx)
 {
-    const sunrealtype t0 = N_VGetArrayPointer(ode_model.times)[0];               /* Initial time */
-
-    /* Set the vector absolute tolerance */ // Don't know if this is needed
-    N_Vector abstol = N_VNew_Serial(ode_model.number_eq, sunctx);
-    Ith(abstol, 1) = ATOL1;
-    Ith(abstol, 2) = ATOL2;
-
     void *cvode_mem = CVodeCreate(CV_ADAMS, sunctx);
 
-    CVodeInit(cvode_mem, ode_model.f, t0, ode_model.initial_values);
-    CVodeSVtolerances(cvode_mem, RTOL, abstol);
+    CVodeInit(cvode_mem, ode_model.f, N_VGetArrayPointer(ode_model.times)[0], ode_model.initial_values);
+    CVodeSVtolerances(cvode_mem, tolerances.scalar_rtol, tolerances.abs_tol);
     CVodeSetUserData(cvode_mem, parameters);
 
     /* Create dense SUNMatrix for use in linear solves */
@@ -82,18 +97,18 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, SUNContext sunctx)
 
     /* Time points */
     sunrealtype t;
-    sunrealtype tinc = 0.1;
-    sunrealtype tout = 3.5;
-    const sunrealtype tf = 4.0;
+    sunrealtype tinc = time_constraints.tinc;
+    sunrealtype tout = time_constraints.first_output_time;
+    const sunrealtype tf = time_constraints.tf;
 
     int retval;
     int retvalr;
     int rootsfound[2];
     sunrealtype *y_result = N_VGetArrayPointer(ode_model.initial_values);
 
-    int result_rows = (tout - t0) / tinc;
+    int result_rows = time_constraints_steps(time_constraints);
     int result_cols = ode_model.number_eq + 1; // We add the time col
-    SUNMatrix result = SUNDenseMatrix(result_rows, ode_model.number_eq, sunctx);
+    SUNMatrix result = SUNDenseMatrix(result_rows, result_cols, sunctx);
     sunrealtype *result_data = SM_DATA_D(result);
 
     int actual_result_matrix_row = 0;
@@ -105,10 +120,16 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, SUNContext sunctx)
         if (retval == CV_ROOT_RETURN)
         {
             retvalr = CVodeGetRootInfo(cvode_mem, rootsfound);
-            if (check_retval(&retvalr, "CVodeGetRootInfo", 1)) { return NULL; }
+            if (check_retval(&retvalr, "CVodeGetRootInfo", 1))
+            {
+                return NULL;
+            }
         }
 
-        if (check_retval(&retval, "CVode", 1)) { break; }
+        if (check_retval(&retval, "CVode", 1))
+        {
+            break;
+        }
         if (retval == CV_SUCCESS)
         {
             tout += tinc;
@@ -116,10 +137,14 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, SUNContext sunctx)
 
         // We are adding the time (t) as the first column but maybe we don't need it
         result_data[result_cols * actual_result_matrix_row] = t;
+        printf("%f", t);
 
-        for (int i = 0; i < ode_model.number_eq; i++) {
+        for (int i = 0; i < ode_model.number_eq; i++)
+        {
             result_data[result_cols * actual_result_matrix_row + i + 1] = y_result[i];
+            printf("\t%f", y_result[i]);
         }
+        printf("\n");
 
         actual_result_matrix_row++;
     }
@@ -127,26 +152,24 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, SUNContext sunctx)
     return result;
 }
 
-int check_retval(void* returnvalue, const char* funcname, int opt)
+int check_retval(void *returnvalue, const char *funcname, int opt)
 {
-    int* retval;
+    int *retval;
 
     /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
     if (opt == 0 && returnvalue == NULL)
     {
-        fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
-                funcname);
+        fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n", funcname);
         return (1);
     }
 
     /* Check if retval < 0 */
     else if (opt == 1)
     {
-        retval = (int*)returnvalue;
+        retval = (int *) returnvalue;
         if (*retval < 0)
         {
-            fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with retval = %d\n\n",
-                    funcname, *retval);
+            fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with retval = %d\n\n", funcname, *retval);
             return (1);
         }
     }
@@ -154,8 +177,7 @@ int check_retval(void* returnvalue, const char* funcname, int opt)
     /* Check if function returned NULL pointer - no memory allocated */
     else if (opt == 2 && returnvalue == NULL)
     {
-        fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
-                funcname);
+        fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n", funcname);
         return (1);
     }
 

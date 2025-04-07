@@ -4,6 +4,7 @@
 
 #include <lib.h>
 #include <sundials/sundials_matrix.h>
+#include <time.h>
 
 int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data);
 void test_basic_ode();
@@ -31,8 +32,23 @@ void test_basic_ode()
     N_VGetArrayPointer(times)[0] = 3.0;
 
     ODEModel ode_model = create_ode_model(1, basic_f, initial_values, times);
+    TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
+    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8}, ode_model, sunctx);
 
-    SUNMatrix result = solve_ode(parameters, ode_model, sunctx);
+    SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances, sunctx);
+
+    sunrealtype *data = SM_DATA_D(result);
+    int rows = SM_ROWS_D(result);
+    int cols = SM_COLUMNS_D(result);
+
+    assert(cols == 2);
+    assert(rows == 10);
+
+    assert(abs(data[cols * 3] - 4.3) < 0.0001);
+    assert(abs(data[cols * 2 + 1] - 148.176) < 0.001);
+    assert(abs(data[cols * 3 + 1] - 159.014) < 0.001);
+    assert(abs(data[cols * 6 + 1] - 194.672) < 0.001);
+    assert(abs(data[cols * 9 + 1] - 235.298) < 0.001);
 }
 
 int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
