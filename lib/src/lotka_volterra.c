@@ -5,6 +5,7 @@
 #include <cvode/cvode.h>
 #include <lib.h>
 #include <math.h>
+#include <matlab.h>
 #include <nvector/nvector_serial.h>
 #include <stdio.h>
 #include <string.h>
@@ -12,15 +13,16 @@
 #include <sundials/sundials_matrix.h>
 #include <sundials/sundials_nvector.h>
 
-static SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix yexp,
+static SUNContext sunctx;
+
+SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix yexp,
                             N_Vector initial_values, N_Vector times);
+
+int f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data);
 
 void solve_lotka_volterra()
 {
-    int retval; // TODO: Handle the error. See cvRoberts_dns.c for example inside cvode src
-    SUNContext sunctx;
-
-    retval = SUNContext_Create(SUN_COMM_NULL, &sunctx);
+    SUNContext_Create(SUN_COMM_NULL, &sunctx);
 
 
     const char dataDir[] = "Data_LV";
@@ -166,13 +168,29 @@ void solve_lotka_volterra()
  * The original function, despite being called "media", it takes the result of the ODE solver
  * and returns it without the first column, which I guess is the time.
  */
-static SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix yexp,
+SUNMatrix calc_media(Problem problem, Options options, N_Vector texp, SUNMatrix yexp,
                             N_Vector initial_values, N_Vector times)
 {
     Results results = meigo(problem, options, texp, yexp);
     N_Vector parameters = results.best; // Optimal parameters
-    SUNMatrix solution = solve_ode(initial_values, times, parameters);
-    SUNMatrix media; // TODO: Remove first column of solutions
+    SUNMatrix solution = solve_ode(initial_values, times, parameters, 2, sunctx, f);
+    SUNMatrix media = copy_matrix_remove_columns(solution, create_array((long[]){1}, 1), sunctx);
 
     return media;
+}
+
+
+int f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    sunrealtype y1, y2;
+
+    y1 = Ith(y, 1);
+    y2 = Ith(y, 2);
+
+    sunrealtype *data = N_VGetArrayPointer(user_data);
+
+    Ith(ydot, 1) = y1 * (SUN_RCONST(data[0]) - SUN_RCONST(data[1]) * y2);
+    Ith(ydot, 2) = -y2 * (SUN_RCONST(data[2]) - SUN_RCONST(data[3]) * y1);
+
+    return (0);
 }

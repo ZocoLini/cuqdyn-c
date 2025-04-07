@@ -9,6 +9,7 @@ fi
 
 TEST_BINS=(
   test_matlab
+  test_sundials_ode
 )
 
 (
