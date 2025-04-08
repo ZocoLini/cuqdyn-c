@@ -22,6 +22,15 @@ target_link_libraries(test_matrix_array_get_median
         PRIVATE lib
 )
 
+add_executable(test_get_matrix_cols_median
+        test_get_matrix_cols_median.c
+)
+
+target_link_libraries(test_get_matrix_cols_median
+        PRIVATE lib
+)
+
 add_test(NAME test_matlab COMMAND test_matlab)
 add_test(NAME test_ode_solver COMMAND test_ode_solver)
 add_test(NAME test_matrix_array_get_median COMMAND test_matrix_array_get_median)
+add_test(NAME test_get_matrix_cols_median COMMAND test_get_matrix_cols_median)

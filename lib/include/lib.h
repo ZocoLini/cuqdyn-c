@@ -69,4 +69,6 @@ SUNMatrix matrix_array_get_index(MatrixArray, long);
 void matrix_array_set_index(MatrixArray, long, SUNMatrix);
 SUNMatrix matrix_array_get_median(MatrixArray);
 
+N_Vector get_matrix_cols_median(SUNMatrix);
+
 #endif // LIB_H
