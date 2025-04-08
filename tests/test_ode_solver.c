@@ -38,12 +38,11 @@ void test_basic_ode()
     N_Vector initial_values = N_VNew_Serial(1, sunctx);
     N_VGetArrayPointer(initial_values)[0] = 54;
 
-    N_Vector times = N_VNew_Serial(1, sunctx);
-    N_VGetArrayPointer(times)[0] = 3.0;
+    sunrealtype t0 = 3.0;
 
-    ODEModel ode_model = create_ode_model(1, basic_f, initial_values, times);
+    ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0);
     TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
-    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8}, ode_model, sunctx);
+    Tolerances tolerances = create_tolerances(1.0e-8, (sunrealtype[]){1.0e-8}, ode_model, sunctx);
 
     SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances, sunctx);
 
@@ -79,21 +78,19 @@ void test_lotka_volterra()
 
     N_Vector parameters = N_VNew_Serial(4, sunctx);
     N_VGetArrayPointer(parameters)[0] = 0.5;
-    N_VGetArrayPointer(parameters)[1] = 0.2;
+    N_VGetArrayPointer(parameters)[1] = 0.02;
     N_VGetArrayPointer(parameters)[2] = 0.5;
-    N_VGetArrayPointer(parameters)[3] = 0.2;
+    N_VGetArrayPointer(parameters)[3] = 0.02;
 
     N_Vector initial_values = N_VNew_Serial(2, sunctx);
     N_VGetArrayPointer(initial_values)[0] = 10;
     N_VGetArrayPointer(initial_values)[1] = 5;
 
-    N_Vector times = N_VNew_Serial(2, sunctx);
-    N_VGetArrayPointer(times)[0] = 0.0;
-    N_VGetArrayPointer(times)[1] = 0.0;
+    sunrealtype t0 = 0.0;
 
-    ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, times);
+    ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
     TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
-    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-4), (sunrealtype[]){1.0e-8}, ode_model, sunctx);
+    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8}, ode_model, sunctx);
 
     SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances, sunctx);
 
@@ -117,8 +114,8 @@ void test_lotka_volterra()
     assert(rows == 8);
 
     assert(abs(data[cols * 0] - 1.0) < 0.0001);
-    assert(abs(data[cols * 0 + 1] - 16.27) < 0.001);
-    assert(abs(data[cols * 0 + 2] - -3.196e-2) < 0.001);
-    // assert(abs(data[cols * 6 + 1] - 194.672) < 0.001);
-    // assert(abs(data[cols * 9 + 1] - 235.298) < 0.001);
+    assert(abs(data[cols * 0 + 1] - 15.10) < 0.001);
+    assert(abs(data[cols * 0 + 2] - 3.883) < 0.001);
+    assert(abs(data[cols * 6 + 1] - 53.785) < 0.001);
+    assert(abs(data[cols * 6 + 2] - 5.456) < 0.001);
 }

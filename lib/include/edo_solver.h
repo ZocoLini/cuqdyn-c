@@ -13,10 +13,10 @@ typedef struct
     int number_eq;
     void *f;
     N_Vector initial_values;
-    N_Vector times;
+    sunrealtype t0;
 } ODEModel;
 
-ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, N_Vector times);
+ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, sunrealtype t0);
 
 typedef struct
 {

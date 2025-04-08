@@ -6,13 +6,13 @@
 #include <cvode/cvode.h>
 #include <edo_solver.h>
 
-ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, N_Vector times)
+ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, sunrealtype t0)
 {
     ODEModel ode_model;
     ode_model.f = f;
     ode_model.number_eq = number_eq;
     ode_model.initial_values = initial_values;
-    ode_model.times = times;
+    ode_model.t0 = t0;
     return ode_model;
 }
 
@@ -62,7 +62,7 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
 {
     void *cvode_mem = CVodeCreate(CV_ADAMS, sunctx);
 
-    CVodeInit(cvode_mem, ode_model.f, N_VGetArrayPointer(ode_model.times)[0], ode_model.initial_values);
+    CVodeInit(cvode_mem, ode_model.f, ode_model.t0, ode_model.initial_values);
     CVodeSVtolerances(cvode_mem, tolerances.scalar_rtol, tolerances.abs_tol);
     CVodeSetUserData(cvode_mem, parameters);
 
