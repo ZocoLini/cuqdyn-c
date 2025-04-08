@@ -10,7 +10,5 @@
 
 int main(void)
 {
-    solve_lotka_volterra();
-
     return 0;
 }

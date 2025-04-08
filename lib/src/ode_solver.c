@@ -2,9 +2,9 @@
 // Created by borja on 4/7/25.
 //
 
-#include <sundials/sundials_nvector.h>
 #include <cvode/cvode.h>
-#include <edo_solver.h>
+#include <ode_solver.h>
+#include <sundials/sundials_nvector.h>
 
 ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, sunrealtype t0)
 {

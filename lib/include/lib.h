@@ -5,11 +5,10 @@
 #ifndef LIB_H
 #define LIB_H
 
-#include <sundials/sundials_nvector.h>
 #include <sundials/sundials_matrix.h>
+#include <sundials/sundials_nvector.h>
+#include "ode_solver.h"
 
-
-#include "math.h"
 
 #define Ith(v, i) NV_Ith_S(v, i - 1) /* i-th vector component i=1..n */
 #define IJth(A, i, j) SM_ELEMENT_D(A, i - 1, j - 1) /* (i,j)-th matrix component i,j=1..n */
@@ -49,6 +48,7 @@ typedef struct
 } Results;
 
 Results meigo(Problem, Options, N_Vector, SUNMatrix);
+void predict_parameters(N_Vector, SUNMatrix, ODEModel, TimeConstraints, Tolerances, SUNContext);
 
 void prob_mod_dynamics_ap(double *, double *, double *);
 void prob_mod_dynamics_log(double *, double *, double *);

@@ -6,7 +6,6 @@
 #define LOTKA_VOLTERRA_H
 #include <sundials/sundials_nvector.h>
 
-void solve_lotka_volterra();
 int lotka_volterra_f(sunrealtype, N_Vector, N_Vector , void *);
 
 #endif //LOTKA_VOLTERRA_H

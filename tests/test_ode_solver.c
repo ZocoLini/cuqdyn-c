@@ -7,8 +7,8 @@
 #include <sundials/sundials_matrix.h>
 #include <time.h>
 
-#include "edo_solver.h"
 #include "lotka_volterra.h"
+#include "ode_solver.h"
 
 int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data);
 void test_basic_ode();
