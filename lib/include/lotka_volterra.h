@@ -1,7 +1,3 @@
-//
-// Created by borja on 03/04/25.
-//
-
 #ifndef LOTKA_VOLTERRA_H
 #define LOTKA_VOLTERRA_H
 #include <sundials/sundials_nvector.h>

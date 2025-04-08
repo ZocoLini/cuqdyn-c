@@ -1,7 +1,3 @@
-//
-// Created by borja on 03/04/25.
-//
-
 
 #include <sundials/sundials_nvector.h>
 #include <sundials/sundials_types.h>

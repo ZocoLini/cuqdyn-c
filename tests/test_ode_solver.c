@@ -1,7 +1,3 @@
-//
-// Created by borja on 4/7/25.
-//
-
 #include <lib.h>
 #include <nvector/nvector_serial.h>
 #include <sundials/sundials_matrix.h>

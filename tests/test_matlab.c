@@ -1,7 +1,3 @@
-//
-// Created by borja on 4/4/25.
-//
-
 #include <matlab.h>
 #include <nvector/nvector_serial.h>
 #include <stdio.h>

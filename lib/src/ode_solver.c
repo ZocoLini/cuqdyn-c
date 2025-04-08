@@ -1,7 +1,3 @@
-//
-// Created by borja on 4/7/25.
-//
-
 #include <cvode/cvode.h>
 #include <ode_solver.h>
 #include <sundials/sundials_nvector.h>

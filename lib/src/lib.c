@@ -1,11 +1,6 @@
-//
-// Created by borja on 03/04/25.
-//
-
 #include "lib.h"
 #include <nvector/nvector_serial.h>
 #include <string.h>
-#include <sundials/sundials_direct.h>
 #include <sundials/sundials_matrix.h>
 #include <sundials/sundials_nvector.h>
 

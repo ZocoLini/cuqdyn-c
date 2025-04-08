@@ -1,7 +1,3 @@
-//
-// Created by borja on 03/04/25.
-//
-
 #ifndef LIB_H
 #define LIB_H
 

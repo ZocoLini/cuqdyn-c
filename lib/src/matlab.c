@@ -1,7 +1,3 @@
-//
-// Created by borja on 03/04/25.
-//
-
 #include <nvector/nvector_serial.h>
 #include <sundials/sundials_types.h>
 #include <sunmatrix/sunmatrix_dense.h>

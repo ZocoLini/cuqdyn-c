@@ -1,7 +1,3 @@
-//
-// Created by borja on 4/7/25.
-//
-
 #ifndef EDO_SOLVER_H
 #define EDO_SOLVER_H
 
