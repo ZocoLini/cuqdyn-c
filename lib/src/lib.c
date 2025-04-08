@@ -4,9 +4,18 @@
 #include <sundials/sundials_matrix.h>
 #include <sundials/sundials_nvector.h>
 
-#include "math.h"
 #include "matlab.h"
 #include "ode_solver.h"
+
+SUNContext get_sun_context()
+{
+    static SUNContext ctx;
+    if (ctx == NULL)
+    {
+        SUNContext_Create(SUN_COMM_NULL, &ctx);
+    }
+    return ctx;
+}
 
 Problem create_problem(FunctionType function_type, N_Vector lower_bounds, N_Vector upper_bounds, N_Vector parameters)
 {
@@ -68,16 +77,15 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
     Results results = meigo(problem, options, times, observed_data);
     N_Vector parameters_init = results.best; // Optimal parameters
     problem.parameters = parameters_init;
-    // The original code solves the ode using this params but thye result is not used again
+    // The original code solves the ode using this params but the result is not used again
 
     SUNMatrix resid_loo = SUNDenseMatrix(observed_data_rows, observed_data_cols, sunctx);
-    // TODO: Create a struct to handle an array of SUNMatrix
-    Array media_matrix = create_array((SUNMatrix[]){}, observed_data_rows - 1);
+    MatrixArray predicted_data_matrix = create_matrix_array(observed_data_rows - 1);
 
     // TODO: This can be done in parallel and the indices can be erroneous
     for (long i = 1; i < observed_data_rows; ++i)
     {
-        Array indices_to_remove = create_array((long[]){i + 1}, 1);
+        LongArray indices_to_remove = create_array((long[]){i + 1}, 1);
 
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove, sunctx);
         SUNMatrix yexp = copy_matrix_remove_rows(observed_data, indices_to_remove, sunctx);
@@ -93,25 +101,98 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
             sunindextype actual_index = i * observed_data_cols + j;
             SM_DATA_D(resid_loo)[actual_index] = abs(SM_DATA_D(observed_data)[actual_index] - SM_DATA_D(predicted_data)[actual_index]);
         }
-        
-        // TODO: set_matrix_array_index(predicted_data, i - 1);
+
+        matrix_array_set_index(predicted_data_matrix, i - 1, predicted_data);
     }
+
+    // TODO: Output this matrix
+    SUNMatrix median_matrix = matrix_array_get_median(predicted_data_matrix);
 }
 
-Array create_array(long *data, const long len)
+LongArray create_array(long *data, const long len)
 {
-    Array array;
+    LongArray array;
     array.data = data;
     array.len = len;
     return array;
 }
 
-Array create_empty_array()
+LongArray create_empty_array()
 {
-    Array array;
+    LongArray array;
     array.data = NULL;
     array.len = 0;
     return array;
 }
 
-long array_get_index(Array array, long i) { return array.data[i]; }
+long array_get_index(LongArray array, long i) { return array.data[i]; }
+
+MatrixArray create_matrix_array(long len)
+{
+    MatrixArray array;
+    array.len = len;
+    array.data = (SUNMatrix*) malloc(len * sizeof(SUNMatrix));
+    return array;
+}
+
+SUNMatrix matrix_array_get_index(MatrixArray array, long i)
+{
+    if (i < 0 || i >= array.len)
+    {
+        printf("ERROR: Index out of bounds in function matrix_array_get_index()\n");
+        return NULL;
+    }
+
+    return array.data[i];
+}
+
+void matrix_array_set_index(MatrixArray array, long i, SUNMatrix matrix)
+{
+    if (i < 0 || i >= array.len)
+    {
+        printf("ERROR: Index out of bounds in function matrix_array_get_index()\n");
+        return;
+    }
+
+    array.data[i] = matrix;
+}
+
+int compare_sunrealtype(const void *a, const void *b)
+{
+    return *(sunrealtype *) a - *(sunrealtype *) b;
+}
+
+SUNMatrix matrix_array_get_median(MatrixArray matrix_array)
+{
+    SUNMatrix first_matrix = matrix_array_get_index(matrix_array, 0);
+    sunindextype rows = SM_ROWS_D(first_matrix);
+    sunindextype cols = SM_COLUMNS_D(first_matrix);
+
+    long max_z = matrix_array.len;
+
+    SUNMatrix medians_matrix = SUNDenseMatrix(rows, cols, get_sun_context());
+    sunrealtype *medians = SM_DATA_D(medians_matrix);
+
+    sunrealtype values[max_z];
+
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            for (int z = 0; z < max_z; ++z)
+            {
+                SUNMatrix actual_matrix = matrix_array_get_index(matrix_array, z);
+                values[z] = SM_DATA_D(actual_matrix)[i * cols + j];
+            }
+
+            // Sorting the vector to obtain the median easily
+            qsort(values, max_z, sizeof(values[0]), compare_sunrealtype);
+
+            medians[i * cols + j] = max_z & 0b1
+                ? values[(max_z - 1) / 2]
+                : (values[max_z / 2 - 1] + values[max_z / 2]) / 2;
+        }
+    }
+
+    return medians_matrix;
+}

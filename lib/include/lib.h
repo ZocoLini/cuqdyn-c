@@ -11,6 +11,8 @@
 
 // function
 
+SUNContext get_sun_context();
+
 typedef enum
 {
     LOTKA_VOLTERRA = 0,
@@ -46,18 +48,25 @@ typedef struct
 Results meigo(Problem, Options, N_Vector, SUNMatrix);
 void predict_parameters(N_Vector, SUNMatrix, ODEModel, TimeConstraints, Tolerances, SUNContext);
 
-void prob_mod_dynamics_ap(double *, double *, double *);
-void prob_mod_dynamics_log(double *, double *, double *);
-void prob_mod_dynamics_lv(double *, double *, double *);
-
 typedef struct
 {
     long *data;
     long len;
-} Array;
+} LongArray;
 
-Array create_array(long *, long);
-Array create_empty_array();
-long array_get_index(Array, long);
+LongArray create_array(long *, long);
+LongArray create_empty_array();
+long array_get_index(LongArray, long);
+
+typedef struct
+{
+    SUNMatrix *data;
+    long len;
+} MatrixArray;
+
+MatrixArray create_matrix_array(long);
+SUNMatrix matrix_array_get_index(MatrixArray, long);
+void matrix_array_set_index(MatrixArray, long, SUNMatrix);
+SUNMatrix matrix_array_get_median(MatrixArray);
 
 #endif // LIB_H
