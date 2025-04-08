@@ -60,11 +60,18 @@ static int check_retval(void *, const char *, int);
  */
 SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances, SUNContext sunctx)
 {
+    int retval;
     void *cvode_mem = CVodeCreate(CV_ADAMS, sunctx);
+    if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
 
-    CVodeInit(cvode_mem, ode_model.f, ode_model.t0, ode_model.initial_values);
-    CVodeSVtolerances(cvode_mem, tolerances.scalar_rtol, tolerances.abs_tol);
-    CVodeSetUserData(cvode_mem, parameters);
+    retval = CVodeInit(cvode_mem, ode_model.f, ode_model.t0, ode_model.initial_values);
+    if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
+
+    retval = CVodeSVtolerances(cvode_mem, tolerances.scalar_rtol, tolerances.abs_tol);
+    if (check_retval(&retval, "CVodeSVtolerances", 1)) { return NULL; }
+
+    retval = CVodeSetUserData(cvode_mem, parameters);
+    if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
 
     /* Create dense SUNMatrix for use in linear solves */
     SUNMatrix A = SUNDenseMatrix(ode_model.number_eq, ode_model.number_eq, sunctx);
@@ -73,7 +80,8 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
     SUNLinearSolver LS = SUNLinSol_Dense(ode_model.initial_values, A, sunctx);
 
     /* Attach the matrix and linear solver */
-    CVodeSetLinearSolver(cvode_mem, LS, A);
+    retval = CVodeSetLinearSolver(cvode_mem, LS, A);
+    if (check_retval(&retval, "CVodeSetLinearSolver", 1)) { return NULL; }
 
     /* Time points */
     sunrealtype t;
@@ -81,7 +89,6 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
     sunrealtype tout = time_constraints.first_output_time;
     const sunrealtype tf = time_constraints.tf;
 
-    int retval;
     int retvalr;
     int rootsfound[2];
     sunrealtype *y_result = N_VGetArrayPointer(ode_model.initial_values);
@@ -125,6 +132,10 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
 
         actual_result_matrix_row++;
     }
+
+    SUNLinSolFree(LS);
+    SUNMatDestroy(A);
+    SUNContext_Free(&sunctx);
 
     return result;
 }

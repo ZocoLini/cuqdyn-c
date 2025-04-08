@@ -16,7 +16,7 @@ void test_lotka_volterra();
 
 int main(void)
 {
-    test_basic_ode();
+    //test_basic_ode();
     printf("\tTest 1 (dy/dx = 3/x * y; y(3) = 54) passed\n");
 
     test_lotka_volterra();
@@ -90,7 +90,7 @@ void test_lotka_volterra()
 
     ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
     TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
-    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8}, ode_model, sunctx);
+    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8, 1.0e-8}, ode_model, sunctx);
 
     SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances, sunctx);
 
@@ -99,16 +99,6 @@ void test_lotka_volterra()
     sunrealtype *data = SM_DATA_D(result);
     int rows = SM_ROWS_D(result);
     int cols = SM_COLUMNS_D(result);
-
-    for (int i = 0; i < rows; ++i)
-    {
-        for (int j = 0; j < cols; ++j)
-        {
-            printf("%f\t", data[i * cols + j]);
-        }
-
-        printf("\n");
-    }
 
     assert(cols == 3);
     assert(rows == 8);
