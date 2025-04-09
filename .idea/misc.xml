@@ -13,5 +13,8 @@
     <libraryRoots>
       <file path="$PROJECT_DIR$/deps" />
     </libraryRoots>
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/sundials" />
+    </excludeRoots>
   </component>
 </project>
