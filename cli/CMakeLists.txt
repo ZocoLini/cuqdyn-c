@@ -1,11 +1,15 @@
-file(GLOB CLI_SRC CONFIGURE_DEPENDS src/*.c)
+file(GLOB CLI_SRC CONFIGURE_DEPENDS src/*.c src/handlers/*.c)
+file(GLOB CLI_HEADERS CONFIGURE_DEPENDS include include/handlers)
 
-add_executable(
-        cli
-        ${CLI_SRC}
+include_directories(cli
+        ${CLI_HEADERS}
 )
 
-target_link_libraries(
-        cli
+add_executable(cli
+        ${CLI_SRC}
+        src/handlers/params.c
+)
+
+target_link_libraries(cli
         PRIVATE lib
 )
