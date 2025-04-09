@@ -141,9 +141,9 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
         actual_result_matrix_row++;
     }
 
+    CVodeFree(&cvode_mem);
     SUNLinSolFree(LS);
     SUNMatDestroy(A);
-    CVodeFree(cvode_mem);
 
     return result;
 }
