@@ -44,8 +44,6 @@ Results meigo(Problem problem, Options options, N_Vector t, SUNMatrix x)
 
 void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances)
 {
-    sunrealtype *observed_data_ptr = SM_DATA_D(observed_data);
-
     sunindextype observed_data_rows = SM_ROWS_D(observed_data);
     sunindextype observed_data_cols = SM_COLUMNS_D(observed_data);
     sunindextype times_len = NV_LENGTH_S(times);
@@ -55,9 +53,6 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
         printf("ERROR: The number of rows in the observed data matrix must match the length of the times vector.\n");
         return;
     }
-
-    N_Vector initial_values = N_VNew_Serial(observed_data_cols, get_sun_context());
-    N_VSetArrayPointer(&observed_data_ptr[1], initial_values);
 
     /*
      * problem.f='prob_mod_lv';
@@ -93,7 +88,11 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
         SUNMatrix yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
         results = meigo(problem, options, texp, yexp);
-        N_Vector predicted_params = results.best;
+
+        N_VDestroy_Serial(texp);
+        SUNMatDestroy(yexp);
+
+        N_Vector predicted_params = results.best; // TODO: Free this memory
 
         // Saving the predicted params obtained
         // This are
@@ -107,17 +106,22 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
         // Saving the ode solution data obtained with the predicted params
         SUNMatrix ode_solution = solve_ode(predicted_params, ode_model, time_constraints, tolerances);
         SUNMatrix predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]){1}, 1));
+
+        SUNMatDestroy(ode_solution);
+
         for (int j = 0; j < observed_data_cols; ++j)
         {
             sunindextype actual_index = i * observed_data_cols + j;
             SM_DATA_D(resid_loo)[actual_index] = abs(SM_DATA_D(observed_data)[actual_index] - SM_DATA_D(predicted_data)[actual_index]);
         }
-        matrix_array_set_index(predicted_data_matrix, i - 1, predicted_data);
+        matrix_array_set_index(predicted_data_matrix, i - 1, predicted_data); // predicted_data_matrix takes ownership of predicted_data
     }
 
     // TODO: Output some of this data or all
     SUNMatrix predicted_data_median = matrix_array_get_median(predicted_data_matrix);
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
+
+    destroy_matrix_array(predicted_data_matrix); // This frees the matrix array and all the matrices inside
 }
 
 LongArray create_array(long *data, const long len)
@@ -144,6 +148,16 @@ MatrixArray create_matrix_array(long len)
     array.len = len;
     array.data = (SUNMatrix*) malloc(len * sizeof(SUNMatrix));
     return array;
+}
+
+void destroy_matrix_array(MatrixArray array)
+{
+    for (int i = 0; i < array.len; ++i)
+    {
+        SUNMatDestroy(array.data[i]);
+    }
+
+    free(array.data);
 }
 
 SUNMatrix matrix_array_get_index(MatrixArray array, long i)

@@ -14,6 +14,11 @@ ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, sunre
     return ode_model;
 }
 
+void destroy_ode_model(ODEModel model)
+{
+    N_VDestroy_Serial(model.initial_values);
+}
+
 TimeConstraints create_time_constraints(sunrealtype first_output_time, sunrealtype tf, sunrealtype tinc)
 {
     TimeConstraints time_constraints;
@@ -38,6 +43,11 @@ Tolerances create_tolerances(sunrealtype scalar_rtol, sunrealtype * atol, ODEMod
 
     tolerances.abs_tol = atol_vec;
     return tolerances;
+}
+
+void destroy_tolerances(Tolerances tolerances)
+{
+    N_VDestroy(tolerances.abs_tol);
 }
 
 static int check_retval(void *, const char *, int);
@@ -133,6 +143,7 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
 
     SUNLinSolFree(LS);
     SUNMatDestroy(A);
+    CVodeFree(cvode_mem);
 
     return result;
 }

@@ -65,6 +65,7 @@ typedef struct
 } MatrixArray;
 
 MatrixArray create_matrix_array(long);
+void destroy_matrix_array(MatrixArray array);
 SUNMatrix matrix_array_get_index(MatrixArray, long);
 void matrix_array_set_index(MatrixArray, long, SUNMatrix);
 SUNMatrix matrix_array_get_median(MatrixArray);

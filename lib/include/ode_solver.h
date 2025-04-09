@@ -13,6 +13,7 @@ typedef struct
 } ODEModel;
 
 ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, sunrealtype t0);
+void destroy_ode_model(ODEModel);
 
 typedef struct
 {
@@ -31,6 +32,7 @@ typedef struct
 } Tolerances;
 
 Tolerances create_tolerances(sunrealtype, sunrealtype *, ODEModel);
+void destroy_tolerances(Tolerances);
 
 SUNMatrix solve_ode(N_Vector, ODEModel, TimeConstraints, Tolerances);
 
