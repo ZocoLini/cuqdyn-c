@@ -3,34 +3,33 @@
 #include <stdio.h>
 #include <sundials/sundials_nvector.h>
 
-void test_copy_vector_remove_indices(SUNContext);
-void test_copy_matrix_remove_rows(SUNContext);
-void test_copy_matrix_remove_cols(SUNContext);
-void test_copy_matrix_remove_rows_and_cols(SUNContext);
+#include "../lib/include/lib.h"
+
+void test_copy_vector_remove_indices();
+void test_copy_matrix_remove_rows();
+void test_copy_matrix_remove_cols();
+void test_copy_matrix_remove_rows_and_cols();
 
 int main(void)
 {
-    SUNContext sunctx;
-    SUNContext_Create(SUN_COMM_NULL, &sunctx);
-
-    test_copy_vector_remove_indices(sunctx);
+    test_copy_vector_remove_indices();
     printf("\tTest 1 passed\n");
 
-    test_copy_matrix_remove_rows(sunctx);
+    test_copy_matrix_remove_rows();
     printf("\tTest 2 passed\n");
 
-    test_copy_matrix_remove_cols(sunctx);
+    test_copy_matrix_remove_cols();
     printf("\tTest 3 passed\n");
 
-    test_copy_matrix_remove_rows_and_cols(sunctx);
+    test_copy_matrix_remove_rows_and_cols();
     printf("\tTest 4 passed\n");
 
     return 0;
 }
 
-void test_copy_vector_remove_indices(SUNContext sunctx)
+void test_copy_vector_remove_indices()
 {
-    N_Vector vector = N_VNew_Serial(5, sunctx);
+    N_Vector vector = N_VNew_Serial(5, get_sun_context());
 
     sunrealtype *data = N_VGetArrayPointer(vector);
     for (int i = 0; i < 5; ++i)
@@ -38,7 +37,7 @@ void test_copy_vector_remove_indices(SUNContext sunctx)
         data[i] = i + 1;
     }
 
-    N_Vector copy = copy_vector_remove_indices(vector, create_array((long[]) {1, 3}, 2), sunctx);
+    N_Vector copy = copy_vector_remove_indices(vector, create_array((long[]) {1, 3}, 2));
 
     data = N_VGetArrayPointer(copy);
 
@@ -52,9 +51,9 @@ void test_copy_vector_remove_indices(SUNContext sunctx)
     N_VDestroy(copy);
 }
 
-void test_copy_matrix_remove_rows(SUNContext sunctx)
+void test_copy_matrix_remove_rows()
 {
-    SUNMatrix matrix = SUNDenseMatrix(3, 3, sunctx);
+    SUNMatrix matrix = SUNDenseMatrix(3, 3, get_sun_context());
 
     sunrealtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 9; ++i)
@@ -62,7 +61,7 @@ void test_copy_matrix_remove_rows(SUNContext sunctx)
         data[i] = i + 1;
     }
 
-    SUNMatrix copy = copy_matrix_remove_rows(matrix, create_array((long[]) {1, 2}, 2), sunctx);
+    SUNMatrix copy = copy_matrix_remove_rows(matrix, create_array((long[]) {1, 2}, 2));
 
     assert(SM_ROWS_D(copy) == 1);
     assert(SM_COLUMNS_D(copy) == 3);
@@ -77,9 +76,9 @@ void test_copy_matrix_remove_rows(SUNContext sunctx)
     SUNMatDestroy(matrix);
 }
 
-void test_copy_matrix_remove_cols(SUNContext sunctx)
+void test_copy_matrix_remove_cols()
 {
-    SUNMatrix matrix = SUNDenseMatrix(3, 5, sunctx);
+    SUNMatrix matrix = SUNDenseMatrix(3, 5, get_sun_context());
 
     sunrealtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 15; ++i)
@@ -87,7 +86,7 @@ void test_copy_matrix_remove_cols(SUNContext sunctx)
         data[i] = i + 1;
     }
 
-    SUNMatrix copy = copy_matrix_remove_columns(matrix, create_array((long[]) {1, 2}, 2), sunctx);
+    SUNMatrix copy = copy_matrix_remove_columns(matrix, create_array((long[]) {1, 2}, 2));
 
     assert(SM_ROWS_D(copy) == 3);
     assert(SM_COLUMNS_D(copy) == 3);
@@ -108,9 +107,9 @@ void test_copy_matrix_remove_cols(SUNContext sunctx)
     SUNMatDestroy(matrix);
 }
 
-void test_copy_matrix_remove_rows_and_cols(SUNContext sunctx)
+void test_copy_matrix_remove_rows_and_cols()
 {
-    SUNMatrix matrix = SUNDenseMatrix(4, 3, sunctx);
+    SUNMatrix matrix = SUNDenseMatrix(4, 3, get_sun_context());
 
     sunrealtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 12; ++i)
@@ -119,7 +118,7 @@ void test_copy_matrix_remove_rows_and_cols(SUNContext sunctx)
     }
 
     SUNMatrix copy = copy_matrix_remove_rows_and_columns(matrix, create_array((long[]) {1, 2, 3}, 3),
-                                                         create_array((long[]) {1, 2}, 2), sunctx);
+                                                         create_array((long[]) {1, 2}, 2));
 
     assert(SM_ROWS_D(copy) == 1);
     assert(SM_COLUMNS_D(copy) == 1);

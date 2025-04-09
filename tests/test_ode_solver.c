@@ -38,9 +38,9 @@ void test_basic_ode()
 
     ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0);
     TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
-    Tolerances tolerances = create_tolerances(1.0e-8, (sunrealtype[]){1.0e-8}, ode_model, sunctx);
+    Tolerances tolerances = create_tolerances(1.0e-8, (sunrealtype[]){1.0e-8}, ode_model);
 
-    SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances, sunctx);
+    SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
     assert(result != NULL);
 
@@ -86,9 +86,9 @@ void test_lotka_volterra()
 
     ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
     TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
-    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8, 1.0e-8}, ode_model, sunctx);
+    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8, 1.0e-8}, ode_model);
 
-    SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances, sunctx);
+    SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
     assert(result != NULL);
 

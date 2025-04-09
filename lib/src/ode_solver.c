@@ -2,6 +2,8 @@
 #include <ode_solver.h>
 #include <sundials/sundials_nvector.h>
 
+#include "lib.h"
+
 ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, sunrealtype t0)
 {
     ODEModel ode_model;
@@ -26,12 +28,12 @@ int time_constraints_steps(TimeConstraints constraints)
     return (constraints.tf - constraints.first_output_time) / constraints.tinc;
 }
 
-Tolerances create_tolerances(sunrealtype scalar_rtol, sunrealtype * atol, ODEModel ode_model, SUNContext sunctx)
+Tolerances create_tolerances(sunrealtype scalar_rtol, sunrealtype * atol, ODEModel ode_model)
 {
     Tolerances tolerances;
     tolerances.scalar_rtol = scalar_rtol;
 
-    N_Vector atol_vec = N_VNew_Serial(ode_model.number_eq, sunctx);
+    N_Vector atol_vec = N_VNew_Serial(ode_model.number_eq, get_sun_context());
     N_VSetArrayPointer(atol, atol_vec);
 
     tolerances.abs_tol = atol_vec;
@@ -54,10 +56,10 @@ static int check_retval(void *, const char *, int);
  *   - Columns 1-n: Solution components (y1, y2, ..., yn)
  *
  */
-SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances, SUNContext sunctx)
+SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances)
 {
     int retval;
-    void *cvode_mem = CVodeCreate(CV_ADAMS, sunctx);
+    void *cvode_mem = CVodeCreate(CV_ADAMS, get_sun_context());
     if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
 
     retval = CVodeInit(cvode_mem, ode_model.f, ode_model.t0, ode_model.initial_values);
@@ -70,10 +72,10 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
     if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
 
     /* Create dense SUNMatrix for use in linear solves */
-    SUNMatrix A = SUNDenseMatrix(ode_model.number_eq, ode_model.number_eq, sunctx);
+    SUNMatrix A = SUNDenseMatrix(ode_model.number_eq, ode_model.number_eq, get_sun_context());
 
     /* Create dense SUNLinearSolver object for use by CVode */
-    SUNLinearSolver LS = SUNLinSol_Dense(ode_model.initial_values, A, sunctx);
+    SUNLinearSolver LS = SUNLinSol_Dense(ode_model.initial_values, A, get_sun_context());
 
     /* Attach the matrix and linear solver */
     retval = CVodeSetLinearSolver(cvode_mem, LS, A);
@@ -91,7 +93,7 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
 
     int result_rows = time_constraints_steps(time_constraints);
     int result_cols = ode_model.number_eq + 1; // We add the time col
-    SUNMatrix result = SUNDenseMatrix(result_rows, result_cols, sunctx);
+    SUNMatrix result = SUNDenseMatrix(result_rows, result_cols, get_sun_context());
     sunrealtype *result_data = SM_DATA_D(result);
 
     int actual_result_matrix_row = 0;
@@ -131,7 +133,6 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
 
     SUNLinSolFree(LS);
     SUNMatDestroy(A);
-    SUNContext_Free(&sunctx);
 
     return result;
 }

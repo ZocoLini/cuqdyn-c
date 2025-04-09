@@ -42,7 +42,7 @@ Results meigo(Problem problem, Options options, N_Vector t, SUNMatrix x)
     // TODO: Calls MEIGO in the MATLAB code --> MEIGO(problem,opts,'ESS',texp,yexp);
 }
 
-void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances, SUNContext sunctx)
+void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances)
 {
     sunrealtype *observed_data_ptr = SM_DATA_D(observed_data);
 
@@ -56,7 +56,7 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
         return;
     }
 
-    N_Vector initial_values = N_VNew_Serial(observed_data_cols, sunctx);
+    N_Vector initial_values = N_VNew_Serial(observed_data_cols, get_sun_context());
     N_VSetArrayPointer(&observed_data_ptr[1], initial_values);
 
     /*
@@ -89,8 +89,8 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
     {
         LongArray indices_to_remove = create_array((long[]){i + 1}, 1);
 
-        N_Vector texp = copy_vector_remove_indices(times, indices_to_remove, sunctx);
-        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, indices_to_remove, sunctx);
+        N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
+        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
         results = meigo(problem, options, texp, yexp);
         N_Vector predicted_params = results.best;
@@ -105,8 +105,8 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
 
         // Maybe this data is not needed once is proved that this way of predicting params works fine
         // Saving the ode solution data obtained with the predicted params
-        SUNMatrix ode_solution = solve_ode(predicted_params, ode_model, time_constraints, tolerances, sunctx);
-        SUNMatrix predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]){1}, 1), sunctx);
+        SUNMatrix ode_solution = solve_ode(predicted_params, ode_model, time_constraints, tolerances);
+        SUNMatrix predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]){1}, 1));
         for (int j = 0; j < observed_data_cols; ++j)
         {
             sunindextype actual_index = i * observed_data_cols + j;

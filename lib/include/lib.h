@@ -46,7 +46,7 @@ typedef struct
 } Results;
 
 Results meigo(Problem, Options, N_Vector, SUNMatrix);
-void predict_parameters(N_Vector, SUNMatrix, ODEModel, TimeConstraints, Tolerances, SUNContext);
+void predict_parameters(N_Vector, SUNMatrix, ODEModel, TimeConstraints, Tolerances);
 
 typedef struct
 {

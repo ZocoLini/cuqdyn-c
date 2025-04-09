@@ -6,12 +6,12 @@
 
 // num_indices are the indices to be removed from the original vector. Should be sorted in ascending order.
 // the indices are 1-based, so the first element is 1, not 0.
-N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices, SUNContext sunctx)
+N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 {
     sunrealtype *original_data = N_VGetArrayPointer(original);
     sunindextype N = N_VGetLength(original);
 
-    N_Vector new_vector = N_VNew_Serial(N - indices.len, sunctx);
+    N_Vector new_vector = N_VNew_Serial(N - indices.len, get_sun_context());
 
     sunrealtype *new_data = N_VGetArrayPointer(new_vector);
 
@@ -33,13 +33,12 @@ N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices, SUNCon
 }
 
 // the indices are 1-based
-SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix matrix, LongArray row_indices, LongArray col_indices,
-                                              SUNContext sunctx)
+SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix matrix, LongArray row_indices, LongArray col_indices)
 {
     const sunindextype rows = SM_ROWS_D(matrix);
     const sunindextype cols = SM_COLUMNS_D(matrix);
 
-    SUNMatrix copy = SUNDenseMatrix(rows - row_indices.len, cols - col_indices.len, sunctx);
+    SUNMatrix copy = SUNDenseMatrix(rows - row_indices.len, cols - col_indices.len, get_sun_context());
 
     sunrealtype *original_data = SM_DATA_D(matrix);
     sunrealtype *copy_data = SM_DATA_D(copy);
@@ -82,13 +81,13 @@ SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix matrix, LongArray row_in
 }
 
 // the indices are 1-based
-SUNMatrix copy_matrix_remove_rows(SUNMatrix matrix, LongArray indices, SUNContext sunctx)
+SUNMatrix copy_matrix_remove_rows(SUNMatrix matrix, LongArray indices)
 {
-    return copy_matrix_remove_rows_and_columns(matrix, indices, create_empty_array(), sunctx);
+    return copy_matrix_remove_rows_and_columns(matrix, indices, create_empty_array());
 }
 
 // the indices are 1-based
-SUNMatrix copy_matrix_remove_columns(SUNMatrix matrix, LongArray indices, SUNContext sunctx)
+SUNMatrix copy_matrix_remove_columns(SUNMatrix matrix, LongArray indices)
 {
-    return copy_matrix_remove_rows_and_columns(matrix, create_empty_array(), indices, sunctx);
+    return copy_matrix_remove_rows_and_columns(matrix, create_empty_array(), indices);
 }

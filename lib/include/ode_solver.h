@@ -30,8 +30,8 @@ typedef struct
     N_Vector abs_tol;
 } Tolerances;
 
-Tolerances create_tolerances(sunrealtype, sunrealtype *, ODEModel, SUNContext sunctx);
+Tolerances create_tolerances(sunrealtype, sunrealtype *, ODEModel);
 
-SUNMatrix solve_ode(N_Vector, ODEModel, TimeConstraints, Tolerances, SUNContext);
+SUNMatrix solve_ode(N_Vector, ODEModel, TimeConstraints, Tolerances);
 
 #endif //EDO_SOLVER_H
