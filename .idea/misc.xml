@@ -6,6 +6,8 @@
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
     <sourceRoots>
+      <file path="$PROJECT_DIR$/cli-lib/include" />
+      <file path="$PROJECT_DIR$/cli-lib/src" />
       <file path="$PROJECT_DIR$/cli/include" />
       <file path="$PROJECT_DIR$/cli/src" />
       <file path="$PROJECT_DIR$/dotmat-introspector/src" />

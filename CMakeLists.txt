@@ -11,6 +11,7 @@ pkg_check_modules(MATIO REQUIRED matio)
 enable_testing()
 
 add_subdirectory(cli)
+add_subdirectory(cli-lib)
 add_subdirectory(dotmat-introspector)
 add_subdirectory(lib)
 add_subdirectory(tests)

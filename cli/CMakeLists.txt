@@ -10,6 +10,6 @@ add_executable(cli
 )
 
 target_link_libraries(cli
-        PRIVATE lib
-        matio
+        PRIVATE
+        cli-lib
 )
