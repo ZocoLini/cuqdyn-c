@@ -104,7 +104,6 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
     int result_rows = time_constraints_steps(time_constraints);
     int result_cols = ode_model.number_eq + 1; // We add the time col
     SUNMatrix result = SUNDenseMatrix(result_rows, result_cols, get_sun_context());
-    sunrealtype *result_data = SM_DATA_D(result);
 
     int actual_result_matrix_row = 0;
 
@@ -131,11 +130,11 @@ SUNMatrix solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints tim
         }
 
         // We are adding the time (t) as the first column but maybe we don't need it
-        result_data[result_cols * actual_result_matrix_row] = t;
+        SM_ELEMENT_D(result, actual_result_matrix_row, 0) = t;
 
         for (int i = 0; i < ode_model.number_eq; i++)
         {
-            result_data[result_cols * actual_result_matrix_row + i + 1] = y_result[i];
+            SM_ELEMENT_D(result, actual_result_matrix_row, i + 1) = y_result[i];
         }
 
         actual_result_matrix_row++;

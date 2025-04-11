@@ -12,7 +12,7 @@ void test_lotka_volterra();
 
 int main(void)
 {
-    //test_basic_ode();
+    test_basic_ode();
     printf("\tTest 1 (dy/dx = 3/x * y; y(3) = 54) passed\n");
 
     test_lotka_volterra();
@@ -25,83 +25,75 @@ int main(void)
 
 void test_basic_ode()
 {
-    SUNContext sunctx;
-    SUNContext_Create(SUN_COMM_NULL, &sunctx);
+    N_Vector parameters = N_VNew_Serial(1, get_sun_context());
+    NV_Ith_S(parameters, 0) = 3.0;
 
-    N_Vector parameters = N_VNew_Serial(1, sunctx);
-    N_VGetArrayPointer(parameters)[0] = 3.0;
+    N_Vector initial_values = N_VNew_Serial(1, get_sun_context());
+    NV_Ith_S(initial_values, 0) = 54;
 
-    N_Vector initial_values = N_VNew_Serial(1, sunctx);
-    N_VGetArrayPointer(initial_values)[0] = 54;
+    const sunrealtype t0 = 3.0;
 
-    sunrealtype t0 = 3.0;
-
-    ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0);
-    TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
-    Tolerances tolerances = create_tolerances(1.0e-8, (sunrealtype[]){1.0e-8}, ode_model);
+    const ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0);
+    const TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
+    const Tolerances tolerances = create_tolerances(1.0e-8, (sunrealtype[]){1.0e-8}, ode_model);
 
     SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
     assert(result != NULL);
 
-    sunrealtype *data = SM_DATA_D(result);
-    int rows = SM_ROWS_D(result);
-    int cols = SM_COLUMNS_D(result);
+    const int rows = SM_ROWS_D(result);
+    const int cols = SM_COLUMNS_D(result);
 
     assert(cols == 2);
     assert(rows == 10);
 
-    assert(abs(data[cols * 3] - 4.3) < 0.0001);
-    assert(abs(data[cols * 2 + 1] - 148.176) < 0.001);
-    assert(abs(data[cols * 3 + 1] - 159.014) < 0.001);
-    assert(abs(data[cols * 6 + 1] - 194.672) < 0.001);
-    assert(abs(data[cols * 9 + 1] - 235.298) < 0.001);
+    assert(abs(SM_ELEMENT_D(result, 3, 0) - 4.3) < 0.0001);
+    assert(abs(SM_ELEMENT_D(result, 2, 1) - 148.176) < 0.0001);
+    assert(abs(SM_ELEMENT_D(result, 3, 1) - 159.014) < 0.0001);
+    assert(abs(SM_ELEMENT_D(result, 6, 1) - 194.672) < 0.0001);
+    assert(abs(SM_ELEMENT_D(result, 9, 1) - 235.298) < 0.0001);
 }
 
 int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     N_Vector parameters = user_data;
 
-    NV_Ith_S(ydot, 0) = (Ith(parameters, 1) / t) * Ith(y, 1);
+    Ith(ydot, 1) = (Ith(parameters, 1) / t) * Ith(y, 1);
 
     return 0;
 }
 
 void test_lotka_volterra()
 {
-    SUNContext sunctx;
-    SUNContext_Create(SUN_COMM_NULL, &sunctx);
+    N_Vector parameters = N_VNew_Serial(4, get_sun_context());
+    NV_Ith_S(parameters, 0) = 0.5;
+    NV_Ith_S(parameters, 1) = 0.02;
+    NV_Ith_S(parameters, 2) = 0.5;
+    NV_Ith_S(parameters, 3) = 0.02;
 
-    N_Vector parameters = N_VNew_Serial(4, sunctx);
-    N_VGetArrayPointer(parameters)[0] = 0.5;
-    N_VGetArrayPointer(parameters)[1] = 0.02;
-    N_VGetArrayPointer(parameters)[2] = 0.5;
-    N_VGetArrayPointer(parameters)[3] = 0.02;
+    N_Vector initial_values = N_VNew_Serial(2, get_sun_context());
+    NV_Ith_S(initial_values, 0) = 10;
+    NV_Ith_S(initial_values, 1) = 5;
 
-    N_Vector initial_values = N_VNew_Serial(2, sunctx);
-    N_VGetArrayPointer(initial_values)[0] = 10;
-    N_VGetArrayPointer(initial_values)[1] = 5;
+    const sunrealtype t0 = 0.0;
 
-    sunrealtype t0 = 0.0;
-
-    ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
-    TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
-    Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8, 1.0e-8}, ode_model);
+    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
+    const TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
+    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8, 1.0e-8}, ode_model);
 
     SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
     assert(result != NULL);
 
-    sunrealtype *data = SM_DATA_D(result);
-    int rows = SM_ROWS_D(result);
-    int cols = SM_COLUMNS_D(result);
+    const int rows = SM_ROWS_D(result);
+    const int cols = SM_COLUMNS_D(result);
 
     assert(cols == 3);
     assert(rows == 8);
 
-    assert(abs(data[cols * 0] - 1.0) < 0.0001);
-    assert(abs(data[cols * 0 + 1] - 15.10) < 0.001);
-    assert(abs(data[cols * 0 + 2] - 3.883) < 0.001);
-    assert(abs(data[cols * 6 + 1] - 53.785) < 0.001);
-    assert(abs(data[cols * 6 + 2] - 5.456) < 0.001);
+    assert(abs(SM_ELEMENT_D(result, 0, 0) - 1.0) < 0.0001);
+    assert(abs(SM_ELEMENT_D(result, 0, 1) - 15.10) < 0.001);
+    assert(abs(SM_ELEMENT_D(result, 0, 2) - 3.883) < 0.001);
+    assert(abs(SM_ELEMENT_D(result, 6, 1) - 53.785) < 0.001);
+    assert(abs(SM_ELEMENT_D(result, 6, 2) - 5.456) < 0.001);
 }
