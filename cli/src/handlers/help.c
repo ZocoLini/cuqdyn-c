@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "handlers.h"
 
-void handle_help(int argc, char *argv[]);
+int handle_help(int argc, char *argv[]);
 
 Handler create_help_handler()
 {
@@ -10,7 +10,7 @@ Handler create_help_handler()
     return handler;
 }
 
-void handle_help(int argc, char *argv[])
+int handle_help(int argc, char *argv[])
 {
     const char* help_message =
 "db-sniffer v{version} - A database introspector tool (by Borja Castellano)\n"
@@ -43,4 +43,5 @@ void handle_help(int argc, char *argv[])
 
 
     printf("%s", help_message);
+    return 0;
 }

@@ -7,7 +7,7 @@
 
 typedef struct
 {
-    void (*handle)(int argc, char *argv[]);
+    int (*handle)(int argc, char *argv[]);
 } Handler;
 
 #endif //HANDLERS_H
