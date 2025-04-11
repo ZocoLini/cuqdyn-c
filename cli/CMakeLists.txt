@@ -7,9 +7,9 @@ include_directories(cli
 
 add_executable(cli
         ${CLI_SRC}
-        src/handlers/params.c
 )
 
 target_link_libraries(cli
         PRIVATE lib
+        matio
 )
