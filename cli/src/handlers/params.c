@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "handlers.h"
+
+void handle_params(int argc, char *argv[]);
+
+Handler create_params_handler()
+{
+    Handler handler;
+    handler.handle = handle_params;
+    return handler;
+}
+
 void handle_params(int argc, char *argv[])
 {
     int opt;

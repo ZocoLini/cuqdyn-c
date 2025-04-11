@@ -2,6 +2,8 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-void handle_params(int argc, char *argv[]);
+#include <handlers.h>
+
+Handler create_params_handler();
 
 #endif //PARAMS_H

@@ -11,17 +11,17 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (strcmp(argv[1], "help") == 0)
+    Handler handler;
+
+    if (strcmp(argv[1], "params") == 0)
     {
-        handle_help(argc, argv);
-    } else if (strcmp(argv[1], "params") == 0)
-    {
-        handle_params(argc, argv);
+        handler = create_params_handler();
     }else
     {
-        printf("Unknown command: %s\n", argv[1]);
-        handle_help(argc, argv);
+        handler = create_help_handler();
     }
+
+    handler.handle(argc, argv);
 
     return 0;
 }
