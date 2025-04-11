@@ -9,8 +9,8 @@
 #include "lib.h"
 
 int handle_params(int argc, char *argv[]);
-int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
-int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
+int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunrealtype *t0, N_Vector *y0);
+int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunrealtype *t0, N_Vector *y0);
 
 Handler create_params_handler()
 {
@@ -35,17 +35,28 @@ int handle_params(int argc, char *argv[])
         }
     }
 
+    sunrealtype t0 = 0.0;
+    N_Vector y0 = NULL;
     N_Vector t = NULL;
     SUNMatrix y = NULL;
 
-    if (read_txt_data_file(data_file, &t, &y) != 0
-        && read_mat_data_file(data_file, &t, &y) != 0)
+    if (read_txt_data_file(data_file, &t, &y, &t0, &y0) != 0
+        && read_mat_data_file(data_file, &t, &y, &t0, &y0) != 0)
     {
         fprintf(stderr, "Error reading data file: %s\n", data_file);
         return 1;
     }
 
     // Bucle para mostrar los datos
+    printf("t0 = %g\n", t0);
+
+    printf("y0 = (");
+    for (long i = 0; i < N_VGetLength(y0); i++)
+    {
+        printf("%g, ", NV_Ith_S(y0, i));
+    }
+    printf(")\n");
+
     for (int i = 0; i < N_VGetLength(t); i++)
     {
         printf("t[%d] = %g\n", i, NV_Ith_S(t, i));
@@ -59,7 +70,7 @@ int handle_params(int argc, char *argv[])
 
 }
 
-int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
+int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunrealtype *t0, N_Vector *y0)
 {
     FILE *f = fopen(data_file, "r");
     if (f == NULL)
@@ -73,7 +84,7 @@ int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
     return 1;
 }
 
-int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
+int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunrealtype *t0, N_Vector *y0)
 {
     mat_t *matfp = Mat_Open(data_file, MAT_ACC_RDONLY);
     if (matfp == NULL)
@@ -102,30 +113,43 @@ int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
 
     const size_t rows = matvar->dims[0];
     const size_t cols = matvar->dims[1];
+
     if (rows < 2 || cols < 2)
     {
         fprintf(stderr, "Error: Data must be at least 2x2\n");
         return 1;
     }
 
-    *t = N_VNew_Serial((sunindextype) rows, get_sun_context());
+    // The first column of the matrix is the time vector
+    // The first row of the matrix are the initial values [t0 y10 y20 ...]
+
+    *t = N_VNew_Serial((sunindextype) rows - 1, get_sun_context());
     sunrealtype *data_t = N_VGetArrayPointer(*t);
 
-    // The first column of the matrix is the time vector
+    *y0 = N_VNew_Serial((sunindextype) cols - 1, get_sun_context());
+    sunrealtype *data_y0 = N_VGetArrayPointer(*y0);
+
     *y = SUNDenseMatrix(
-        (sunindextype) rows,
+        (sunindextype) rows - 1,
         (sunindextype) cols - 1,
         get_sun_context());
     sunrealtype *data_y = SUNDenseMatrix_Data(*y);
 
-    double *file_data = matvar->data;
+    const double *file_data = matvar->data;
 
-    for (int i = 0; i < rows; ++i)
+    *t0 = file_data[0];
+
+    for (int j = 1; j < cols; ++j)
     {
-        data_t[i] = file_data[i];
+        data_y0[j - 1] = file_data[j * rows];
+    }
+
+    for (int i = 1; i < rows; ++i)
+    {
+        data_t[i - 1] = file_data[i];
         for (int j = 1; j < cols; ++j)
         {
-            data_y[(j - 1) * rows + i] = file_data[j * rows + i];
+            data_y[(j - 1) * rows + i - 1] = file_data[j * rows + i];
         }
     }
 
