@@ -40,7 +40,10 @@ n_pars = 29;
 dt = 60;
 tspan=[0:dt:3*3600];
                
-options = odeset('RelTol',1e-12,'AbsTol',1e-12*ones(1,15));
+% tolerances for integration of ODEs 
+% options = odeset('RelTol',1e-12,'AbsTol',1e-12*ones(1,1));
+options = odeset('RelTol',1e-7,'AbsTol',1e-6*ones(1,1));
+
 [t_true,x_true]=ode15s(@(t,x) prob_mod_dynamics_NFKB_PE(t,x,p),tspan,initial_values,options);
 times_true = t_true;
 data_true = x_true;    
@@ -70,7 +73,11 @@ solution_tot = ODE_solve_NFKB_PE(initial_values,tspan,parameters_init);
 media_tot = solution_tot(:, 2:end);
 
 problem.x_0=parameters_init;
-parpool('local', 20);
+
+% change number of parallel workers depending on your machine
+% parpool('local', 20);
+parpool('local', 10);
+
 parfor i=2:m
     texp = times([1:i-1,i+1:end]);
     yexp = observed_data([1:i-1,i+1:end],:);

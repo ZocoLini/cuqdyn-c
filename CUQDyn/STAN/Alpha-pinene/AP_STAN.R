@@ -1,8 +1,10 @@
+library(StanHeaders)
 library(rstan)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(R.matlab)
+library(bayesplot)
 library(deSolve)
 
 rstan_options(auto_write = TRUE)
@@ -50,7 +52,7 @@ nSamples = n_dat - 1
 y0 <- c(absorbance1[1], absorbance2[1], absorbance3[1], absorbance4[1], absorbance5[1]) # Initial conditions
 t0 <- 0.0
 ts <- long_growthdata %>% filter(time > 0) %>% select(time) %>% unlist
-z <- array(NA_real_, dim = c(nSamples, 5, n_wells)) # Cambia el tamaño del array según el número de especies
+z <- array(NA_real_, dim = c(nSamples, 5, n_wells)) 
 
 z[, 1, 1] <- absorbance1[-1]  
 z[, 2, 1] <- absorbance2[-1]
@@ -76,3 +78,232 @@ estimates <- sampling(object = alpha_pinene_stan,
 
 parametersToPlot = c("params", "sigma", "lp__")
 print(estimates, pars = parametersToPlot)
+
+## STATE 1 ##
+
+xdata1 <- data.frame(absorbance = unlist(z[,1,1:n_wells]),well = as.vector(matrix(rep(1:n_wells,nSamples),nrow=nSamples,byrow=TRUE)),time = rep(ts,n_wells))
+pred1 <- as.data.frame(estimates, pars = "z_pred") %>%
+  gather(factor_key = TRUE) %>%
+  group_by(key) %>%
+  summarize(lb = quantile(value, probs = 0.025),
+            median = quantile(value, probs = 0.5),
+            ub = quantile(value, probs = 0.975)) %>%
+  slice(1:nSamples) %>%
+  bind_cols(xdata1)
+
+######################################################################
+############################# TRUE MODEL #############################
+######################################################################
+
+# Define the true parameters
+p <- c(5.93e-5, 2.96e-5, 2.05e-5, 27.5e-5, 4e-5)
+
+# Define the dynamic system
+model <- function(time, state, parameters) {
+  with(as.list(c(state, parameters)), {
+    dy1 <- -(p[1] + p[2]) * y1
+    dy2 <- p[1] * y1
+    dy3 <- p[2] * y1 - (p[3] + p[4]) * y3 + p[5] * y5
+    dy4 <- p[3] * y3
+    dy5 <- p[4] * y3 - p[5] * y5
+    list(c(dy1, dy2, dy3, dy4, dy5))
+  })
+}
+
+# Define the initial conditions and the integration grid
+initial_state <- c(y1 = 100, y2 = 0, y3 = 0, y4 = 0, y5 = 0)
+times <- seq(0, max(pred1$time), by = 0.1)
+
+# Solve the system
+ode_result <- ode(y = initial_state, times = times, func = model, parms = p)
+ode_df <- as.data.frame(ode_result)
+
+true_values1 <- ode_df %>%
+  gather(key = "state", value = "true_value", -time) %>%
+  filter(state == "y1") %>%  
+  mutate(well = rep(1, n())) 
+
+true_values2 <- ode_df %>%
+  gather(key = "state", value = "true_value", -time) %>%
+  filter(state == "y2") %>%  
+  mutate(well = rep(1, n())) 
+
+true_values3 <- ode_df %>%
+  gather(key = "state", value = "true_value", -time) %>%
+  filter(state == "y3") %>% 
+  mutate(well = rep(1, n())) 
+
+true_values4 <- ode_df %>%
+  gather(key = "state", value = "true_value", -time) %>%
+  filter(state == "y4") %>%  
+  mutate(well = rep(1, n())) 
+
+true_values5 <- ode_df %>%
+  gather(key = "state", value = "true_value", -time) %>%
+  filter(state == "y5") %>% 
+  mutate(well = rep(1, n())) 
+
+
+######################################################################
+######################################################################
+######################################################################
+
+svg("AP_st1.svg")
+
+p1 <- ggplot(pred1, aes(x = time, y = absorbance))
+p1 <- p1 + geom_point(aes(color ="Observed values"), size = 1.5) +
+  labs(x = "Time", y = "State Value") +
+  theme_minimal() +
+  theme(text = element_text(size = 12),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        legend.position ="none",
+  )
+p1 + geom_line(aes(x = time, y = median,color="Predicted model"),linewidth=1) +
+  geom_ribbon(aes(ymin = lb, ymax = ub,fill = "Predictive region"), alpha = 0.25) +
+  scale_color_manual(values = c("Observed values" = "darkred", "Predicted model" = "blue")) +
+  scale_fill_manual(values = c("Predictive region" = "dodgerblue"))+
+  scale_x_continuous(breaks = seq(0, 50000, by = 10000)) +  
+  scale_y_continuous(breaks = seq(0, 115, by = 40), limits = c(-18, 119)) 
+
+dev.off()
+
+
+## STATE 2 ##
+
+svg("AP_st2.svg")
+
+xdata2 <- data.frame(absorbance = unlist(z[,2,1:n_wells]),well = as.vector(matrix(rep(1:n_wells,nSamples),nrow=nSamples,byrow=TRUE)),time = rep(ts,n_wells))
+pred2 <- as.data.frame(estimates, pars = "z_pred") %>%
+  gather(factor_key = TRUE) %>%
+  group_by(key) %>%
+  summarize(lb = quantile(value, probs = 0.025),
+            median = quantile(value, probs = 0.5),
+            ub = quantile(value, probs = 0.975)) %>%
+  slice((nSamples+1):(2*nSamples)) %>%
+  bind_cols(xdata2)
+
+p2 <- ggplot(pred2, aes(x = time, y = absorbance))
+p2 <- p2 + geom_point(aes(color ="Observed values"), size = 1.5) +
+  labs(x = "Time", y = "State Value") +
+  theme_minimal() +
+  theme(text = element_text(size = 12),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        legend.position ="none",
+  )
+p2 + geom_line(aes(x = time, y = median,color="Predicted model"),linewidth=1) +
+  geom_ribbon(aes(ymin = lb, ymax = ub,fill = "Predictive region"), alpha = 0.25) +
+  scale_color_manual(values = c("Observed values" = "darkred", "Predicted model" = "blue")) +
+  scale_fill_manual(values = c("Predictive region" = "dodgerblue"))+
+  scale_x_continuous(breaks = seq(0, 50000, by = 10000)) +  
+  scale_y_continuous(breaks = seq(0, 115, by = 40), limits = c(0, 80))
+
+dev.off()
+
+
+## STATE 3 ##
+
+svg("AP_st3.svg")
+
+xdata3 <- data.frame(absorbance = unlist(z[,3,1:n_wells]),well = as.vector(matrix(rep(1:n_wells,nSamples),nrow=nSamples,byrow=TRUE)),time = rep(ts,n_wells))
+pred3 <- as.data.frame(estimates, pars = "z_pred") %>%
+  gather(factor_key = TRUE) %>%
+  group_by(key) %>%
+  summarize(lb = quantile(value, probs = 0.025),
+            median = quantile(value, probs = 0.5),
+            ub = quantile(value, probs = 0.975)) %>%
+  slice((2*nSamples+1):(3*nSamples)) %>%
+  bind_cols(xdata3)
+
+p3 <- ggplot(pred3, aes(x = time, y = absorbance))
+p3 <- p3 + geom_point(aes(color ="Observed values"), size = 1.5) +
+  labs(x = "Time", y = "State Value") +
+  theme_minimal() +
+  theme(text = element_text(size = 12),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        legend.position ="none",
+  )
+p3 + geom_line(aes(x = time, y = median,color="Predicted model"),linewidth=1) +
+  geom_ribbon(aes(ymin = lb, ymax = ub,fill = "Predictive region"), alpha = 0.25) +
+  scale_color_manual(values = c("Observed values" = "darkred", "Predicted model" = "blue")) +
+  scale_fill_manual(values = c("Predictive region" = "dodgerblue")) +
+  scale_x_continuous(breaks = seq(0, 50000, by = 10000)) +  
+  scale_y_continuous(breaks = seq(0, 10, by = 2), limits = c(0, 10))
+
+dev.off()
+
+
+## STATE 4 ##
+
+svg("AP_st4.svg")
+
+xdata4 <- data.frame(absorbance = unlist(z[,4,1:n_wells]),well = as.vector(matrix(rep(1:n_wells,nSamples),nrow=nSamples,byrow=TRUE)),time = rep(ts,n_wells))
+pred4 <- as.data.frame(estimates, pars = "z_pred") %>%
+  gather(factor_key = TRUE) %>%
+  group_by(key) %>%
+  summarize(lb = quantile(value, probs = 0.025),
+            median = quantile(value, probs = 0.5),
+            ub = quantile(value, probs = 0.975)) %>%
+  slice((3*nSamples+1):(4*nSamples)) %>%
+  bind_cols(xdata4)
+
+p4 <- ggplot(pred4, aes(x = time, y = absorbance))
+p4 <- p4 + geom_point(aes(color ="Observed values"), size = 1.5) +
+  labs(x = "Time", y = "State Value") +
+  theme_minimal() +
+  theme(text = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        legend.title = element_blank(),
+        legend.position = c(0.45, 1.05),
+        legend.justification = c(0.45, 1.05),
+        legend.direction = "vertical",
+        legend.box = "vertical",
+        legend.background = element_rect(fill = "white", color = "black", size = 0.5),
+        strip.text = element_text(size = 8)
+  )
+p4 + geom_line(aes(x = time, y = median,color="Predicted model"),linewidth=1) +
+  geom_ribbon(aes(ymin = lb, ymax = ub,fill = "Predictive region"), alpha = 0.25) +
+  facet_wrap(~factor(well))+
+  scale_color_manual(values = c("Observed values" = "darkred", "Predicted model" = "blue")) +
+  scale_fill_manual(values = c("Predictive region" = "dodgerblue"))
+
+dev.off()
+
+## STATE 5 ##
+
+svg("AP_st5.svg")
+
+xdata5 <- data.frame(absorbance = unlist(z[,5,1:n_wells]),well = as.vector(matrix(rep(1:n_wells,nSamples),nrow=nSamples,byrow=TRUE)),time = rep(ts,n_wells))
+pred5 <- as.data.frame(estimates, pars = "z_pred") %>%
+  gather(factor_key = TRUE) %>%
+  group_by(key) %>%
+  summarize(lb = quantile(value, probs = 0.025),
+            median = quantile(value, probs = 0.5),
+            ub = quantile(value, probs = 0.975)) %>%
+  slice((4*nSamples+1):(5*nSamples)) %>%
+  bind_cols(xdata5)
+
+p5 <- ggplot(pred5, aes(x = time, y = absorbance))
+p5 <- p5 + geom_point(aes(color ="Observed values"), size = 1.5) +
+  labs(x = "Time", y = "State Value") +
+  theme_minimal() +
+  theme(text = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        legend.title = element_blank(),
+        legend.position = c(0.45, 1.05),
+        legend.justification = c(0.45, 1.05),
+        legend.direction = "vertical",
+        legend.box = "vertical",
+        legend.background = element_rect(fill = "white", color = "black", size = 0.5),
+        strip.text = element_text(size = 8)
+  )
+p5 + geom_line(aes(x = time, y = median,color="Predicted model"),linewidth=1) +
+  geom_ribbon(aes(ymin = lb, ymax = ub,fill = "Predictive region"), alpha = 0.25) +
+  facet_wrap(~factor(well))+
+  scale_color_manual(values = c("Observed values" = "darkred", "Predicted model" = "blue")) +
+  scale_fill_manual(values = c("Predictive region" = "dodgerblue"))
+
+dev.off()
+

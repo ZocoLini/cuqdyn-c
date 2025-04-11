@@ -14,7 +14,7 @@ resultDir = 'Results_LV_CUQDyn2';
 % Dataset
 
 ns = 0.10;  %Noise level
-sz = 31;	%Size of the dataset
+sz = 30;	%Size of the dataset
 ks = 1;		%Label of the dataset
 
 fileName = sprintf('lotka_volterra_data_homoc_noise_%.2f_size_%d_data_%d.mat', ns, sz, ks);
@@ -39,14 +39,16 @@ n_par = length(p);
 dt = 0.01;
 tspan=[0:dt:30];
                
-options = odeset('RelTol',1e-12,'AbsTol',1e-12*ones(1,nstate));
+% options = odeset('RelTol',1e-12,'AbsTol',1e-12*ones(1,1));
+options = odeset('RelTol',1e-7,'AbsTol',1e-6*ones(1,1));
+
 [t_true,x_true]=ode15s(@(t,x) prob_mod_dynamics_lv(t,x,p),tspan,[10,5],options);
 times_true = t_true;
 data_true = x_true; 
 
 alp = 0.05; %Predictive region level
 
-media_matrix = NaN(sz, nstate, sz);
+media_matrix = NaN(m, nstate, m);
 
 % Initialization
 
@@ -67,7 +69,10 @@ solution_tot = ODE_solve_LV(initial_values,times,parameters_init);
 media_tot = solution_tot(:, 2:end);
 
 problem.x_0=parameters_init;
-parpool('local', 20);
+% change number of parallel workers depending on your machine
+% parpool('local', 20);
+parpool('local', 10);
+
 
 parfor i=2:m                    
 	texp = times([1:i-1,i+1:end]);

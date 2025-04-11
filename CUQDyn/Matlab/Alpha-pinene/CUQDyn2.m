@@ -28,7 +28,7 @@ nstate = 5; % Number of states
 
 alp = 0.05; %Predictive region level
 
-media_matrix = NaN(sz, nstate, sz);
+media_matrix = NaN(m, nstate, m);
 
 % Initialization
 
@@ -48,7 +48,9 @@ solution_tot = ODE_solve(initial_values,times,parameters_init);
 media_tot = solution_tot(:, 2:end);
 
 problem.x_0=parameters_init;
-parpool('local', 20);
+% change number of parallel workers depending on your machine
+% parpool('local', 20);
+parpool('local', 10);
 
 parfor i=2:m                    
 	texp = times([1:i-1,i+1:end]);
@@ -60,6 +62,8 @@ parfor i=2:m
     resid_loo(i,:) = abs(observed_data(i,:) - media(i,:)); % Residuals                    
     media_matrix(:,:,i) = media;
 end
+
+delete(gcp('nocreate'));
 
 cf = 1-alp;
 for i=1:n

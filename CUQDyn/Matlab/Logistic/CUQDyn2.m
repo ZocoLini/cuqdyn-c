@@ -14,7 +14,7 @@ resultDir = 'Results_Logistic_CUQDyn2';
 % Dataset
 
 ns = 0.10;  %Noise level
-sz = 11;	%Size of the dataset
+sz = 10;	%Size of the dataset
 ks = 1;		%Label of the dataset
 
 fileName = sprintf('logistic_data_homoc_noise_%.2f_size_%d_data_%d.mat', ns, sz, ks);
@@ -38,14 +38,18 @@ p = [0.1, 100]; % Optimal parameters
 dt = 5;
 tspan=[0:dt:100];
                
-options = odeset('RelTol',1e-12,'AbsTol',1e-12*ones(1,1));
+% tolerances for integration of ODEs 
+% options = odeset('RelTol',1e-12,'AbsTol',1e-12*ones(1,1));
+options = odeset('RelTol',1e-6,'AbsTol',1e-6*ones(1,1));
+
+% true model trajectories
 [t_true,x_true]=ode15s(@(t,x) prob_mod_dynamics_log(t,x,p),tspan,10,options);
 times_true = t_true;
 data_true = x_true;
 
 alp = 0.05; %Predictive region level
  
-media_matrix = NaN(sz, nstate, sz);
+media_matrix = NaN(m, nstate, m);
 
 % Initialization
 
@@ -65,7 +69,9 @@ solution_tot = ODE_solve_log(initial_values,times,parameters_init);
 media_tot = solution_tot(:, 2:end);
    
 problem.x_0=parameters_init;
-parpool('local', 20);
+% change number of parallel workers depending on your machine
+% parpool('local', 20);
+parpool('local', 10);
 
 parfor i=2:m                                                
 	texp = times([1:i-1,i+1:end]);
