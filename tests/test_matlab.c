@@ -270,8 +270,8 @@ void test_quantile()
     NV_Ith_S(values, 5) = -1.3077;
     NV_Ith_S(values, 6) = -0.4336;
 
-    sunrealtype q[6] = {0.3, 0.025, 0.35, 0.5, 0.75, 0.975};
-    sunrealtype expected[6] = {-0.7832, -2.2588, -1.0892, 0.3188, 0.7810, 1.8339};
+    sunrealtype q[7] = {1, 0.3, 0.025, 0.25, 0.5, 0.75, 0.975};
+    sunrealtype expected[7] = {1.8339, -0.7832, -2.2588, -1.0892, 0.3188, 0.7810, 1.8339};
 
     for (int i = 0; i < 7; ++i)
     {

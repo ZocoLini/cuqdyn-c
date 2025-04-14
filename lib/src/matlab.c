@@ -1,4 +1,5 @@
 #include <nvector/nvector_serial.h>
+#include <string.h>
 #include <sundials/sundials_types.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
@@ -174,7 +175,47 @@ SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b)
     return result;
 }
 
-sunrealtype quantile(N_Vector, sunrealtype)
+int cmp_sunrealtype(const void *a, const void *b)
 {
+    double x = *(sunrealtype *) a;
+    double y = *(sunrealtype *) b;
 
+    if (x < y)
+        return -1;
+    if (x > y)
+        return 1;
+    return 0;
+}
+
+sunrealtype quantile(N_Vector vec, sunrealtype q)
+{
+    const sunindextype n = NV_LENGTH_S(vec);
+    sunrealtype *data = malloc(n * sizeof(sunrealtype));
+
+    memcpy(data, NV_DATA_S(vec), n * sizeof(sunrealtype));
+
+    qsort(data, n, sizeof(sunrealtype), cmp_sunrealtype);
+
+    const double min_q = 0.5 / (sunrealtype) n;
+    const double max_q = ((sunrealtype) n - 0.5) / (sunrealtype) n;
+
+    if (q <= min_q) {
+        const double val = data[0];
+        free(data);
+        return val;
+    }
+    if (q >= max_q)
+    {
+        const double val = data[n - 1];
+        free(data);
+        return val;
+    }
+
+    const double pos = q * (sunrealtype) n - 0.5;
+    const int i = (int) pos;
+    const double delta = pos - i;
+
+    const double result = data[i] * (1 - delta) + data[i + 1] * delta;
+    free(data);
+    return result;
 }

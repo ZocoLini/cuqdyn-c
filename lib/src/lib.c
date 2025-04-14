@@ -224,7 +224,15 @@ void matrix_array_set_index(MatrixArray array, long i, SUNMatrix matrix)
     array.data[i] = matrix;
 }
 
-int compare_sunrealtype(const void *a, const void *b) { return *(sunrealtype *) a - *(sunrealtype *) b; }
+int compare_sunrealtype(const void *a, const void *b)
+{
+    double x = *(sunrealtype *)a;
+    double y = *(sunrealtype *)b;
+
+    if (x < y) return -1;
+    if (x > y) return 1;
+    return 0;
+}
 
 SUNMatrix matrix_array_get_median(MatrixArray matrix_array)
 {
