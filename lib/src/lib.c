@@ -44,9 +44,6 @@ Results meigo(Problem problem, Options options, N_Vector t, SUNMatrix x)
 
 void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances)
 {
-    // TODO: Include the initial points in the observed data as they are used in the original
-    //  code and, thorically, they are values observed too or make the user explicilty add them as observed
-
     sunindextype observed_data_rows = SM_ROWS_D(observed_data);
     sunindextype observed_data_cols = SM_COLUMNS_D(observed_data);
     sunindextype times_len = NV_LENGTH_S(times);
@@ -83,8 +80,6 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
     SUNMatrix predicted_params_matrix = SUNDenseMatrix(observed_data_rows - 1, observed_data_cols, get_sun_context());
 
     // TODO: This can be done in parallel and the indices can be erroneous
-    // TODO: We are ignoring the initial values in the calculations while the oroiginal code includes them
-    //  inside the time vector and observed_data matrix
     for (long i = 1; i < observed_data_rows; ++i)
     {
         LongArray indices_to_remove = create_array((long[]){i + 1}, 1);
@@ -125,11 +120,14 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
 
     double alp = 0.05;
-    sunindextype m = observed_data_rows; // The riginal code includes the initial points so there is one more row
+    sunindextype m = observed_data_rows;
     sunindextype n = observed_data_cols;
 
     SUNMatrix q_low = SUNDenseMatrix(m, n, get_sun_context());
     SUNMatrix q_up = SUNDenseMatrix(m, n, get_sun_context());
+
+    MatrixArray m_low = create_matrix_array(m - 1);
+    MatrixArray m_up = create_matrix_array(m - 1);
 
     for (int j = 0; j < n; ++j)
     {

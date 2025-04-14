@@ -134,6 +134,46 @@ N_Vector copy_matrix_column(SUNMatrix matrix, sunindextype col_index, sunindexty
     return vec;
 }
 
+SUNMatrix sum_two_matrices(SUNMatrix a, SUNMatrix b)
+{
+    sunindextype rows = SM_ROWS_D(b);
+    sunindextype cols = SM_COLUMNS_D(b);
+
+    if (SM_ROWS_D(a) < rows || SM_COLUMNS_D(a) < cols)
+    {
+        return NULL;
+    }
+
+    SUNMatrix result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a), get_sun_context());
+
+    for (long i = 0; i < rows * cols; i++)
+    {
+        SM_DATA_D(result)[i] = SM_DATA_D(a)[i] + SM_DATA_D(b)[i];
+    }
+
+    return result;
+}
+
+SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b)
+{
+    sunindextype rows = SM_ROWS_D(b);
+    sunindextype cols = SM_COLUMNS_D(b);
+
+    if (SM_ROWS_D(a) < rows || SM_COLUMNS_D(a) < cols)
+    {
+        return NULL;
+    }
+
+    SUNMatrix result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a), get_sun_context());
+
+    for (long i = 0; i < rows * cols; i++)
+    {
+        SM_DATA_D(result)[i] = SM_DATA_D(a)[i] - SM_DATA_D(b)[i];
+    }
+
+    return result;
+}
+
 sunrealtype quantile(N_Vector, sunrealtype)
 {
 
