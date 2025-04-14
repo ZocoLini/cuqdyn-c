@@ -97,7 +97,7 @@ void set_matrix_row(SUNMatrix matrix, N_Vector vec, const sunindextype row_index
 {
     for (long i = start; i < end; ++i)
     {
-        SM_ELEMENT_D(matrix, row_index, i) = NV_Ith_S(vec, i);
+        SM_ELEMENT_D(matrix, row_index, i) = NV_Ith_S(vec, i - start);
     }
 }
 
@@ -106,7 +106,7 @@ void set_matrix_column(SUNMatrix matrix, N_Vector vec, const sunindextype col_in
 {
     for (long i = start; i < end; ++i)
     {
-        SM_ELEMENT_D(matrix, i, col_index) = NV_Ith_S(vec, i);
+        SM_ELEMENT_D(matrix, i, col_index) = NV_Ith_S(vec, i - start);
     }
 }
 

@@ -6,9 +6,16 @@
 #include "../lib/include/lib.h"
 
 void test_copy_vector_remove_indices();
+// TODO: this four funs maybe test indexing first by row instead of column
 void test_copy_matrix_remove_rows();
 void test_copy_matrix_remove_cols();
 void test_copy_matrix_remove_rows_and_cols();
+
+void test_set_matrix_row();
+void test_set_matrix_column();
+
+void test_copy_matrix_row();
+void test_copy_matrix_column();
 
 int main(void)
 {
@@ -23,6 +30,18 @@ int main(void)
 
     test_copy_matrix_remove_rows_and_cols();
     printf("\tTest 4 passed\n");
+
+    test_set_matrix_row();
+    printf("\tTest 5 passed\n");
+
+    test_set_matrix_column();
+    printf("\tTest 6 passed\n");
+
+    test_copy_matrix_row();
+    printf("\tTest 7 passed\n");
+
+    test_copy_matrix_column();
+    printf("\tTest 8 passed\n");
 
     return 0;
 }
@@ -129,4 +148,111 @@ void test_copy_matrix_remove_rows_and_cols()
 
     SUNMatDestroy(copy);
     SUNMatDestroy(matrix);
+}
+
+void test_set_matrix_row()
+{
+    SUNMatrix matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    for (int i = 0; i < 9; ++i)
+    {
+        SM_DATA_D(matrix)[i] = i + 1;
+    }
+
+    N_Vector vector = N_VNew_Serial(3, get_sun_context());
+    for (int i = 0; i < 3; ++i)
+    {
+        NV_Ith_S(vector, i) = 0;
+    }
+
+    sunrealtype expected_data[3][3] = {
+        1, 4, 7,
+        0, 0, 0,
+        3, 6, 9,
+    };
+
+    set_matrix_row(matrix, vector, 1, 0, 3);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            assert(SM_ELEMENT_D(matrix, i, j) == expected_data[i][j]);
+        }
+    }
+}
+
+void test_set_matrix_column()
+{
+    SUNMatrix matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    for (int i = 0; i < 9; ++i)
+    {
+        SM_DATA_D(matrix)[i] = i + 1;
+    }
+
+    N_Vector vector = N_VNew_Serial(3, get_sun_context());
+    for (int i = 0; i < 3; ++i)
+    {
+        NV_Ith_S(vector, i) = i + 1;
+    }
+
+    sunrealtype expected_data[3][3] = {
+        1, 4, 7,
+        1, 5, 8,
+        2, 6, 9,
+    };
+
+    set_matrix_column(matrix, vector, 0, 1, 3);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            sunrealtype value = SM_ELEMENT_D(matrix, i, j);
+            sunrealtype expected = expected_data[i][j];
+
+            assert(value == expected);
+        }
+    }
+}
+
+void test_copy_matrix_row()
+{
+    SUNMatrix matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    for (int i = 0; i < 9; ++i)
+    {
+        SM_DATA_D(matrix)[i] = i + 1;
+    }
+
+    sunrealtype expected_data[3] = {
+            3,
+            6,
+            9,
+    };
+
+    N_Vector vector = copy_matrix_row(matrix, 2, 0, 3);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        assert(NV_Ith_S(vector, i) == expected_data[i]);
+    }
+}
+
+void test_copy_matrix_column()
+{
+    SUNMatrix matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    for (int i = 0; i < 9; ++i)
+    {
+        SM_DATA_D(matrix)[i] = i + 1;
+    }
+
+    sunrealtype expected_data[1] = {
+        3,
+    };
+
+    N_Vector vector = copy_matrix_column(matrix, 0, 2, 3);
+
+    for (int i = 0; i < 1; ++i)
+    {
+        assert(NV_Ith_S(vector, i) == expected_data[i]);
+    }
 }
