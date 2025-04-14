@@ -69,6 +69,7 @@ void destroy_matrix_array(MatrixArray array);
 SUNMatrix matrix_array_get_index(MatrixArray, long);
 void matrix_array_set_index(MatrixArray, long, SUNMatrix);
 SUNMatrix matrix_array_get_median(MatrixArray);
+N_Vector matrix_array_depth_vector_at(MatrixArray, long i, long j);
 
 N_Vector get_matrix_cols_median(SUNMatrix);
 
