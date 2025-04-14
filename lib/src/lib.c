@@ -44,6 +44,9 @@ Results meigo(Problem problem, Options options, N_Vector t, SUNMatrix x)
 
 void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances)
 {
+    // TODO: Include the initial points in the observed data as they are used in the original
+    //  code and, thorically, they are values observed too or make the user explicilty add them as observed
+
     sunindextype observed_data_rows = SM_ROWS_D(observed_data);
     sunindextype observed_data_cols = SM_COLUMNS_D(observed_data);
     sunindextype times_len = NV_LENGTH_S(times);
@@ -80,6 +83,8 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
     SUNMatrix predicted_params_matrix = SUNDenseMatrix(observed_data_rows - 1, observed_data_cols, get_sun_context());
 
     // TODO: This can be done in parallel and the indices can be erroneous
+    // TODO: We are ignoring the initial values in the calculations while the oroiginal code includes them
+    //  inside the time vector and observed_data matrix
     for (long i = 1; i < observed_data_rows; ++i)
     {
         LongArray indices_to_remove = create_array((long[]){i + 1}, 1);
@@ -98,8 +103,7 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
         // This are
         for (int j = 0; j < observed_data_cols; ++j)
         {
-            sunindextype actual_index = i * observed_data_cols + j;
-            SM_DATA_D(predicted_params_matrix)[actual_index] = NV_DATA_S(predicted_params)[j];
+            SM_ELEMENT_D(predicted_params_matrix, i - 1, j) = NV_Ith_S(predicted_params, j);
         }
 
         // Maybe this data is not needed once is proved that this way of predicting params works fine
@@ -111,8 +115,7 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
 
         for (int j = 0; j < observed_data_cols; ++j)
         {
-            sunindextype actual_index = i * observed_data_cols + j;
-            SM_DATA_D(resid_loo)[actual_index] = abs(SM_DATA_D(observed_data)[actual_index] - SM_DATA_D(predicted_data)[actual_index]);
+            SM_ELEMENT_D(resid_loo, i - 1, j) = abs(SM_ELEMENT_D(observed_data, i - 1, j) - SM_ELEMENT_D(predicted_data, i - 1, j));
         }
         matrix_array_set_index(predicted_data_matrix, i - 1, predicted_data); // predicted_data_matrix takes ownership of predicted_data
     }
@@ -121,6 +124,27 @@ void predict_parameters(N_Vector times, SUNMatrix observed_data, ODEModel ode_mo
     SUNMatrix predicted_data_median = matrix_array_get_median(predicted_data_matrix);
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
 
+    double alp = 0.05;
+    sunindextype m = observed_data_rows; // The riginal code includes the initial points so there is one more row
+    sunindextype n = observed_data_cols;
+
+    SUNMatrix q_low = SUNDenseMatrix(m, n, get_sun_context());
+    SUNMatrix q_up = SUNDenseMatrix(m, n, get_sun_context());
+
+    for (int j = 0; j < n; ++j)
+    {
+        set_matrix_row(q_low, ode_model.initial_values, 0, 0, observed_data_cols);
+        set_matrix_row(q_up, ode_model.initial_values, 0, 0, observed_data_cols);
+
+        for (int i = 1; i < m; ++i)
+        {
+            for (int k = 0; k < (m - 1); ++k)
+            {
+
+            }
+        }
+    }
+    
     destroy_matrix_array(predicted_data_matrix); // This frees the matrix array and all the matrices inside
 }
 

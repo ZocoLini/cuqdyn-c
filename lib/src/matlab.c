@@ -91,3 +91,50 @@ SUNMatrix copy_matrix_remove_columns(SUNMatrix matrix, LongArray indices)
 {
     return copy_matrix_remove_rows_and_columns(matrix, create_empty_array(), indices);
 }
+
+void set_matrix_row(SUNMatrix matrix, N_Vector vec, const sunindextype row_index, const sunindextype start,
+                    const sunindextype end)
+{
+    for (long i = start; i < end; ++i)
+    {
+        SM_ELEMENT_D(matrix, row_index, i) = NV_Ith_S(vec, i);
+    }
+}
+
+void set_matrix_column(SUNMatrix matrix, N_Vector vec, const sunindextype col_index, const sunindextype start,
+                       const sunindextype end)
+{
+    for (long i = start; i < end; ++i)
+    {
+        SM_ELEMENT_D(matrix, i, col_index) = NV_Ith_S(vec, i);
+    }
+}
+
+N_Vector copy_matrix_row(SUNMatrix matrix, sunindextype row_index, sunindextype start, sunindextype end)
+{
+    N_Vector vec = N_VNew_Serial(end - start, get_sun_context());
+
+    for (long i = start; i < end; ++i)
+    {
+        NV_Ith_S(vec, i - start) = SM_ELEMENT_D(matrix, row_index, i);
+    }
+
+    return vec;
+}
+
+N_Vector copy_matrix_column(SUNMatrix matrix, sunindextype col_index, sunindextype start, sunindextype end)
+{
+    N_Vector vec = N_VNew_Serial(end - start, get_sun_context());
+
+    for (long i = start; i < end; ++i)
+    {
+        NV_Ith_S(vec, i - start) = SM_ELEMENT_D(matrix, i, col_index);
+    }
+
+    return vec;
+}
+
+sunrealtype quantile(N_Vector, sunrealtype)
+{
+
+}
