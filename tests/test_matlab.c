@@ -2,6 +2,7 @@
 #include <nvector/nvector_serial.h>
 #include <stdio.h>
 #include <sundials/sundials_nvector.h>
+#include <tgmath.h>
 
 #include "../lib/include/lib.h"
 
@@ -16,6 +17,8 @@ void test_set_matrix_column();
 
 void test_copy_matrix_row();
 void test_copy_matrix_column();
+
+void test_quantile();
 
 int main(void)
 {
@@ -42,6 +45,9 @@ int main(void)
 
     test_copy_matrix_column();
     printf("\tTest 8 passed\n");
+
+    test_quantile();
+    printf("\tTest 9 passed\n");
 
     return 0;
 }
@@ -165,9 +171,7 @@ void test_set_matrix_row()
     }
 
     sunrealtype expected_data[3][3] = {
-        1, 4, 7,
-        0, 0, 0,
-        3, 6, 9,
+            1, 4, 7, 0, 0, 0, 3, 6, 9,
     };
 
     set_matrix_row(matrix, vector, 1, 0, 3);
@@ -196,9 +200,7 @@ void test_set_matrix_column()
     }
 
     sunrealtype expected_data[3][3] = {
-        1, 4, 7,
-        1, 5, 8,
-        2, 6, 9,
+            1, 4, 7, 1, 5, 8, 2, 6, 9,
     };
 
     set_matrix_column(matrix, vector, 0, 1, 3);
@@ -246,7 +248,7 @@ void test_copy_matrix_column()
     }
 
     sunrealtype expected_data[1] = {
-        3,
+            3,
     };
 
     N_Vector vector = copy_matrix_column(matrix, 0, 2, 3);
@@ -254,5 +256,26 @@ void test_copy_matrix_column()
     for (int i = 0; i < 1; ++i)
     {
         assert(NV_Ith_S(vector, i) == expected_data[i]);
+    }
+}
+
+void test_quantile()
+{
+    N_Vector values = N_VNew_Serial(7, get_sun_context());
+    NV_Ith_S(values, 0) = 0.5377;
+    NV_Ith_S(values, 1) = 1.8339;
+    NV_Ith_S(values, 2) = -2.2588;
+    NV_Ith_S(values, 3) = 0.8622;
+    NV_Ith_S(values, 4) = 0.3188;
+    NV_Ith_S(values, 5) = -1.3077;
+    NV_Ith_S(values, 6) = -0.4336;
+
+    sunrealtype q[6] = {0.3, 0.025, 0.35, 0.5, 0.75, 0.975};
+    sunrealtype expected[6] = {-0.7832, -2.2588, -1.0892, 0.3188, 0.7810, 1.8339};
+
+    for (int i = 0; i < 7; ++i)
+    {
+        sunrealtype result = quantile(values, q[i]);
+        assert(fabs(result - expected[i]) < 0.0001);
     }
 }

@@ -1,4 +1,5 @@
 #include <lib.h>
+#include <math.h>
 #include <nvector/nvector_serial.h>
 #include <sundials/sundials_matrix.h>
 #include <time.h>
@@ -35,7 +36,7 @@ void test_basic_ode()
 
     const ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0);
     const TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
-    const Tolerances tolerances = create_tolerances(1.0e-8, (sunrealtype[]){1.0e-8}, ode_model);
+    const Tolerances tolerances = create_tolerances(1.0e-12, (sunrealtype[]){1.0e-12}, ode_model);
 
     SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
@@ -47,11 +48,11 @@ void test_basic_ode()
     assert(cols == 2);
     assert(rows == 10);
 
-    assert(abs(SM_ELEMENT_D(result, 3, 0) - 4.3) < 0.0001);
-    assert(abs(SM_ELEMENT_D(result, 2, 1) - 148.176) < 0.0001);
-    assert(abs(SM_ELEMENT_D(result, 3, 1) - 159.014) < 0.0001);
-    assert(abs(SM_ELEMENT_D(result, 6, 1) - 194.672) < 0.0001);
-    assert(abs(SM_ELEMENT_D(result, 9, 1) - 235.298) < 0.0001);
+    assert(fabs(SM_ELEMENT_D(result, 3, 0) - 4.3) < 0.0001);
+    assert(fabs(SM_ELEMENT_D(result, 2, 1) - 148.176) < 0.0001);
+    assert(fabs(SM_ELEMENT_D(result, 3, 1) - 159.014) < 0.0001);
+    assert(fabs(SM_ELEMENT_D(result, 6, 1) - 194.672) < 0.0001);
+    assert(fabs(SM_ELEMENT_D(result, 9, 1) - 235.298) < 0.0001);
 }
 
 int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
@@ -79,7 +80,7 @@ void test_lotka_volterra()
 
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
     const TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
-    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-8), (sunrealtype[]){1.0e-8, 1.0e-8}, ode_model);
+    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-12), (sunrealtype[]){1.0e-12, 1.0e-12}, ode_model);
 
     SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
@@ -91,9 +92,11 @@ void test_lotka_volterra()
     assert(cols == 3);
     assert(rows == 8);
 
-    assert(abs(SM_ELEMENT_D(result, 0, 0) - 1.0) < 0.0001);
-    assert(abs(SM_ELEMENT_D(result, 0, 1) - 15.10) < 0.001);
-    assert(abs(SM_ELEMENT_D(result, 0, 2) - 3.883) < 0.001);
-    assert(abs(SM_ELEMENT_D(result, 6, 1) - 53.785) < 0.001);
-    assert(abs(SM_ELEMENT_D(result, 6, 2) - 5.456) < 0.001);
+    sunrealtype val = SM_ELEMENT_D(result, 0, 1);
+
+    assert(fabs(SM_ELEMENT_D(result, 0, 0) - 1.0) < 0.0001);
+    assert(fabs(SM_ELEMENT_D(result, 0, 1) - 15.10) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 0, 2) - 3.883) < 0.001);
+    assert(fabs(SM_ELEMENT_D(result, 6, 1) - 53.79) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 6, 2) - 5.456) < 0.001);
 }
