@@ -55,7 +55,7 @@ int handle_params(int argc, char *argv[])
     // TODO: To much hardcoded right now
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, y0, t0);
     const TimeConstraints time_constraints =create_time_constraints(
-        NV_Ith_S(t, 0),
+        NV_Ith_S(t, 0) == t0 ? NV_Ith_S(t, 1) : NV_Ith_S(t, 0),
         NV_Ith_S(t, t_len - 1),
         NV_Ith_S(t, 1) - NV_Ith_S(t, 0)
     );
