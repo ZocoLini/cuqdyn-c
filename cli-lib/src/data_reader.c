@@ -13,10 +13,31 @@ int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
         return 1;
     }
 
-    // TODO: Not yet implemented
+    long rows, cols;
+    fscanf(f, "%ld", &rows);
+    fscanf(f, "%ld", &cols);
+
+    *t = N_VNew_Serial(rows, get_sun_context());
+    sunrealtype *data_t = N_VGetArrayPointer(*t);
+
+    *y = SUNDenseMatrix(rows, cols - 1, get_sun_context());
+    sunrealtype *data_y = SUNDenseMatrix_Data(*y);
+
+    double tmp;
+
+    for (int i = 0; i < rows; ++i)
+    {
+        fscanf(f, "%lf", &tmp);
+        data_t[i] = tmp;
+        for (int j = 0; j < cols - 1; ++j)
+        {
+            fscanf(f, "%lf", &tmp);
+            data_y[j * rows + i] = tmp;
+        }
+    }
 
     fclose(f);
-    return 1;
+    return 0;
 }
 
 /*
