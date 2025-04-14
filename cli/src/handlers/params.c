@@ -1,13 +1,15 @@
+#include <data_reader.h>
 #include <matio.h>
 #include <nvector/nvector_serial.h>
 #include <stdio.h>
 #include <sundials/sundials_matrix.h>
 #include <unistd.h>
-#include <data_reader.h>
 
 #include "handlers.h"
-#include "params.h"
 #include "lib.h"
+#include "params.h"
+
+#include "lotka_volterra.h"
 
 int handle_params(int argc, char *argv[]);
 
@@ -23,14 +25,16 @@ int handle_params(int argc, char *argv[])
     int opt;
     char *data_file = NULL;
 
-    while ((opt = getopt(argc, argv, "d:")) != -1) {
-        switch (opt) {
+    while ((opt = getopt(argc, argv, "d:")) != -1)
+    {
+        switch (opt)
+        {
             case 'd':
                 data_file = optarg;
-            break;
+                break;
             default:
                 fprintf(stderr, "Usage: %s -d <data-file>\n", argv[0]);
-            return 1;
+                return 1;
         }
     }
 
@@ -39,30 +43,29 @@ int handle_params(int argc, char *argv[])
     N_Vector t = NULL;
     SUNMatrix y = NULL;
 
-    if (read_txt_data_file(data_file, &t, &y, &t0, &y0) != 0
-        && read_mat_data_file(data_file, &t, &y, &t0, &y0) != 0)
+    if (read_txt_data_file(data_file, &t, &y, &t0, &y0) != 0 && read_mat_data_file(data_file, &t, &y, &t0, &y0) != 0)
     {
         fprintf(stderr, "Error reading data file: %s\n", data_file);
         return 1;
     }
 
-    printf("t0 = %g\n", t0);
+    const sunindextype t_len = NV_LENGTH_S(t);
 
-    printf("y0 = (");
-    for (long i = 0; i < N_VGetLength(y0); i++)
-    {
-        printf("%g, ", NV_Ith_S(y0, i));
-    }
-    printf(")\n");
+    // TODO: The f shouldn't be hardcoded and there should be a function called created_lotka_volterra_ode_model
+    // TODO: To much hardcoded right now
+    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, y0, t0);
+    const TimeConstraints time_constraints =create_time_constraints(
+        NV_Ith_S(t, 0),
+        NV_Ith_S(t, t_len - 1),
+        NV_Ith_S(t, 1) - NV_Ith_S(t, 0)
+    );
+    const Tolerances tolerances =create_tolerances(
+        SUN_RCONST(1e-08),
+        (sunrealtype[]) {SUN_RCONST(1e-08), SUN_RCONST(1e-08)},
+        ode_model
+    );
 
-    for (int i = 0; i < N_VGetLength(t); i++)
-    {
-        printf("t[%d] = %g\n", i, NV_Ith_S(t, i));
-        for (int j = 0; j < SUNDenseMatrix_Columns(y); j++)
-        {
-            printf("y[%d][%d] = %g\n", i, j, SM_ELEMENT_D(y, i, j));
-        }
-    }
+    predict_parameters(t, y, ode_model, time_constraints, tolerances);
 
     return 0;
 }
