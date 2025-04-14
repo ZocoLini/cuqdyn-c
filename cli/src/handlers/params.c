@@ -10,6 +10,7 @@
 #include "params.h"
 
 #include "lotka_volterra.h"
+#include "matlab.h"
 
 int handle_params(int argc, char *argv[]);
 
@@ -38,16 +39,17 @@ int handle_params(int argc, char *argv[])
         }
     }
 
-    sunrealtype t0 = 0.0;
-    N_Vector y0 = NULL;
     N_Vector t = NULL;
     SUNMatrix y = NULL;
 
-    if (read_txt_data_file(data_file, &t, &y, &t0, &y0) != 0 && read_mat_data_file(data_file, &t, &y, &t0, &y0) != 0)
+    if (read_txt_data_file(data_file, &t, &y) != 0 && read_mat_data_file(data_file, &t, &y) != 0)
     {
         fprintf(stderr, "Error reading data file: %s\n", data_file);
         return 1;
     }
+
+    const sunrealtype t0 = NV_Ith_S(t, 0);
+    N_Vector y0 = copy_matrix_row(y, 0, 0, SM_COLUMNS_D(y));
 
     const sunindextype t_len = NV_LENGTH_S(t);
 
@@ -55,7 +57,7 @@ int handle_params(int argc, char *argv[])
     // TODO: To much hardcoded right now
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, y0, t0);
     const TimeConstraints time_constraints =create_time_constraints(
-        NV_Ith_S(t, 0) == t0 ? NV_Ith_S(t, 1) : NV_Ith_S(t, 0),
+        NV_Ith_S(t, 1),
         NV_Ith_S(t, t_len - 1),
         NV_Ith_S(t, 1) - NV_Ith_S(t, 0)
     );

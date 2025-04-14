@@ -19,8 +19,8 @@ int main(void)
 
 void test_lotka_volterra_mat()
 {
-    const sunrealtype expected_initial_values[2] = {10, 5};
-    const sunrealtype expected_y_values[30][2] = {
+    const sunrealtype expected_y_values[31][2] = {
+        {10, 5},
         {1.627e+01 , -3.196e-02},
         {2.597e+01 , 5.589e+00 },
         {3.373e+01 , 8.552e+00 },
@@ -53,23 +53,21 @@ void test_lotka_volterra_mat()
         {9.117e+00 , 4.822e+00 }
     };
 
-    sunrealtype t0 = 0.0;
-    N_Vector y0 = NULL;
     N_Vector t = NULL;
     SUNMatrix y = NULL;
 
-    assert(read_mat_data_file(LOTKA_VOLTERRA_MAT, &t, &y, &t0, &y0) == 0);
+    assert(read_mat_data_file(LOTKA_VOLTERRA_MAT, &t, &y) == 0);
 
-    assert(t0 == 0.0);
+    assert(NV_Ith_S(t, 0) == 0.0);
 
-    for (long i = 0; i < N_VGetLength(y0); i++)
+    for (long i = 0; i < SM_COLUMNS_D(y); i++)
     {
-        assert(expected_initial_values[i] == NV_Ith_S(y0, i));
+        assert(expected_y_values[0][i] == SM_ELEMENT_D(y, 0, i));
     }
 
-    for (int i = 0; i < 30; ++i)
+    for (int i = 0; i < 31; ++i)
     {
-        assert(i + 1 == NV_Ith_S(t, i));
+        assert(i == NV_Ith_S(t, i));
     }
 
     // TODO: The data contained in the file doesn't match the paper values.

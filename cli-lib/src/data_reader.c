@@ -5,7 +5,7 @@
 
 #include "lib.h"
 
-int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunrealtype *t0, N_Vector *y0)
+int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
 {
     FILE *f = fopen(data_file, "r");
     if (f == NULL)
@@ -19,7 +19,26 @@ int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunreal
     return 1;
 }
 
-int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunrealtype *t0, N_Vector *y0)
+/*
+ * The file should be a single matrix mxn
+ * All the data contained in the matrix is the observed data and has this form:
+ *      t0 y00 y01 y02 ... y0n
+ *      t1 y10 y11 y12 ... y1n
+ *      .                   .
+ *      .                   .
+ *      .                   .
+ *      tm ym0 ym1 ym2 ... ymn
+ *
+ * The time vector is the first column of the matrix [t0, t1, t2, ..., tm]
+ * The y matrix is the entire matrix skipping the first column
+ *      y00 y01 y02 ... y0n
+ *      y10 y11 y12 ... y1n
+ *      .                .
+ *      .                .
+ *      .                .
+ *      ym0 ym1 ym2 ... ymn
+ */
+int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
 {
     mat_t *matfp = Mat_Open(data_file, MAT_ACC_RDONLY);
     if (matfp == NULL)
@@ -58,33 +77,23 @@ int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y, sunreal
     // The first column of the matrix is the time vector
     // The first row of the matrix are the initial values [t0 y10 y20 ...]
 
-    *t = N_VNew_Serial((sunindextype) rows - 1, get_sun_context());
+    *t = N_VNew_Serial((sunindextype) rows, get_sun_context());
     sunrealtype *data_t = N_VGetArrayPointer(*t);
 
-    *y0 = N_VNew_Serial((sunindextype) cols - 1, get_sun_context());
-    sunrealtype *data_y0 = N_VGetArrayPointer(*y0);
-
     *y = SUNDenseMatrix(
-        (sunindextype) rows - 1,
+        (sunindextype) rows,
         (sunindextype) cols - 1,
         get_sun_context());
     sunrealtype *data_y = SUNDenseMatrix_Data(*y);
 
     const double *file_data = matvar->data;
 
-    *t0 = file_data[0];
-
-    for (int j = 1; j < cols; ++j)
+    for (int i = 0; i < rows; ++i)
     {
-        data_y0[j - 1] = file_data[j * rows];
-    }
-
-    for (int i = 1; i < rows; ++i)
-    {
-        data_t[i - 1] = file_data[i];
+        data_t[i] = file_data[i];
         for (int j = 1; j < cols; ++j)
         {
-            data_y[(j - 1) * rows + i - 1] = file_data[j * rows + i];
+            data_y[(j - 1) * rows + i] = file_data[j * rows + i];
         }
     }
 
