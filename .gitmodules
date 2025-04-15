@@ -1,0 +1,3 @@
+[submodule "deps/eSS-c"]
+	path = deps/eSS-c
+	url = https://github.com/ZocoLini/eSS-c.git
