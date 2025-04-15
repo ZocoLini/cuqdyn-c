@@ -91,11 +91,9 @@ void test_copy_matrix_remove_rows()
     assert(SM_ROWS_D(copy) == 1);
     assert(SM_COLUMNS_D(copy) == 3);
 
-    data = SM_DATA_D(copy);
-
-    assert(data[0] == 7);
-    assert(data[1] == 8);
-    assert(data[2] == 9);
+    assert(SM_ELEMENT_D(copy, 0, 0) == 3);
+    assert(SM_ELEMENT_D(copy, 0, 1) == 6);
+    assert(SM_ELEMENT_D(copy, 0, 2) == 9);
 
     SUNMatDestroy(copy);
     SUNMatDestroy(matrix);
@@ -116,17 +114,17 @@ void test_copy_matrix_remove_cols()
     assert(SM_ROWS_D(copy) == 3);
     assert(SM_COLUMNS_D(copy) == 3);
 
-    data = SM_DATA_D(copy);
+    assert(SM_ELEMENT_D(copy, 0, 0) == 7);
+    assert(SM_ELEMENT_D(copy, 0, 1) == 10);
+    assert(SM_ELEMENT_D(copy, 0, 2) == 13);
 
-    assert(data[0] == 3);
-    assert(data[1] == 4);
-    assert(data[2] == 5);
-    assert(data[3] == 8);
-    assert(data[4] == 9);
-    assert(data[5] == 10);
-    assert(data[6] == 13);
-    assert(data[7] == 14);
-    assert(data[8] == 15);
+    assert(SM_ELEMENT_D(copy, 1, 0) == 8);
+    assert(SM_ELEMENT_D(copy, 1, 1) == 11);
+    assert(SM_ELEMENT_D(copy, 1, 2) == 14);
+
+    assert(SM_ELEMENT_D(copy, 2, 0) == 9);
+    assert(SM_ELEMENT_D(copy, 2, 1) == 12);
+    assert(SM_ELEMENT_D(copy, 2, 2) == 15);
 
     SUNMatDestroy(copy);
     SUNMatDestroy(matrix);
@@ -148,9 +146,7 @@ void test_copy_matrix_remove_rows_and_cols()
     assert(SM_ROWS_D(copy) == 1);
     assert(SM_COLUMNS_D(copy) == 1);
 
-    data = SM_DATA_D(copy);
-
-    assert(data[0] == 12);
+    assert(SM_ELEMENT_D(copy, 0, 0) == 12);
 
     SUNMatDestroy(copy);
     SUNMatDestroy(matrix);
