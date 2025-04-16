@@ -45,7 +45,7 @@ typedef struct
     N_Vector best;
 } Results;
 
-Results meigo(Problem, Options, N_Vector, SUNMatrix);
+Results ess_solver(Problem, Options, N_Vector, SUNMatrix);
 void predict_parameters(N_Vector, SUNMatrix, ODEModel, TimeConstraints, Tolerances);
 
 typedef struct

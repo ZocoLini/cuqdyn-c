@@ -12,11 +12,13 @@ target_include_directories(lib
 )
 
 target_link_directories(lib
-        PUBLIC ${PROJECT_SOURCE_DIR}/deps/cvode-7.2.1/lib
+        PUBLIC
+        ${PROJECT_SOURCE_DIR}/deps/cvode-7.2.1/lib
 )
 
 target_link_libraries(
         lib
+        sacess
         sundials_cvode
         sundials_nvecserial
         sundials_core

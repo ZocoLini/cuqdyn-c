@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sundials/sundials_matrix.h>
 #include <sundials/sundials_nvector.h>
+#include <method_module/solversinterface.h>
 
 #include "matlab.h"
 #include "ode_solver.h"
@@ -37,9 +38,10 @@ Options create_options(const int max_iterations, double *log_var_index, const in
     return options;
 }
 
-Results meigo(Problem problem, Options options, N_Vector t, SUNMatrix x)
+Results ess_solver(Problem problem, Options options, N_Vector t, SUNMatrix x)
 {
     // TODO: Calls MEIGO in the MATLAB code --> MEIGO(problem,opts,'ESS',texp,yexp);
+    // execute_Solver(NULL, NULL, 0, NULL);
 }
 
 void predict_parameters(N_Vector times, SUNMatrix data, ODEModel ode_model, TimeConstraints time_constraints,
@@ -76,7 +78,7 @@ void predict_parameters(N_Vector times, SUNMatrix data, ODEModel ode_model, Time
     const Options options = create_options(3000, NULL, 0, "nl2sol");
 
     // TODO: Ask if ignoring the first predicted params is what we want
-    Results results = meigo(problem, options, times, data);
+    Results results = ess_solver(problem, options, times, data);
     N_Vector parameters_init = results.best; // Optimal parameters
     problem.parameters = parameters_init;
     // The original code solves the ode using this params but the result is not used again
@@ -93,7 +95,7 @@ void predict_parameters(N_Vector times, SUNMatrix data, ODEModel ode_model, Time
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         SUNMatrix yexp = copy_matrix_remove_rows(data, indices_to_remove);
 
-        results = meigo(problem, options, texp, yexp);
+        results = ess_solver(problem, options, texp, yexp);
 
         N_VDestroy_Serial(texp);
         SUNMatDestroy(yexp);

@@ -14,9 +14,6 @@
       <file path="$PROJECT_DIR$/lib/include" />
       <file path="$PROJECT_DIR$/lib/src" />
     </sourceRoots>
-    <libraryRoots>
-      <file path="$PROJECT_DIR$/deps" />
-    </libraryRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/sundials" />
     </excludeRoots>
