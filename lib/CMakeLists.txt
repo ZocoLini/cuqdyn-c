@@ -16,10 +16,12 @@ target_link_directories(lib
         ${PROJECT_SOURCE_DIR}/deps/cvode-7.2.1/lib
 )
 
-target_link_libraries(
-        lib
-        sacess
+target_link_libraries(lib
+        PUBLIC
         sundials_cvode
         sundials_nvecserial
         sundials_core
+
+        PRIVATE
+        sacess
 )

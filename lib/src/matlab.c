@@ -10,7 +10,7 @@
 N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 {
     sunrealtype *original_data = N_VGetArrayPointer(original);
-    sunindextype N = N_VGetLength(original);
+    sunindextype N = N_VGetLength_Serial(original);
 
     N_Vector new_vector = N_VNew_Serial(N - indices.len, get_sun_context());
 
