@@ -1,12 +1,14 @@
-#include <nvector/nvector_serial.h>
-#include <stdio.h>
-#include <sundials/sundials_nvector.h>
-#include <sunmatrix/sunmatrix_dense.h>
-
-#include "data_reader.h"
-
 #define LOTKA_VOLTERRA_MAT "data/lotka_volterra_data_homoc_noise_0.10_size_30_data_1.mat"
 #define DATA_TXT "data/test_data.txt"
+
+#include <nvector_old/nvector_serial.h>
+#include <stdio.h>
+#include <sundials_old/sundials_nvector.h>
+#include <assert.hd .
+
+
+#include "data_reader.h"
+#include "lib.h"
 
 void test_lotka_volterra_mat();
 void test_read_data_txt();
@@ -24,7 +26,7 @@ int main(void)
 
 void test_lotka_volterra_mat()
 {
-    const sunrealtype expected_y_values[31][2] = {
+    const realtype expected_y_values[31][2] = {
         {10, 5},
         {1.627e+01 , -3.196e-02},
         {2.597e+01 , 5.589e+00 },
@@ -59,7 +61,7 @@ void test_lotka_volterra_mat()
     };
 
     N_Vector t = NULL;
-    SUNMatrix y = NULL;
+    DlsMat y = NULL;
 
     assert(read_mat_data_file(LOTKA_VOLTERRA_MAT, &t, &y) == 0);
 
@@ -80,10 +82,10 @@ void test_lotka_volterra_mat()
     //  described in the paper.
     for (int i = 0; i < N_VGetLength_Serial(t); i++)
     {
-        for (int j = 0; j < SUNDenseMatrix_Columns(y); j++)
+        for (int j = 0; j < SM_COLUMNS_D(y); j++)
         {
-            const sunrealtype expected = expected_y_values[i][j];
-            const sunrealtype actual = SM_ELEMENT_D(y, i, j);
+            const realtype expected = expected_y_values[i][j];
+            const realtype actual = SM_ELEMENT_D(y, i, j);
 
             printf("%g ", SM_ELEMENT_D(y, i, j));
             if (1)
@@ -99,7 +101,7 @@ void test_lotka_volterra_mat()
 void test_read_data_txt()
 {
     N_Vector t = NULL;
-    SUNMatrix y = NULL;
+    DlsMat y = NULL;
 
     assert(read_txt_data_file(DATA_TXT, &t, &y) == 0);
 

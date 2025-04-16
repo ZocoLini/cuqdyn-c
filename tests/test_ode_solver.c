@@ -1,13 +1,14 @@
+#include <assert.h>
 #include <lib.h>
 #include <math.h>
-#include <nvector/nvector_serial.h>
-#include <sundials/sundials_matrix.h>
+#include <nvector_old/nvector_serial.h>
+#include <stdio.h>
 #include <time.h>
 
 #include "lotka_volterra.h"
 #include "ode_solver.h"
 
-int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data);
+int basic_f(realtype t, N_Vector y, N_Vector ydot, void *user_data);
 void test_basic_ode();
 void test_lotka_volterra();
 
@@ -32,13 +33,13 @@ void test_basic_ode()
     N_Vector initial_values = N_VNew_Serial(1, get_sun_context());
     NV_Ith_S(initial_values, 0) = 54;
 
-    const sunrealtype t0 = 3.0;
+    const realtype t0 = 3.0;
 
     const ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0);
     const TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
-    const Tolerances tolerances = create_tolerances(1.0e-12, (sunrealtype[]){1.0e-12}, ode_model);
+    const Tolerances tolerances = create_tolerances(1.0e-12, (realtype[]){1.0e-12}, ode_model);
 
-    SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
+    DlsMat result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
     assert(result != NULL);
 
@@ -55,7 +56,7 @@ void test_basic_ode()
     assert(fabs(SM_ELEMENT_D(result, 9, 1) - 235.298) < 0.0001);
 }
 
-int basic_f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+int basic_f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     N_Vector parameters = user_data;
 
@@ -76,13 +77,13 @@ void test_lotka_volterra()
     NV_Ith_S(initial_values, 0) = 10;
     NV_Ith_S(initial_values, 1) = 5;
 
-    const sunrealtype t0 = 0.0;
+    const realtype t0 = 0.0;
 
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
     const TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
-    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-12), (sunrealtype[]){1.0e-12, 1.0e-12}, ode_model);
+    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-12), (realtype[]){1.0e-12, 1.0e-12}, ode_model);
 
-    SUNMatrix result = solve_ode(parameters, ode_model, time_constraints, tolerances);
+    DlsMat result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
     assert(result != NULL);
 
@@ -92,7 +93,7 @@ void test_lotka_volterra()
     assert(cols == 3);
     assert(rows == 8);
 
-    sunrealtype val = SM_ELEMENT_D(result, 0, 1);
+    realtype val = SM_ELEMENT_D(result, 0, 1);
 
     assert(fabs(SM_ELEMENT_D(result, 0, 0) - 1.0) < 0.0001);
     assert(fabs(SM_ELEMENT_D(result, 0, 1) - 15.10) < 0.01);

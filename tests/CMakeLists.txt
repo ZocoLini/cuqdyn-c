@@ -8,7 +8,7 @@ foreach(test_name
         test_data_reader
 )
     add_executable(${test_name} ${test_name}.c)
-    target_link_libraries(${test_name} cli-lib)
+    target_link_libraries(${test_name} cli-lib -lc)
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
 

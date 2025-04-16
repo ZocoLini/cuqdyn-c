@@ -1,11 +1,11 @@
 #include <matio.h>
-#include <nvector/nvector_serial.h>
+#include <nvector_old/nvector_serial.h>
 #include <stddef.h>
 #include <stdio.h>
 
 #include "lib.h"
 
-int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
+int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
 {
     FILE *f = fopen(data_file, "r");
     if (f == NULL)
@@ -18,10 +18,10 @@ int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
     fscanf(f, "%ld", &cols);
 
     *t = N_VNew_Serial(rows, get_sun_context());
-    sunrealtype *data_t = N_VGetArrayPointer(*t);
+    realtype *data_t = N_VGetArrayPointer(*t);
 
     *y = SUNDenseMatrix(rows, cols - 1, get_sun_context());
-    sunrealtype *data_y = SUNDenseMatrix_Data(*y);
+    realtype *data_y = (*y)->data;
 
     double tmp;
 
@@ -59,7 +59,7 @@ int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
  *      .                .
  *      ym0 ym1 ym2 ... ymn
  */
-int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
+int read_mat_data_file(const char *data_file, N_Vector *t, DlsMat *y)
 {
     mat_t *matfp = Mat_Open(data_file, MAT_ACC_RDONLY);
     if (matfp == NULL)
@@ -98,14 +98,14 @@ int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
     // The first column of the matrix is the time vector
     // The first row of the matrix are the initial values [t0 y10 y20 ...]
 
-    *t = N_VNew_Serial((sunindextype) rows, get_sun_context());
-    sunrealtype *data_t = N_VGetArrayPointer(*t);
+    *t = N_VNew_Serial((long) rows, get_sun_context());
+    realtype *data_t = N_VGetArrayPointer(*t);
 
     *y = SUNDenseMatrix(
-        (sunindextype) rows,
-        (sunindextype) cols - 1,
+        (long) rows,
+        (long) cols - 1,
         get_sun_context());
-    sunrealtype *data_y = SUNDenseMatrix_Data(*y);
+    realtype *data_y = (*y)->data;
 
     const double *file_data = matvar->data;
 

@@ -1,17 +1,35 @@
 #ifndef LIB_H
 #define LIB_H
 
-#include <sundials/sundials_matrix.h>
-#include <sundials/sundials_nvector.h>
+#include <cvodes_old/cvodes_dense.h>
+#include <stdlib.h>
+#include <sundials_old/sundials_nvector.h>
+
 #include "ode_solver.h"
 
+#define SM_ROWS_D(mat) mat->M
+#define SM_COLUMNS_D(mat) mat->N
+#define SUNDenseMatrix(m, n, ctx) create_allocate(m, n)
+
+static DlsMat create_allocate(long m, long n)
+{
+    N_VNew_Serial()
+    DlsMat mat = (DlsMat) malloc(sizeof(struct _DlsMat));
+    mat->data = (realtype *) malloc(m * n * sizeof(realtype));
+    return mat;
+}
+
+#define SM_ELEMENT_D(mat, i, j) mat->data[j + i * mat->N]
+#define N_VNew_Serial(n, ctx) N_VNew_Serial(n)
+#define SM_DATA_D(mat) mat->data
+#define SUNMatDestroy(mat) if (mat != NULL) { free(mat->data); free(mat); }
+#define SUN_RCONST(n) n
+#define N_VGetLength_Serial(v) NV_LENGTH_S(v)
 
 #define Ith(v, i) NV_Ith_S(v, i - 1) /* i-th vector component i=1..n */
 #define IJth(A, i, j) SM_ELEMENT_D(A, i - 1, j - 1) /* (i,j)-th matrix component i,j=1..n */
 
 // function
-
-SUNContext get_sun_context();
 
 typedef enum
 {
@@ -45,8 +63,8 @@ typedef struct
     N_Vector best;
 } Results;
 
-Results ess_solver(Problem, Options, N_Vector, SUNMatrix);
-void predict_parameters(N_Vector, SUNMatrix, ODEModel, TimeConstraints, Tolerances);
+Results ess_solver(Problem, Options, N_Vector, DlsMat);
+void predict_parameters(N_Vector, DlsMat, ODEModel, TimeConstraints, Tolerances);
 
 typedef struct
 {
@@ -60,17 +78,17 @@ long array_get_index(LongArray, long);
 
 typedef struct
 {
-    SUNMatrix *data;
+    DlsMat *data;
     long len;
 } MatrixArray;
 
 MatrixArray create_matrix_array(long);
 void destroy_matrix_array(MatrixArray array);
-SUNMatrix matrix_array_get_index(MatrixArray, long);
-void matrix_array_set_index(MatrixArray, long, SUNMatrix);
-SUNMatrix matrix_array_get_median(MatrixArray);
+DlsMat matrix_array_get_index(MatrixArray, long);
+void matrix_array_set_index(MatrixArray, long, DlsMat);
+DlsMat matrix_array_get_median(MatrixArray);
 N_Vector matrix_array_depth_vector_at(MatrixArray, long i, long j);
 
-N_Vector get_matrix_cols_median(SUNMatrix);
+N_Vector get_matrix_cols_median(DlsMat);
 
 #endif // LIB_H

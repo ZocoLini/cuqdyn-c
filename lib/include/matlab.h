@@ -4,26 +4,26 @@
 #include <lib.h>
 
 N_Vector copy_vector_remove_indices(N_Vector, LongArray);
-SUNMatrix copy_matrix_remove_rows(SUNMatrix, LongArray);
-SUNMatrix copy_matrix_remove_columns(SUNMatrix, LongArray);
-SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix, LongArray, LongArray);
+DlsMat copy_matrix_remove_rows(DlsMat, LongArray);
+DlsMat copy_matrix_remove_columns(DlsMat, LongArray);
+DlsMat copy_matrix_remove_rows_and_columns(DlsMat, LongArray, LongArray);
 
-void set_matrix_row(SUNMatrix, N_Vector, sunindextype row_index, sunindextype start, sunindextype end);
-void set_matrix_column(SUNMatrix, N_Vector, sunindextype col_index, sunindextype start, sunindextype end);
+void set_matrix_row(DlsMat, N_Vector, long row_index, long start, long end);
+void set_matrix_column(DlsMat, N_Vector, long col_index, long start, long end);
 
-N_Vector copy_matrix_row(SUNMatrix, sunindextype row_index, sunindextype start, sunindextype end);
-N_Vector copy_matrix_column(SUNMatrix, sunindextype col_index, sunindextype start, sunindextype end);
+N_Vector copy_matrix_row(DlsMat, long row_index, long start, long end);
+N_Vector copy_matrix_column(DlsMat, long col_index, long start, long end);
 
 /*
  * Sums matrix a + b. Note that 'b' can have fewer cols or rows than 'a' but not otherwise
  * Returns NULL if the dimensions are not compatible
  */
-SUNMatrix sum_two_matrices(SUNMatrix a, SUNMatrix b);
+DlsMat sum_two_matrices(DlsMat a, DlsMat b);
 /*
  * Substracts b from a. Note that 'b' can have fewer cols or rows than 'a' but not otherwise
  * Returns NULL if the dimensions are not compatible
  */
-SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b);
+DlsMat subtract_two_matrices(DlsMat a, DlsMat b);
 
 /*
  * For an n-element vector A, quantile computes quantiles by using a sorting-based algorithm:
@@ -41,5 +41,5 @@ SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b);
  * For the quantiles corresponding to the probabilities outside that range,
  * quantile assigns the minimum or maximum values of the elements in A.
  */
-sunrealtype quantile(N_Vector, sunrealtype);
+realtype quantile(N_Vector, realtype);
 #endif //MATLAB_H

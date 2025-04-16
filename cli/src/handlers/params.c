@@ -1,8 +1,7 @@
 #include <data_reader.h>
 #include <matio.h>
-#include <nvector/nvector_serial.h>
+#include <nvector_old/nvector_serial.h>
 #include <stdio.h>
-#include <sundials/sundials_matrix.h>
 #include <unistd.h>
 
 #include "handlers.h"
@@ -40,7 +39,7 @@ int handle_params(int argc, char *argv[])
     }
 
     N_Vector t = NULL;
-    SUNMatrix y = NULL;
+    DlsMat y = NULL;
 
     if (read_txt_data_file(data_file, &t, &y) != 0 && read_mat_data_file(data_file, &t, &y) != 0)
     {
@@ -48,10 +47,10 @@ int handle_params(int argc, char *argv[])
         return 1;
     }
 
-    const sunrealtype t0 = NV_Ith_S(t, 0);
+    const realtype t0 = NV_Ith_S(t, 0);
     N_Vector y0 = copy_matrix_row(y, 0, 0, SM_COLUMNS_D(y));
 
-    const sunindextype t_len = NV_LENGTH_S(t);
+    const long t_len = NV_LENGTH_S(t);
 
     // TODO: The f shouldn't be hardcoded and there should be a function called created_lotka_volterra_ode_model
     // TODO: To much hardcoded right now
@@ -63,7 +62,7 @@ int handle_params(int argc, char *argv[])
     );
     const Tolerances tolerances =create_tolerances(
         SUN_RCONST(1e-08),
-        (sunrealtype[]) {SUN_RCONST(1e-08), SUN_RCONST(1e-08)},
+        (realtype[]) {SUN_RCONST(1e-08), SUN_RCONST(1e-08)},
         ode_model
     );
 

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 
 #include "lib.h"
@@ -19,17 +20,17 @@ void test_even_matrices()
 {
     MatrixArray matrix_array = create_matrix_array(4);
 
-    sunrealtype values1[12] = {2, 7, 8, 9, 2, 8, 7, 2, 4, 5, 5, 6};
-    sunrealtype values2[12] = {6, 6, 6, 5, 4, 3, 7, 8, 9, 1, 3, 7};
-    sunrealtype values3[12] = {1, 4, 5, 6, 8, 7, 3, 2, 9, 9, 9, 9};
-    sunrealtype values4[12] = {1, 4, 5, 6, 8, 7, 3, 2, 9, 9, 9, 9};
+    realtype values1[12] = {2, 7, 8, 9, 2, 8, 7, 2, 4, 5, 5, 6};
+    realtype values2[12] = {6, 6, 6, 5, 4, 3, 7, 8, 9, 1, 3, 7};
+    realtype values3[12] = {1, 4, 5, 6, 8, 7, 3, 2, 9, 9, 9, 9};
+    realtype values4[12] = {1, 4, 5, 6, 8, 7, 3, 2, 9, 9, 9, 9};
 
-    sunrealtype medians[12] = {1.5, 5, 5.5, 6, 6, 7, 5, 2, 9, 7, 7, 8};
+    realtype medians[12] = {1.5, 5, 5.5, 6, 6, 7, 5, 2, 9, 7, 7, 8};
 
-    SUNMatrix matrix1 = SUNDenseMatrix(3, 4, get_sun_context());
-    SUNMatrix matrix2 = SUNDenseMatrix(3, 4, get_sun_context());
-    SUNMatrix matrix3 = SUNDenseMatrix(3, 4, get_sun_context());
-    SUNMatrix matrix4 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix1 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix2 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix3 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix4 = SUNDenseMatrix(3, 4, get_sun_context());
 
     for (int i = 0; i < 12; ++i)
     {
@@ -44,16 +45,16 @@ void test_even_matrices()
     matrix_array_set_index(matrix_array, 2, matrix3);
     matrix_array_set_index(matrix_array, 3, matrix4);
 
-    SUNMatrix median_matrix = matrix_array_get_median(matrix_array);
+    DlsMat median_matrix = matrix_array_get_median(matrix_array);
 
     assert(median_matrix != NULL);
 
-    sunrealtype *median_matrix_data = SM_DATA_D(median_matrix);
+    realtype *median_matrix_data = SM_DATA_D(median_matrix);
 
     for (int i = 0; i < 12; ++i)
     {
-        sunrealtype a = median_matrix_data[i];
-        sunrealtype b = medians[i];
+        realtype a = median_matrix_data[i];
+        realtype b = medians[i];
 
         assert(a == b);
     }
@@ -63,15 +64,15 @@ void test_odd_matrices()
 {
     MatrixArray matrix_array = create_matrix_array(3);
 
-    sunrealtype values1[12] = {2, 7, 8, 9, 2, 8, 7, 2, 4, 5, 5, 6};
-    sunrealtype values2[12] = {6, 6, 6, 5, 4, 3, 7, 8, 9, 1, 3, 7};
-    sunrealtype values3[12] = {1, 4, 5, 6, 8, 7, 3, 2, 9, 9, 9, 9};
+    realtype values1[12] = {2, 7, 8, 9, 2, 8, 7, 2, 4, 5, 5, 6};
+    realtype values2[12] = {6, 6, 6, 5, 4, 3, 7, 8, 9, 1, 3, 7};
+    realtype values3[12] = {1, 4, 5, 6, 8, 7, 3, 2, 9, 9, 9, 9};
 
-    sunrealtype medians[12] = {2, 6, 6, 6, 4, 7, 7, 2, 9, 5, 5, 7};
+    realtype medians[12] = {2, 6, 6, 6, 4, 7, 7, 2, 9, 5, 5, 7};
 
-    SUNMatrix matrix1 = SUNDenseMatrix(3, 4, get_sun_context());
-    SUNMatrix matrix2 = SUNDenseMatrix(3, 4, get_sun_context());
-    SUNMatrix matrix3 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix1 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix2 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix3 = SUNDenseMatrix(3, 4, get_sun_context());
 
     for (int i = 0; i < 12; ++i)
     {
@@ -84,16 +85,16 @@ void test_odd_matrices()
     matrix_array_set_index(matrix_array, 1, matrix2);
     matrix_array_set_index(matrix_array, 2, matrix3);
 
-    SUNMatrix median_matrix = matrix_array_get_median(matrix_array);
+    DlsMat median_matrix = matrix_array_get_median(matrix_array);
 
     assert(median_matrix != NULL);
 
-    sunrealtype *median_matrix_data = SM_DATA_D(median_matrix);
+    realtype *median_matrix_data = SM_DATA_D(median_matrix);
 
     for (int i = 0; i < 12; ++i)
     {
-        sunrealtype a = median_matrix_data[i];
-        sunrealtype b = medians[i];
+        realtype a = median_matrix_data[i];
+        realtype b = medians[i];
 
         assert(a == b);
     }
