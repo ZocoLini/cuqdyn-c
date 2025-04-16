@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #include <cvode/cvode_direct.h>
-#include <sundials/sundials_lapack.h>
+#include <sundials_old/sundials_lapack.h>
 
 /*
  * =================================================================

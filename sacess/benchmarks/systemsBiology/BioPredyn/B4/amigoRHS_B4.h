@@ -1,6 +1,6 @@
 #include <math.h>
-#include <nvector/nvector_serial.h>
-#include <sundials/sundials_direct.h> 
+#include <nvector_old/nvector_serial.h>
+#include <sundials_old/sundials_direct.h>
 
 int amigoRHS_B4(realtype t, N_Vector y, N_Vector ydot, void *data);
 

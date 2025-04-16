@@ -1,4 +1,4 @@
-file(GLOB SRC_C
+file(GLOB SRC_C CONFIGURE_DEPENDS
         src/input_module/*.c
         src/output/*.c
         src/structure_data/*.c
@@ -10,7 +10,6 @@ file(GLOB SRC_C
         benchmarks/bbob/*.c
         benchmarks/customized/*.c
 
-        libAMIGO/src/src_cvodes/*.c
         libAMIGO/src/src_amigo/*.c
         libAMIGO/src/src_de/*.c
         libAMIGO/src/src_fullC/*.c
@@ -18,7 +17,7 @@ file(GLOB SRC_C
         libAMIGO/src/src_SRES/*.c
 )
 
-file(GLOB SRC_FORTRAN
+file(GLOB SRC_FORTRAN CONFIGURE_DEPENDS
         src/method_module_fortran/eSS/*.f90
         src/method_module_fortran/eSS/localsolvers/*.f90
         src/method_module_fortran/eSS/localsolvers/dhc/*.f90
@@ -38,7 +37,6 @@ target_include_directories(sacess
 
         PRIVATE
         libAMIGO/include
-        libAMIGO/include/include_cvodes
 
         include/method_module_fortran
 
@@ -55,4 +53,5 @@ target_link_libraries(sacess
         # ${LIBS}
         # ${CLIBS}
         # ${FLIBS}
+        cvodes_old
 )

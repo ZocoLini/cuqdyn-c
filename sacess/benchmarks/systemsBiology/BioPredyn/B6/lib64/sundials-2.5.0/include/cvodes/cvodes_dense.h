@@ -21,8 +21,8 @@
 extern "C" {
 #endif
 
-#include <cvodes/cvodes_direct.h>
-#include <sundials/sundials_dense.h>
+#include <cvodes_old/cvodes_direct.h>
+#include <sundials_old/sundials_dense.h>
 
 /*
  * -----------------------------------------------------------------

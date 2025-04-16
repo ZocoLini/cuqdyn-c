@@ -24,8 +24,8 @@ extern "C" {
 #include <stdarg.h>
 
 #include <idas/idas.h>
-#include <sundials/sundials_nvector.h>
-#include <sundials/sundials_types.h>
+#include <sundials_old/sundials_nvector.h>
+#include <sundials_old/sundials_types.h>
 
 /* 
  * =================================================================

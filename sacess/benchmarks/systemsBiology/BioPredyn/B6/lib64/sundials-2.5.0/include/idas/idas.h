@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <sundials/sundials_nvector.h>
+#include <sundials_old/sundials_nvector.h>
 
 /* * =================================================================
  *              I D A S     C O N S T A N T S

@@ -25,7 +25,7 @@ extern "C" {
 
 #ifndef _SUNDIALS_CONFIG_H
 #define _SUNDIALS_CONFIG_H
-#include <sundials/sundials_config.h>
+#include <sundials_old/sundials_config.h>
 #endif
 
 /* SUNDIALS solver IDs */

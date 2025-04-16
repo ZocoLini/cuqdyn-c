@@ -22,10 +22,10 @@
 #include <cvode/cvode.h>
 #include <cvode/cvode_band.h>
 #include <cvode/cvode_spgmr.h>
-#include <nvector/nvector_serial.h>
-#include <sundials/sundials_dense.h>
-#include <sundials/sundials_types.h>
-#include <sundials/sundials_math.h>
+#include <nvector_old/nvector_serial.h>
+#include <sundials_old/sundials_dense.h>
+#include <sundials_old/sundials_types.h>
+#include <sundials_old/sundials_math.h>
 #include "maternal.h"
 
 /*** GLOBAL VARIABLES ******************************************************/

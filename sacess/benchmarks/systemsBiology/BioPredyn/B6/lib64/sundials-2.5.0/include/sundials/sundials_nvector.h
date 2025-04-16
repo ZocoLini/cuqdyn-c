@@ -47,7 +47,7 @@
 extern "C" {
 #endif
 
-#include <sundials/sundials_types.h>
+#include <sundials_old/sundials_types.h>
 
 /*
  * -----------------------------------------------------------------

@@ -30,9 +30,9 @@
  *
  * The user's calling program should have the following form:
  *
- *   #include <sundials/sundials_types.h>
- *   #include <sundials/sundials_math.h>
- *   #include <sundials/sundials_iterative.h>
+ *   #include <sundials_old/sundials_types.h>
+ *   #include <sundials_old/sundials_math.h>
+ *   #include <sundials_old/sundials_iterative.h>
  *   #include <nvector_parallel.h>
  *   #include <kinsol.h>
  *   #include <kinsol/kinsol_bbdpre.h>
@@ -102,7 +102,7 @@
 extern "C" {
 #endif
 
-#include <sundials/sundials_nvector.h>
+#include <sundials_old/sundials_nvector.h>
 
 /* KINBBDPRE return values */
 

@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <cvodes/cvodes_dense.h>  
-#include <sundials/sundials_types.h> /* definition of type realtype */
-#include <nvector/nvector_serial.h>/* serial N_Vector types, fcts., and macros */
-#include <sundials/sundials_math.h>
+#include <cvodes_old/cvodes_dense.h>
+#include <sundials_old/sundials_types.h> /* definition of type realtype */
+#include <nvector_old/nvector_serial.h>/* serial N_Vector types, fcts., and macros */
+#include <sundials_old/sundials_math.h>
 #include <include_amigo/simulate_amigo_model.h>
 #include <math.h>
 #include <stddef.h>

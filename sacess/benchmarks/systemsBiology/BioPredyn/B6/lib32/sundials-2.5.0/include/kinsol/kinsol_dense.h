@@ -23,7 +23,7 @@ extern "C" {
 #define _KINDENSE_H
 
 #include <kinsol/kinsol_direct.h>
-#include <sundials/sundials_dense.h>
+#include <sundials_old/sundials_dense.h>
 
 /*
  * -----------------------------------------------------------------

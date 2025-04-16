@@ -23,8 +23,8 @@
 extern "C" {
 #endif
 
-#include <sundials/sundials_iterative.h>
-#include <sundials/sundials_nvector.h>
+#include <sundials_old/sundials_iterative.h>
+#include <sundials_old/sundials_nvector.h>
 
 
 /*

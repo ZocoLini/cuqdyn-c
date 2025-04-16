@@ -23,9 +23,9 @@ extern "C" {
 
 #include <stdarg.h>
 
-#include <cvodes/cvodes.h>
-#include <sundials/sundials_nvector.h>
-#include <sundials/sundials_types.h>
+#include <cvodes_old/cvodes.h>
+#include <sundials_old/sundials_nvector.h>
+#include <sundials_old/sundials_types.h>
 
 /* 
  * =================================================================

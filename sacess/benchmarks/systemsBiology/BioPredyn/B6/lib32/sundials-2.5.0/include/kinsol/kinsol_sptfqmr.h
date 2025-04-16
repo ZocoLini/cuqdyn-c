@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <kinsol/kinsol_spils.h>
-#include <sundials/sundials_sptfqmr.h>
+#include <sundials_old/sundials_sptfqmr.h>
 
 /*
  * -----------------------------------------------------------------

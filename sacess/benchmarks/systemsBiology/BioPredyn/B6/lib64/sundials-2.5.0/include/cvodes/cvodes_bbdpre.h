@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-#include <sundials/sundials_nvector.h>
+#include <sundials_old/sundials_nvector.h>
 
 /* 
  * =================================================================
@@ -58,7 +58,7 @@ extern "C" {
  *
  * The user's calling program should have the following form:
  *
- *   #include <cvodes/cvodes_bbdpre.h>
+ *   #include <cvodes_old/cvodes_bbdpre.h>
  *   #include <nvector_parallel.h>
  *   ...
  *   void *cvode_mem;

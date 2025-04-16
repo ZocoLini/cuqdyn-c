@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#include <sundials/sundials_nvector.h>
+#include <sundials_old/sundials_nvector.h>
 
 /* 
  * =================================================================
@@ -64,7 +64,7 @@ extern "C" {
  *   To use these routines, the sequence of calls in the user
  *   main program should be as follows:
  *
- *   #include <cvodes/cvodes_bandpre.h>
+ *   #include <cvodes_old/cvodes_bandpre.h>
  *   #include <nvector_serial.h>
  *   ...
  *   Set y0

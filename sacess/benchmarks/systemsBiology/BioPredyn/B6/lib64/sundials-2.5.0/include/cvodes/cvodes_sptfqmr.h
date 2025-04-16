@@ -28,8 +28,8 @@
 extern "C" {
 #endif
 
-#include <cvodes/cvodes_spils.h>
-#include <sundials/sundials_sptfqmr.h>
+#include <cvodes_old/cvodes_spils.h>
+#include <sundials_old/sundials_sptfqmr.h>
 
 /* 
  * -----------------------------------------------------------------

@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #include <kinsol/kinsol_direct.h>
-#include <sundials/sundials_band.h>
+#include <sundials_old/sundials_band.h>
 
 /*
  * -----------------------------------------------------------------

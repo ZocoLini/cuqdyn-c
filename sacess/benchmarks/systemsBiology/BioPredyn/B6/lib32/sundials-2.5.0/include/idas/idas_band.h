@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #include <idas/idas_direct.h>
-#include <sundials/sundials_band.h>
+#include <sundials_old/sundials_band.h>
 
 /*
  * -----------------------------------------------------------------

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 
+# add_compile_definitions(MPI2) Contains wrong header yet
+
 project(ess-c LANGUAGES C Fortran)
 
 set(CMAKE_C_COMPILER icc)
@@ -17,6 +19,7 @@ pkg_check_modules(MATIO REQUIRED matio)
 
 enable_testing()
 
+add_subdirectory(cvodes_old)
 add_subdirectory(sacess)
 add_subdirectory(cli)
 add_subdirectory(cli-lib)

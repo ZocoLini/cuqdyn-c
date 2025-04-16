@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <cvode/cvode_spils.h>
-#include <sundials/sundials_spbcgs.h>
+#include <sundials_old/sundials_spbcgs.h>
 
 /*
  * -----------------------------------------------------------------

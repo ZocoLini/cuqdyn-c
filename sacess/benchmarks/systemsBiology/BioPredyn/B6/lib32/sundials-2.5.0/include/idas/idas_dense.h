@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #include <idas/idas_direct.h>
-#include <sundials/sundials_dense.h>
+#include <sundials_old/sundials_dense.h>
 
 /*
  * -----------------------------------------------------------------

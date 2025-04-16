@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <ida/ida_spils.h>
-#include <sundials/sundials_spgmr.h>
+#include <sundials_old/sundials_spgmr.h>
 
 /*
  * -----------------------------------------------------------------

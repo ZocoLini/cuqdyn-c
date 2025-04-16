@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 #include <idas/idas_spils.h>
-#include <sundials/sundials_sptfqmr.h>
+#include <sundials_old/sundials_sptfqmr.h>
 
 /* 
  * -----------------------------------------------------------------

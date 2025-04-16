@@ -26,7 +26,7 @@
 
 
 
-int main(int argc, char** argv) {
+int codigo_ejemplo(int argc, char** argv) {
     int id, NPROC, error, i, NPROC_OPENMP;
     const char *file, *path;
     experiment_total *exptotal;

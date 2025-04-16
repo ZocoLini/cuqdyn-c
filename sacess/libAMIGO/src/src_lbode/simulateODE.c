@@ -6,10 +6,10 @@
 
 /* Sundials Header Files */
 
-#include <cvodes/cvodes.h>
-#include <nvector/nvector_serial.h>
-#include <sundials/sundials_types.h>
-#include <sundials/sundials_math.h>
+#include <cvodes_old/cvodes.h>
+#include <nvector_old/nvector_serial.h>
+#include <sundials_old/sundials_types.h>
+#include <sundials_old/sundials_math.h>
 #include "mex.h"
 
 #include "CNOStructure.h"

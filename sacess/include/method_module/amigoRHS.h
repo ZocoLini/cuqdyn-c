@@ -1,6 +1,6 @@
 #include <math.h>
-#include <nvector/nvector_serial.h>
-#include <sundials/sundials_direct.h> 
+#include <nvector_old/nvector_serial.h>
+#include <sundials_old/sundials_direct.h>
 /* *** Definition of the algebraic variables *** */
 
 /* Right hand side of the system (f(t,x,p))*/
