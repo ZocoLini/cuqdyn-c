@@ -13,7 +13,4 @@ target_link_libraries(cli-lib
         PUBLIC
         lib
         matio
-        sundials_cvode
-        sundials_nvecserial
-        sundials_core
 )

@@ -1,7 +1,6 @@
 #ifndef LIB_H
 #define LIB_H
 
-#include <cvodes_old/cvodes_dense.h>
 #include <stdlib.h>
 #include <sundials_old/sundials_nvector.h>
 
@@ -13,7 +12,6 @@
 
 static DlsMat create_allocate(long m, long n)
 {
-    N_VNew_Serial()
     DlsMat mat = (DlsMat) malloc(sizeof(struct _DlsMat));
     mat->data = (realtype *) malloc(m * n * sizeof(realtype));
     return mat;

@@ -11,9 +11,7 @@ set(CMAKE_C_FLAGS "-O3 -ipo -xHost -DINTEL -diag-disable=10441")
 set(CMAKE_Fortran_FLAGS "-O3 -ipo -xHost -fpp -DEXPORT -DINTEL")
 
 set(CMAKE_C_STANDARD 11)
-set(SUNDIALS_DIR "${PROJECT_SOURCE_DIR}/deps/cvode-7.2.1/lib/cmake/sundials")
 
-find_package(SUNDIALS REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(MATIO REQUIRED matio)
 

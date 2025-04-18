@@ -4,7 +4,7 @@
 #include <nvector_old/nvector_serial.h>
 #include <stdio.h>
 #include <sundials_old/sundials_nvector.h>
-#include <assert.hd .
+#include <assert.h>
 
 
 #include "data_reader.h"
