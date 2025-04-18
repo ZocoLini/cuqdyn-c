@@ -82,16 +82,6 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_c
     retval = CVodeSetUserData(cvode_mem, parameters);
     if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
 
-    // /* Create dense DlsMat for use in linear solves */
-    // DlsMat A = SUNDenseMatrix(ode_model.number_eq, ode_model.number_eq, get_sun_context());
-    //
-    // /* Create dense SUNLinearSolver object for use by CVode */
-    // SUNLinearSolver LS = SUNLinSol_Dense(ode_model.initial_values, A);
-
-    // /* Attach the matrix and linear solver */
-    // retval = CVodeSetLinearSolver(cvode_mem, LS, A);
-    // if (check_retval(&retval, "CVodeSetLinearSolver", 1)) { return NULL; }
-
     /* Time points */
     realtype t;
     realtype tinc = time_constraints.tinc;
@@ -99,7 +89,6 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_c
     const realtype tf = time_constraints.tf;
 
     int retvalr;
-    int rootsfound[2];
     realtype *y_result = N_VGetArrayPointer(ode_model.initial_values);
 
     int result_rows = time_constraints_steps(time_constraints);
@@ -114,6 +103,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_c
 
         if (retval == CV_ROOT_RETURN)
         {
+            int rootsfound[2];
             retvalr = CVodeGetRootInfo(cvode_mem, rootsfound);
             if (check_retval(&retvalr, "CVodeGetRootInfo", 1))
             {
@@ -142,8 +132,6 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_c
     }
 
     CVodeFree(&cvode_mem);
-    // SUNLinSolFree(LS);
-    // SUNMatDestroy(A);
 
     return result;
 }

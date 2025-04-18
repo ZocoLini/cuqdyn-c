@@ -8,19 +8,11 @@
 
 #define SM_ROWS_D(mat) mat->M
 #define SM_COLUMNS_D(mat) mat->N
-#define SUNDenseMatrix(m, n, ctx) create_allocate(m, n)
-
-static DlsMat create_allocate(long m, long n)
-{
-    DlsMat mat = (DlsMat) malloc(sizeof(struct _DlsMat));
-    mat->data = (realtype *) malloc(m * n * sizeof(realtype));
-    return mat;
-}
-
-#define SM_ELEMENT_D(mat, i, j) mat->data[j + i * mat->N]
+#define SUNDenseMatrix(m, n, ctx) NewDenseMat(m, n)
+#define SM_ELEMENT_D(mat, i, j) DENSE_ELEM(mat, i, j)
 #define N_VNew_Serial(n, ctx) N_VNew_Serial(n)
 #define SM_DATA_D(mat) mat->data
-#define SUNMatDestroy(mat) if (mat != NULL) { free(mat->data); free(mat); }
+#define SUNMatDestroy(mat) DestroyMat(mat)
 #define SUN_RCONST(n) n
 #define N_VGetLength_Serial(v) NV_LENGTH_S(v)
 

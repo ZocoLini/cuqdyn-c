@@ -1,11 +1,13 @@
 #include <nvector_old/nvector_serial.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "lib.h"
 
-// num_indices are the indices to be removed from the original vector. Should be sorted in ascending order.
-// the indices are 1-based, so the first element is 1, not 0.
+// Num_indices are the indices to be removed from the original vector.
+// Should be sorted in ascending order.
+// The indices are 1-based, so the first element is 1, not 0.
 N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 {
     realtype *original_data = N_VGetArrayPointer(original);
@@ -47,15 +49,12 @@ DlsMat copy_matrix_remove_rows_and_columns(DlsMat matrix, LongArray row_indices,
     // row_skip_index: Index to track the current index in the row_indices array
     // col_skip_index: Index to track the current index in the col_indices array
 
-    for (int i = 0; i < rows; ++i)
-    {
-        for (int j = 0; j < cols; ++j)
-        {
+    long copy_index = 0;
 
-        }
-    }
+    long row_skip_index = 0;
+    long col_skip_index = 0;
 
-    for (long i = 0, copy_index = 0, row_skip_index = 0, col_skip_index = 0; i < rows * cols; i++)
+    for (long i = 0; i < rows * cols; i++)
     {
         const long row = i % rows; // Row index in the original matrix
         const long col = i / rows; // Column index in the original matrix
