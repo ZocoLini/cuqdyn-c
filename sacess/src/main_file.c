@@ -4,16 +4,16 @@
  * @brief This is the main file of the program.
  */
 
-#include <stdio.h>
 #include <configuration.h>
-#include <string.h>
-#include <stdlib.h>
-#include <method_module/structure_paralleltestbed.h>
-#include <input/input_module.h>
-#include <output/output.h>
 #include <customized/example.h>
-#include <setup_benchmarks.h>
 #include <error/def_errors.h>
+#include <input/input_module.h>
+#include <method_module/structure_paralleltestbed.h>
+#include <output/output.h>
+#include <setup_benchmarks.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef MPI2
         #include <mpi.h> 
@@ -114,10 +114,10 @@ int codigo_ejemplo(int argc, char** argv) {
         printresults_end(exptotal,result);
     }
 // PLOT RESULTS
-    plot(&exptotal[0] ); 
-    if (id == 0) {
-        graphs_message(exptotal);
-    }
+//    plot(&exptotal[0] );
+//    if (id == 0) {
+//        graphs_message(exptotal);
+//    }
     
 // DESTROY EXP DATA       
     destroyexp(exptotal);

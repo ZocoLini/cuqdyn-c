@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "handlers.h"
+#include "handlers/handlers.h"
 
 int handle_help(int argc, char *argv[]);
 

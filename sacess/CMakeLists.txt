@@ -23,6 +23,7 @@ file(GLOB SRC_FORTRAN CONFIGURE_DEPENDS
         src/method_module_fortran/eSS/localsolvers/dhc/*.f90
         src/method_module_fortran/eSS/localsolvers/misqp/*.f90
         src/method_module_fortran/eSS/localsolvers/nl2sol/*.f90
+        src/method_module_fortran/eSS/localsolvers/nl2sol/src_nl2sol/*.f
 )
 
 add_library(sacess
@@ -34,8 +35,6 @@ target_include_directories(sacess
         PUBLIC
         include
         benchmarks
-
-        PRIVATE
         libAMIGO/include
 
         include/method_module_fortran
@@ -46,15 +45,22 @@ target_include_directories(sacess
 )
 
 target_link_directories(sacess
-        PRIVATE
+        PUBLIC
         ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/lib
         ${PROJECT_SOURCE_DIR}/deps/libxml2/lib
         ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/lib
+        ${PROJECT_SOURCE_DIR}/deps/misqp/gnu
 )
 
 target_link_libraries(sacess
-        # ${LIBS}
-        # ${CLIBS}
-        # ${FLIBS}
+        PUBLIC
         cvodes_old
+        xml2
+        gsl
+        misqp
+        hdf5
+
+        ifcore
+        ifport
+        imf
 )

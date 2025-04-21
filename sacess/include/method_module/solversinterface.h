@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   serSolvers.h
  * Author: david
  *
@@ -6,26 +6,24 @@
  */
 
 #ifndef SERSOLVERS_H
-#define	SERSOLVERS_H
+#define SERSOLVERS_H
 
-#ifdef	__cplusplus
-extern "C" {
+#ifdef __cplusplus
+extern "C"
+{
 #endif
+
+#include <method_module/structure_paralleltestbed.h>
+    int execute_Solver(experiment_total *, result_solver *, double, void *function(double *, void *));
+    int execute_serial_solver(experiment_total *, result_solver *, long, double, void *function(double *, void *));
 
 #ifdef MPI2
-    #include <method_module/structure_paralleltestbed.h>
-    
-int  execute_Solver(experiment_total *, result_solver *, double, void* function( double *,  void*));
-
-int execute_parallel_solver (experiment_total *, result_solver *, long , double, void* function( double *,  void*));
-
-int execute_serial_solver(experiment_total *, result_solver *, long, double, void* function( double *,  void*));
+    int execute_parallel_solver(experiment_total *, result_solver *, long, double, void *function(double *, void *));
 
 #endif
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif	/* SERSOLVERS_H */
-
+#endif /* SERSOLVERS_H */

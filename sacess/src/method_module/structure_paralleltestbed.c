@@ -6,19 +6,21 @@
  */
 
 
-#include <method_module/structure_paralleltestbed.h>
 #include <configuration.h>
+#include <error/def_errors.h>
+#include <float.h>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <input/input_module.h>
+#include <math.h>
+#include <method_module/benchmark_functions_BBOB.h>
+#include <method_module/benchmark_functions_SystemBiology.h>
+#include <method_module/structure_paralleltestbed.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include <float.h>
-#include <error/def_errors.h>
-#include <configuration.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include <time.h>  
-#include <string.h>
+#include <sys/stat.h>
+#include <time.h>
 
 int returninitsol_( void *exp_ ){
     experiment_total *exp;
@@ -388,6 +390,22 @@ void destroyexp(experiment_total *exp) {
     
 }
 
+
+int destroySystemBiology(experiment_total *exp) {
+
+    if (exp->amigo != NULL) {
+        free_AMIGO_problem(exp->amigo);
+        exp->amigo=NULL;
+    }
+    free(exp->execution.transconst);
+    free(exp->test.bench.logindex);
+    free(exp->test.bench.log_max_dom );
+    free(exp->test.bench.log_min_dom );
+
+
+    return 1;
+
+}
 
 int destroybenchmark(experiment_total *exp){
     int benchmark;

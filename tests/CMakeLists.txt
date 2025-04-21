@@ -6,9 +6,10 @@ foreach(test_name
         test_matrix_array_get_median
         test_get_matrix_cols_median
         test_data_reader
+        test_ess_solver
 )
     add_executable(${test_name} ${test_name}.c)
-    target_link_libraries(${test_name} cli-lib -lc)
+    target_link_libraries(${test_name} cli-lib)
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
 

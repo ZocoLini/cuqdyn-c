@@ -1,4 +1,5 @@
-#include<include_amigo/AMIGO_problem.h>
+#pragma once
+#include <include_amigo/AMIGO_problem.h>
 
 //static int c__2 = 2;
 

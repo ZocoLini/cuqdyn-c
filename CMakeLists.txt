@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-# add_compile_definitions(MPI2) Contains wrong header yet
-
+# add_compile_definitions(MPI2) # Need to fix headers
 project(ess-c LANGUAGES C Fortran)
+enable_language(Fortran)
 
 set(CMAKE_C_COMPILER icc)
 set(CMAKE_Fortran_COMPILER ifort)

@@ -1,7 +1,5 @@
-#ifdef STRUCTURE_PARALLELTESTBED_H
-        #include <method_module/structure_paralleltestbed.h>
-#endif
 
+#include <method_module/structure_paralleltestbed.h>
 int openhdf5solutions_(void *, double *, int *, int *);
 
 

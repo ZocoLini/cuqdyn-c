@@ -1,8 +1,7 @@
 file(GLOB CLI_SRC CONFIGURE_DEPENDS src/*.c src/handlers/*.c)
-file(GLOB CLI_HEADERS CONFIGURE_DEPENDS include include/handlers)
 
 include_directories(cli
-        ${CLI_HEADERS}
+        include
 )
 
 add_executable(cli

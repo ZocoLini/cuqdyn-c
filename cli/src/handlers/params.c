@@ -1,13 +1,12 @@
 #include <data_reader.h>
-#include <matio.h>
 #include <nvector_old/nvector_serial.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include "handlers.h"
-#include "lib.h"
-#include "params.h"
+#include "handlers/handlers.h"
+#include "handlers/params.h"
 
+#include "lib.h"
 #include "lotka_volterra.h"
 #include "matlab.h"
 

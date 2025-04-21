@@ -19,7 +19,7 @@ extern "C" {
 #include <time.h>
     
 #ifdef	MPI2
-    #include <dynamic_list.h>
+    #include <structure_data/dynamic_list.h>
     #include <mpi.h> 
 #endif    
 
