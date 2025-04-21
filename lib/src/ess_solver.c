@@ -2,9 +2,7 @@
 
 #include <method_module/structure_paralleltestbed.h>
 
-typedef void *(*function)(double *, void *);
-
-void execute_ess_solver(const char *file, const char *path)
+void execute_ess_solver(const char *file, const char *path, void *(*func)(double *, void *))
 {
     int NPROC;
     int id;
@@ -54,7 +52,6 @@ void execute_ess_solver(const char *file, const char *path)
     int NPROC_OPENMP = 1;
     // INIT BENCHMARK
     int first = 1;
-    function func;
 
     // INIT RESULT STRUCT
     init_result_data(&result, exptotal->test.bench.dim);
