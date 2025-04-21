@@ -61,7 +61,8 @@ void execute_ess_solver(const char *file, const char *path, void *(*func)(double
 #else
     exptotal = (experiment_total *) malloc(sizeof(experiment_total));
     init = 1;
-    create_expetiment_struct(file, exptotal, NPROC, id, path, init);
+    create_expetiment_struct(file, &exptotal[0], NPROC, id, path, init);
+    exptotal[0].test.bench.logindex[0];
     // INIT MESSAGE
     NPROC_OPENMP = 1;
     // INIT BENCHMARK
