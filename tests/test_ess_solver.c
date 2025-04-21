@@ -39,6 +39,15 @@ void* examplefunction(double *x, void *data) {
 
 int main(int argc, char** argv)
 {
+#ifdef MPI2
+    int err = MPI_Init(&argc, &argv);
+
+    if (err != MPI_SUCCESS) {
+        fprintf(stderr, "MPI_Init failed\n");
+        exit(1);
+    }
+#endif
+
     test_1();
     printf("\tTest 1 passed\n");
 

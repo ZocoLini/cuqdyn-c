@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project(ess-c LANGUAGES C Fortran)
 
+## saCeSS solver
 set(CMAKE_C_COMPILER mpicc)
 set(CMAKE_Fortran_COMPILER mpif90)
-
 set(CMAKE_C_FLAGS "-O3 -cpp -DGNU -fPIC -no-pie -DOPENMP -DMPI2 -fopenmp -lmpi")
 set(CMAKE_Fortran_FLAGS "-O3 -cpp -DGNU  -fallow-argument-mismatch -std=gnu -DOPENMP -DMPI2 -DGNU -fopenmp")
 

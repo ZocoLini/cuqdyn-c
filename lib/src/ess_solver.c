@@ -19,14 +19,7 @@ void execute_ess_solver(const char *file, const char *path, void *(*func)(double
 
 #ifdef MPI2
     // Original call MPI_Init(&argc, &argv);
-    int err = MPI_Init(NULL, NULL);
-
-    if (err != MPI_SUCCESS) {
-        fprintf(stderr, "MPI_Init failed\n");
-        exit(1);
-    }
-
-    err = MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
+    int err = MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
 
     if (err != MPI_SUCCESS) {
         fprintf(stderr, "MPI_COMM_WORLD failed\n");
