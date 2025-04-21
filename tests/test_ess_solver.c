@@ -37,7 +37,7 @@ void* examplefunction(double *x, void *data) {
     return res;
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
     test_1();
     printf("\tTest 1 passed\n");
@@ -47,5 +47,5 @@ int main(void)
 
 void test_1()
 {
-    execute_ess_solver(BBOB_CONF_FILE, OUPUT_PATH, examplefunction);
+    execute_ess_solver(CONF_FILE, OUPUT_PATH, examplefunction);
 }

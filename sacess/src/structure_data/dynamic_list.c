@@ -5,15 +5,15 @@
  * Created on 14 de enero de 2013, 16:00
  */
 //#ifdef MPI2
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <float.h>
 
 
 #ifdef MPI2
 #include <mpi.h>
-#include <dynamic_list.h>
+#include <structure_data/dynamic_list.h>
 
 void create_list(list *l, int number_solutions, int size_solutions) {
     (*l) = NULL;

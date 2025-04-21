@@ -39,6 +39,8 @@ target_include_directories(sacess
 
         include/method_module_fortran
 
+        /opt/intel/oneapi/2025.1/include/
+
         ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/include
         ${PROJECT_SOURCE_DIR}/deps/libxml2/include
         ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/include
@@ -59,6 +61,8 @@ target_link_libraries(sacess
         gsl
         misqp
         hdf5
+
+        mpi
 
         ifcore
         ifport

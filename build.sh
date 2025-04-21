@@ -5,6 +5,6 @@ mkdir build
 
 (
   cd build || exit 1
-  cmake ..
+  cmake -DCMAKE_BUILD_TYPE=Debug ..
   make
 )

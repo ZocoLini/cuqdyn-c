@@ -9,7 +9,7 @@
 
 #include <math.h>
 #include <method_module/structure_paralleltestbed.h>
-#include <parallel_functions.h>
+#include <method_module/parallel_functions.h>
 #include <mpi.h>
 #include <string.h>
 

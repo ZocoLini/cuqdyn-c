@@ -18,6 +18,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libmatio-dev
+          sudo apt install -y openmpi-bin libopenmpi-dev
 
       - name: Make test.sh executable
         run: chmod +x ./test.sh

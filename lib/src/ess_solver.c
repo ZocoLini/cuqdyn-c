@@ -2,16 +2,37 @@
 
 #include <method_module/structure_paralleltestbed.h>
 
+#ifdef MPI2
+        #include <mpi.h>
+#endif
+
+#ifdef OPENMP
+        #include <omp.h>
+#endif
+
 void execute_ess_solver(const char *file, const char *path, void *(*func)(double *, void *))
 {
-    int NPROC;
-    int id;
+    int id, NPROC, error, i, NPROC_OPENMP;
+    experiment_total *exptotal;
     result_solver result;
+    int first, init;
 
 #ifdef MPI2
     // Original call MPI_Init(&argc, &argv);
-    MPI_Init(NULL, NULL);
-    MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
+    int err = MPI_Init(NULL, NULL);
+
+    if (err != MPI_SUCCESS) {
+        fprintf(stderr, "MPI_Init failed\n");
+        exit(1);
+    }
+
+    err = MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
+
+    if (err != MPI_SUCCESS) {
+        fprintf(stderr, "MPI_COMM_WORLD failed\n");
+        exit(1);
+    }
+
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
 #else
     id = 0;
@@ -32,26 +53,26 @@ void execute_ess_solver(const char *file, const char *path, void *(*func)(double
         create_expetiment_struct(file, &(exptotal[i]), NPROC, id, path, init);
         init = 0;
     }
-    // INIT MESSAGE
-    if ((id == 0))
-        init_message(NPROC, &(exptotal[0]), NPROC_OPENMP);
-    // INIT BENCHMARK
-    first = 1;
-    for (i = 0; i < NPROC_OPENMP; i++)
-    {
-        func = setup_benchmark(&(exptotal[i]), id, &first);
-    }
+    // // INIT MESSAGE
+    // if ((id == 0))
+    //     init_message(NPROC, &(exptotal[0]), NPROC_OPENMP);
+    // // INIT BENCHMARK
+    // first = 1;
+    // for (int i = 0; i < NPROC_OPENMP; i++)
+    // {
+    //     func = setup_benchmark(&(exptotal[i]), id, &first);
+    // }
 
     init_result_data(&result, exptotal[0].test.bench.dim);
 
 #else
-    experiment_total *exptotal = (experiment_total *) malloc(sizeof(experiment_total));
-    int init = 1;
+    exptotal = (experiment_total *) malloc(sizeof(experiment_total));
+    init = 1;
     create_expetiment_struct(file, exptotal, NPROC, id, path, init);
     // INIT MESSAGE
-    int NPROC_OPENMP = 1;
+    NPROC_OPENMP = 1;
     // INIT BENCHMARK
-    int first = 1;
+    first = 1;
 
     // INIT RESULT STRUCT
     init_result_data(&result, exptotal->test.bench.dim);
