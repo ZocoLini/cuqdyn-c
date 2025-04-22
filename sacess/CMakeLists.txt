@@ -51,7 +51,7 @@ target_link_directories(sacess
         ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/lib
         ${PROJECT_SOURCE_DIR}/deps/libxml2/lib
         ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/lib
-        ${PROJECT_SOURCE_DIR}/deps/misqp/gnu
+        ${MISQP_LIBRARY_DIR}
 )
 
 target_link_libraries(sacess
