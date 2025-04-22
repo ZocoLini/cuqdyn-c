@@ -93,8 +93,6 @@ void test_lotka_volterra()
     assert(cols == 3);
     assert(rows == 8);
 
-    realtype val = SM_ELEMENT_D(result, 0, 1);
-
     assert(fabs(SM_ELEMENT_D(result, 0, 0) - 1.0) < 0.0001);
     assert(fabs(SM_ELEMENT_D(result, 0, 1) - 15.10) < 0.01);
     assert(fabs(SM_ELEMENT_D(result, 0, 2) - 3.883) < 0.001);

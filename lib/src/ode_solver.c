@@ -17,7 +17,7 @@ ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, realt
 
 void destroy_ode_model(ODEModel model)
 {
-    N_VDestroy_Serial(model.initial_values);
+    N_VDestroy(model.initial_values);
 }
 
 TimeConstraints create_time_constraints(realtype first_output_time, realtype tf, realtype tinc)

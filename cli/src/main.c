@@ -11,6 +11,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+#ifdef MPI2
+    int err = MPI_Init(&argc, &argv);
+
+    if (err != MPI_SUCCESS) {
+        fprintf(stderr, "MPI_Init failed\n");
+        exit(1);
+    }
+#endif
+
     Handler handler;
 
     if (strcmp(argv[1], "params") == 0)
