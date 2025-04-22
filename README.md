@@ -14,6 +14,12 @@
 - All the includes were modified to be relative to the include directory they are in.
 - The dependencies were moved into the deps directory.
 
+### Memory leaks
+#### File: sacess/src/method_module/evaluationinterface.c
+- Lines 134-135: Unnecesary allocation of memory
+- Line 74: Unnecesary allocation of memory
+- Line 236: Unnecesary allocation of memory
+
 ### Obtaining the xbest values
 #### File: sacess/src/method_module_fortran/eSS/scattersearch.f90
 - Line 438: Commented so the xbest is not freed

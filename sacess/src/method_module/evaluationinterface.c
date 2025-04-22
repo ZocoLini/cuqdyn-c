@@ -71,7 +71,7 @@ double callfitnessfunction_(void *(*fitnessfunction)(double*, void *), void *exp
 
     experiment_total *exp1;
     output_function *res;
-    res = (output_function *) malloc(sizeof(output_function));
+    // res = (output_function *) malloc(sizeof(output_function));
     exp1 = (experiment_total *) exp1_;
 
     
@@ -130,9 +130,9 @@ double callfitnessfunctionfortran_(void *(*fitnessfunction)(double*, void *), vo
     int i;
     output_function *res;
     double value;
-    
-    res = NULL;    
-    res = (output_function *) malloc(sizeof(output_function));
+
+    // res = NULL;
+    // res = (output_function *) malloc(sizeof(output_function));
     
     exp1 = (experiment_total *) exp1_;
 
@@ -233,7 +233,7 @@ double callfitnessfunctionfortranopenmp2_(void *(*fitnessfunction)(double*, void
 double callfitnessfunctionopenmp_(void *(*fitnessfunction)(double*, void *), void *exp1_, double *U, int *D, double *Xl, double *Xm, int *idp) {
     output_function *res;
     
-    res = (output_function *) malloc(sizeof(output_function) );
+    // res = (output_function *) malloc(sizeof(output_function) );
     experiment_total *exp1;
     exp1 = (experiment_total *) exp1_;
     
