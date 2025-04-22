@@ -1,12 +1,19 @@
 # Uncertainty Quantification in Dynamic Models of Biological Systems Using Conformal Prediction
 
 ## Prerequisites
-- matio:
+- matio and openmpi
 ```bash
-  sudo apt-get install libmatio-dev
+  sudo apt-get install -y libmatio-dev
+  sudo apt install -y openmpi-bin libopenmpi-dev
 ```
 
 ## Modifications to the original sacess-library code
+### Projects struture
+- The original code was modified to use the CMake build system.
+- cvodes was extracted and used as a submodule.
+- All the includes were modified to be relative to the include directory they are in.
+- The dependencies were moved into the deps directory.
+
 ### Obtaining the xbest values
 #### File: sacess/src/method_module_fortran/eSS/scattersearch.f90
 - Line 438: Commented so the xbest is not freed
