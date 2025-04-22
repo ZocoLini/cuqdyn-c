@@ -587,7 +587,7 @@ CONTAINS
         if (ALLOCATED(hyper_x_U)) DEALLOCATE(hyper_x_U)
         if (ALLOCATED(refset_change)) DEALLOCATE(refset_change)
         if (ALLOCATED(opts1%localoptions%finish)) DEALLOCATE(opts1%localoptions%finish)
-        if (ALLOCATED(xbest)) DEALLOCATE(xbest)
+        ! if (ALLOCATED(xbest)) DEALLOCATE(xbest)
         if (ALLOCATED(fbest)) DEALLOCATE(fbest)
         if (ALLOCATED(fbest_lastiter)) DEALLOCATE(fbest_lastiter)   
         IF (ALLOCATED(init)) DEALLOCATE(init)

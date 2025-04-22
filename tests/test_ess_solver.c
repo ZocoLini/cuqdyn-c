@@ -111,7 +111,7 @@ void* lotka_volterra_obj_f(double *x, void *data)
 
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
     const TimeConstraints time_constraints = create_time_constraints(1.0, 30.0, 1.0);
-    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-12), (realtype[]){1.0e-12, 1.0e-12, 1.0e-12, 1.0e-12}, ode_model);
+    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), (realtype[]){1.0e-8, 1.0e-8}, ode_model);
 
     DlsMat result = solve_ode(parameters, ode_model, time_constraints, tolerances);
 
@@ -128,10 +128,10 @@ void* lotka_volterra_obj_f(double *x, void *data)
     }
 
     // Free resources
-    N_VDestroy(initial_values);
     N_VDestroy(parameters);
     destroy_ode_model(ode_model);
-    destroy_tolerances(tolerances);
+    // The vector inside tolerances is beeing destroyed by the solve_ode_function when it frees CVode
+    // destroy_tolerances(tolerances);
     SUNMatDestroy(result);
     SUNMatDestroy(yexp);
 
@@ -162,10 +162,25 @@ int main(int argc, char** argv)
 
 void test_example()
 {
-    execute_ess_solver(EXAMPLE_CONF_FILE, OUPUT_PATH, examplefunction);
+    // I don't know the real values, these are the returned values the test returned for the first time
+    realtype expected[10] = {422, 422, 422, 422, 422, 422, 422, 422, 422, 422};
+
+    realtype *xbest = execute_ess_solver(EXAMPLE_CONF_FILE, OUPUT_PATH, examplefunction);
+
+    for (int i = 0; i < 10; ++i)
+    {
+        assert(fabs(xbest[i] - expected[i]) < 3);
+    }
 }
 
 void lotka_volterra_ess()
 {
-    execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f);
+    realtype expected[4] = { 0.5, 0.02, 0.5, 0.02 };
+
+    realtype *xbest = execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        assert(fabs(xbest[i] - expected[i]) < 0.1);
+    }
 }

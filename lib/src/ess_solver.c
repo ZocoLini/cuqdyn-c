@@ -10,7 +10,7 @@
         #include <omp.h>
 #endif
 
-void execute_ess_solver(const char *file, const char *path, void *(*func)(double *, void *))
+double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)(double *, void *))
 {
     int id, NPROC, error, i, NPROC_OPENMP;
     experiment_total *exptotal;
@@ -76,7 +76,9 @@ void execute_ess_solver(const char *file, const char *path, void *(*func)(double
 #ifdef MPI2
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-    execute_Solver(exptotal, &result, func);
+    execute_Solver(exptotal, &result, obj_func);
+
+    return result.bestx_value;
 
     destroyexp(exptotal);
 
