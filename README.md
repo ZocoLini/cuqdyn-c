@@ -19,6 +19,9 @@
 - Lines 134-135: Unnecesary allocation of memory
 - Line 74: Unnecesary allocation of memory
 - Line 236: Unnecesary allocation of memory
+#### File: sacess/src/method_module/common_solver_operations.c
+- Line 781: Unnecesary allocation of memory
+- Line 612: Unnecesary allocation of memory
 
 ### Obtaining the xbest values
 #### File: sacess/src/method_module_fortran/eSS/scattersearch.f90

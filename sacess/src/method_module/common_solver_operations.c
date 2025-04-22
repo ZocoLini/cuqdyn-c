@@ -609,7 +609,7 @@ void returnBest(double *v, int N, int D, double *best, int sizeBest) {
     int i,  cont = 0;
     double *vect;
 
-    vect = (double *) malloc(N * (D + 1) * sizeof (double));
+    // vect = (double *) malloc(N * (D + 1) * sizeof (double));
 
     vect = reorderVector_QuickShort(v, 0, N - 1, D);
 
@@ -778,7 +778,7 @@ void reorder_best(double *v, int N, int D) {
     int i, j;
     double *vect;
 
-    vect = (double *) malloc(N * (D + 1) * sizeof (double));
+    // vect = (double *) malloc(N * (D + 1) * sizeof (double));
 
     vect = reorderVector_QuickShort(v, 0, N - 1, D);
 
