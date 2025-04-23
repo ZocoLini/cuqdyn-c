@@ -23,6 +23,9 @@ int handle_solve(int argc, char *argv[])
 {
     int opt;
     char *data_file = NULL;
+    char *cuqdyn_config_file = NULL;
+    char *sacess_config_file = NULL;
+    char *output_dir = NULL;
 
     while ((opt = getopt(argc, argv, "d:")) != -1)
     {
@@ -31,8 +34,17 @@ int handle_solve(int argc, char *argv[])
             case 'd':
                 data_file = optarg;
                 break;
+            case 'c':
+                cuqdyn_config_file = optarg;
+                break;
+            case 's':
+                sacess_config_file = optarg;
+                break;
+            case 'o':
+                output_dir = optarg;
+                break;
             default:
-                fprintf(stderr, "Usage: %s -d <data-file>\n", argv[0]);
+                fprintf(stderr, "ERROR: Wrong arguments, do %s help to see how to use it\n", argv[0]);
                 return 1;
         }
     }
@@ -54,16 +66,20 @@ int handle_solve(int argc, char *argv[])
     // TODO: The f shouldn't be hardcoded and there should be a function called created_lotka_volterra_ode_model
     // TODO: To much hardcoded right now
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, y0, t0);
-    const TimeConstraints time_constraints =create_time_constraints(
-        NV_Ith_S(t, 1),
-        NV_Ith_S(t, t_len - 1),
-        NV_Ith_S(t, 1) - NV_Ith_S(t, 0)
-    );
-    const Tolerances tolerances =create_tolerances(
-        SUN_RCONST(1e-08),
-        (realtype[]) {SUN_RCONST(1e-08), SUN_RCONST(1e-08)},
-        ode_model
-    );
+    const TimeConstraints time_constraints =
+            create_time_constraints(NV_Ith_S(t, 1), NV_Ith_S(t, t_len - 1), NV_Ith_S(t, 1) - NV_Ith_S(t, 0));
+    const Tolerances tolerances =
+            create_tolerances(SUN_RCONST(1e-08), (realtype[]) {SUN_RCONST(1e-08), SUN_RCONST(1e-08)}, ode_model);
+
+#ifdef MPI2
+    int err = MPI_Init(&argc, &argv);
+
+    if (err != MPI_SUCCESS)
+    {
+        fprintf(stderr, "MPI_Init failed\n");
+        exit(1);
+    }
+#endif
 
     predict_parameters(t, y, ode_model, time_constraints, tolerances);
 

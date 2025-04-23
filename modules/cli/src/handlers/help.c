@@ -13,35 +13,28 @@ Handler create_help_handler()
 int handle_help(int argc, char *argv[])
 {
     const char* help_message =
-"db-sniffer v{version} - A database introspector tool (by Borja Castellano)\n"
+"cuqdyn-c v%s - A rewrite of the ... (by Borja Castellano)\n"
 "\n"
 "- [ Commands ] -\n"
 "\n"
-" Command   | Description                                         \n"
-"==========+======================================================\n"
-" sniff     | Introspects a database and outputs the results      \n"
-" version   | Displays the current version of the tool            \n"
-" help      | Displays this help message                          \n"
+" Command   | Description                                                         \n"
+"==========+======================================================================\n"
+" solve     | Solves the given problem with the given configuration and data      \n"
+" version   | Displays the current version of the tool                            \n"
+" help      | Displays this help message                                          \n"
 "\n"
-"- [ Options ] -\n"
+"- [ Solve command options ] -\n"
 "\n"
 " Options Short    | Type | Description                                                     | Example\n"
 " =================+======+================================================================+=======================\n"
-" -u               | Str  | Define the connection string to the database                    | -u mysql://user:pass@ip:port/db\n"
-" -m               | Num  | Indicates the generation mode                                   | -m 1\n"
-" -o               | Str  | Defines the output variable of the generation mode (optional)   | -o src/main/java/com/example/entities\n"
+" -c               | Str  | Path to the cuqdyn xml config file                              | -c config/cuqdyn_conf.xml\n"
+" -s               | Str  | Path to the sacess library xml config file                      | -s config/sacess_library_conf.xml\n"
+" -d               | Str  | Path to the data file (Supports text and .mat files)            | -d data/lotka_volterra.txt\n"
+" -o               | Str  | Defines the output folder for the results                       | -o output\n"
 "\n"
-"- [ Generation modes ] -\n"
-"\n"
-"  Mode | Name\n"
-" ======+======\n"
-"     0 | DDL (Not implemented)\n"
-"     1 | Hibernate HBM.XML\n"
-"     2 | Hibernate with JPA Annotations (Not implemented)\n"
-"\n"
-"Usage: sniffer [command] [options]...\n";
+"Usage: %s [command] [options]...\n";
 
 
-    printf("%s", help_message);
+    printf(help_message, "0.1.0", argv[0]);
     return 0;
 }
