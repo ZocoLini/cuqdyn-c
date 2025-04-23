@@ -6,6 +6,8 @@
 #include "handlers/handlers.h"
 #include "handlers/solve.h"
 
+#include <config.h>
+
 #include "cuqdyn.h"
 #include "functions/lotka_volterra.h"
 #include "matlab.h"
@@ -47,6 +49,32 @@ int handle_solve(int argc, char *argv[])
                 fprintf(stderr, "ERROR: Wrong arguments, do %s help to see how to use it\n", argv[0]);
                 return 1;
         }
+    }
+
+    if (cuqdyn_config_file == NULL)
+    {
+        fprintf(stderr, "ERROR: cuqdyn config file not specified. Use -c option.\n");
+        return 1;
+    }
+
+    if (output_dir == NULL) output_dir = "output";
+
+    if (data_file == NULL)
+    {
+        fprintf(stderr, "ERROR: Data file not specified. Use -d option.\n");
+        return 1;
+    }
+
+    if (sacess_config_file == NULL)
+    {
+        fprintf(stderr, "ERROR: sacess config file not specified. Use -s option.\n");
+        return 1;
+    }
+
+    if (init_cuqdyn_conf_from_file(cuqdyn_config_file) == NULL)
+    {
+        fprintf(stderr, "ERROR: Failed to read cuqdyn config file %s\n", cuqdyn_config_file);
+        return 1;
     }
 
     N_Vector t = NULL;

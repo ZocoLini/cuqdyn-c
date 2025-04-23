@@ -25,12 +25,12 @@ int handle_help(int argc, char *argv[])
 "\n"
 "- [ Solve command options ] -\n"
 "\n"
-" Options Short    | Type | Description                                                     | Example\n"
-" =================+======+================================================================+=======================\n"
-" -c               | Str  | Path to the cuqdyn xml config file                              | -c config/cuqdyn_conf.xml\n"
-" -s               | Str  | Path to the sacess library xml config file                      | -s config/sacess_library_conf.xml\n"
-" -d               | Str  | Path to the data file (Supports text and .mat files)            | -d data/lotka_volterra.txt\n"
-" -o               | Str  | Defines the output folder for the results                       | -o output\n"
+" Options Short    | Type | Description                                                     | Default value   |Example\n"
+" =================+======+================================================================+==================+=====================\n"
+" -c               | Str  | Path to the cuqdyn xml config file                              |                 |-c config/cuqdyn_conf.xml\n"
+" -s               | Str  | Path to the sacess library xml config file                      |                 |-s config/sacess_library_conf.xml\n"
+" -d               | Str  | Path to the data file (Supports text and .mat files)            |                 |-d data/lotka_volterra.txt\n"
+" -o               | Str  | Defines the output folder for the results                       | output          |-o output\n"
 "\n"
 "Usage: %s [command] [options]...\n";
 
