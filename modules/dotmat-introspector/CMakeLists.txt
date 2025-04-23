@@ -10,6 +10,7 @@ add_executable(dotmat-introspector
 )
 
 target_link_libraries(dotmat-introspector
-        PRIVATE lib
+        PRIVATE
+        cuqdyn-c
         matio
 )

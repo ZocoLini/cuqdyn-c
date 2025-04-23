@@ -8,7 +8,7 @@
 
 
 #include "data_reader.h"
-#include "lib.h"
+#include "cuqdyn.h"
 
 void test_lotka_volterra_mat();
 void test_read_data_txt();

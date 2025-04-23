@@ -3,7 +3,7 @@
 
 
 
-#include "lib.h"
+#include "cuqdyn.h"
 void test_even_vec();
 void test_odd_vec();
 

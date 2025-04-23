@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "lib.h"
+#include "cuqdyn.h"
 void test_even_matrices();
 void test_odd_matrices();
 

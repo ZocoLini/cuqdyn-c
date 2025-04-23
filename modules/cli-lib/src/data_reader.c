@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "lib.h"
+#include "cuqdyn.h"
 
 int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
 {

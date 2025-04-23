@@ -41,16 +41,16 @@ target_include_directories(sacess
 
         /opt/intel/oneapi/2025.1/include/
 
-        ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/include
-        ${PROJECT_SOURCE_DIR}/deps/libxml2/include
-        ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/include
+        ../../deps/gsl-1.14/include
+        ../../deps/libxml2/include
+        ../../deps/hdf5-1.8.12/include
 )
 
 target_link_directories(sacess
         PUBLIC
-        ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/lib
-        ${PROJECT_SOURCE_DIR}/deps/libxml2/lib
-        ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/lib
+        ../../deps/gsl-1.14/lib
+        ../../deps/libxml2/lib
+        ../../deps/hdf5-1.8.12/lib
         ${MISQP_LIBRARY_DIR}
 )
 

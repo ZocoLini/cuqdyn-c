@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sundials_old/sundials_nvector.h>
 
-#include "lib.h"
+#include "cuqdyn.h"
 
 ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, realtype t0)
 {

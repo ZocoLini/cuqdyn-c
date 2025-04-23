@@ -6,8 +6,8 @@
 #include "handlers/handlers.h"
 #include "handlers/params.h"
 
-#include "lib.h"
-#include "lotka_volterra.h"
+#include "cuqdyn.h"
+#include "functions/lotka_volterra.h"
 #include "matlab.h"
 
 int handle_params(int argc, char *argv[]);

@@ -2,7 +2,7 @@
 #include <sundials_old/sundials_nvector.h>
 
 
-#include "lib.h"
+#include "cuqdyn.h"
 
 int lotka_volterra_f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {

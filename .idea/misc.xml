@@ -10,9 +10,9 @@
       <file path="$PROJECT_DIR$/cli-lib/src" />
       <file path="$PROJECT_DIR$/cli/include" />
       <file path="$PROJECT_DIR$/cli/src" />
+      <file path="$PROJECT_DIR$/cuqdyn-c/include" />
+      <file path="$PROJECT_DIR$/cuqdyn-c/src" />
       <file path="$PROJECT_DIR$/dotmat-introspector/src" />
-      <file path="$PROJECT_DIR$/lib/include" />
-      <file path="$PROJECT_DIR$/lib/src" />
     </sourceRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/deps" />

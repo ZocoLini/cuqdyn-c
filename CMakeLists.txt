@@ -30,10 +30,11 @@ pkg_check_modules(MATIO REQUIRED matio)
 
 enable_testing()
 
-add_subdirectory(cvodes_old)
-add_subdirectory(sacess)
-add_subdirectory(cli)
-add_subdirectory(cli-lib)
-add_subdirectory(dotmat-introspector)
-add_subdirectory(lib)
+add_subdirectory(modules/cvodes_old)
+add_subdirectory(modules/sacess)
+add_subdirectory(modules/cli)
+add_subdirectory(modules/cli-lib)
+add_subdirectory(modules/dotmat-introspector)
+add_subdirectory(modules/cuqdyn-c)
+
 add_subdirectory(tests)

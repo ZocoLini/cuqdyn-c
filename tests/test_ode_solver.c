@@ -1,11 +1,11 @@
 #include <assert.h>
-#include <lib.h>
+#include <cuqdyn.h>
 #include <math.h>
 #include <nvector_old/nvector_serial.h>
 #include <stdio.h>
 #include <time.h>
 
-#include "lotka_volterra.h"
+#include "functions/lotka_volterra.h"
 #include "ode_solver.h"
 
 int basic_f(realtype t, N_Vector y, N_Vector ydot, void *user_data);

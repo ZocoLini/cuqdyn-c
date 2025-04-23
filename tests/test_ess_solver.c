@@ -9,8 +9,8 @@
 #include <tgmath.h>
 
 #include "ess_solver.h"
-#include "lib.h"
-#include "lotka_volterra.h"
+#include "cuqdyn.h"
+#include "functions/lotka_volterra.h"
 #include "method_module/structure_paralleltestbed.h"
 
 void test_example();

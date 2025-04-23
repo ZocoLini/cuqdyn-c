@@ -10,7 +10,7 @@ target_include_directories(cli-lib
 
 target_link_libraries(cli-lib
         PUBLIC
-        lib
+        cuqdyn-c
         PRIVATE
         matio
 )

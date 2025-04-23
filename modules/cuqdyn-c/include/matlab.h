@@ -1,7 +1,7 @@
 #ifndef MATLAB_H
 #define MATLAB_H
 
-#include <lib.h>
+#include <cuqdyn.h>
 
 N_Vector copy_vector_remove_indices(N_Vector, LongArray);
 DlsMat copy_matrix_remove_rows(DlsMat, LongArray);

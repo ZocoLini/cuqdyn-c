@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib.h"
+#include "cuqdyn.h"
 
 // Num_indices are the indices to be removed from the original vector.
 // Should be sorted in ascending order.

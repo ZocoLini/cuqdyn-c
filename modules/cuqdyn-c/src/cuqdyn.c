@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "cuqdyn.h"
 
 #include <nvector_old/nvector_serial.h>
 #include <stdio.h>

@@ -5,7 +5,7 @@
 #include <sundials_old/sundials_nvector.h>
 #include <tgmath.h>
 
-#include "../lib/include/lib.h"
+#include "cuqdyn.h"
 
 void test_copy_vector_remove_indices();
 // TODO: this four funs maybe test indexing first by row instead of column
