@@ -25,10 +25,10 @@
 #### File: sacess/src/input_module/input_AMIGO.c
 - Line 521: Unnecesary memory allocation
 #### File: sacess/src/input_module/input_module.c
-- Line 938: Unnecesary memory allocation
-- Line 959: Unnecesary memory allocation
-- Line 980: Unnecesary memory allocation
-- Line 1002: Unnecesary memory allocation 
+- Line 933: Unnecesary memory allocation
+- Line 954: Unnecesary memory allocation
+- Line 975: Unnecesary memory allocation
+- Line 997: Unnecesary memory allocation 
 - Line 61: Function returning after (possible) more than one allocation without freeing
 - The whole file calls extract_element_uniq(...), function that allocates memory but this memory is never freed.
 
