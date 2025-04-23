@@ -1,7 +1,8 @@
+#include <handlers/solve.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "handlers/help.h"
-#include "handlers/params.h"
 
 int main(int argc, char *argv[])
 {
@@ -22,9 +23,9 @@ int main(int argc, char *argv[])
 
     Handler handler;
 
-    if (strcmp(argv[1], "params") == 0)
+    if (strcmp(argv[1], "solve") == 0)
     {
-        handler = create_params_handler();
+        handler = create_solve_handler();
     }else
     {
         handler = create_help_handler();

@@ -4,22 +4,22 @@
 #include <unistd.h>
 
 #include "handlers/handlers.h"
-#include "handlers/params.h"
+#include "handlers/solve.h"
 
 #include "cuqdyn.h"
 #include "functions/lotka_volterra.h"
 #include "matlab.h"
 
-int handle_params(int argc, char *argv[]);
+int handle_solve(int argc, char *argv[]);
 
-Handler create_params_handler()
+Handler create_solve_handler()
 {
     Handler handler;
-    handler.handle = handle_params;
+    handler.handle = handle_solve;
     return handler;
 }
 
-int handle_params(int argc, char *argv[])
+int handle_solve(int argc, char *argv[])
 {
     int opt;
     char *data_file = NULL;
