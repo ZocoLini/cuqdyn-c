@@ -56,7 +56,7 @@ void set_cuqdyn_conf(CuqdynConf *cuqdyn_conf)
 {
     if (config != NULL)
     {
-        destroy_cuqdyn_conf(cuqdyn_conf);
+        destroy_cuqdyn_conf(config);
     }
 
     config = cuqdyn_conf;
