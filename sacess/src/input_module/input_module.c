@@ -930,7 +930,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     }
 
 //MAX DOMAIN
-    max_dom = (char *) malloc(SIZE_STRING*sizeof(char));
+    // max_dom = (char *) malloc(SIZE_STRING*sizeof(char));
     max_dom=extract_element_uniq(doc, cur, name_ub);
     if (max_dom == NULL) {
         perror(error38);
@@ -951,7 +951,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     free(max_dom);
 
 // MIN DOMAIN
-    min_dom = (char *) malloc(SIZE_STRING*sizeof(char));
+    // min_dom = (char *) malloc(SIZE_STRING*sizeof(char));
     min_dom=extract_element_uniq(doc, cur, name_lb);
     if (min_dom == NULL) {
         perror(error38);
@@ -972,7 +972,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     free(min_dom);
 // CONSTRAINTS MIN
     if (extract_element_uniq(doc, cur, cl_s) != NULL){
-    min_const = (char *) malloc(SIZE_STRING*sizeof(char));
+    // min_const = (char *) malloc(SIZE_STRING*sizeof(char));
     min_const = extract_element_uniq(doc, cur, cl_s);
     if (min_const == NULL) {
         perror(error38);
@@ -994,7 +994,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     }
 // CONSTRAINTS MAX
     if (extract_element_uniq(doc, cur, cu_s) != NULL){
-    max_const = (char *) malloc(SIZE_STRING*sizeof(char));
+    // max_const = (char *) malloc(SIZE_STRING*sizeof(char));
     max_const = extract_element_uniq(doc, cur, cu_s);
     if (max_const == NULL) {
         perror(error38);

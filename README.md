@@ -16,12 +16,21 @@
 
 ### Memory leaks
 #### File: sacess/src/method_module/evaluationinterface.c
-- Lines 134-135: Unnecesary allocation of memory
-- Line 74: Unnecesary allocation of memory
-- Line 236: Unnecesary allocation of memory
+- Lines 134-135: Unnecesary memory allocation
+- Line 74: Unnecesary memory allocation
+- Line 236: Unnecesary memory allocation
 #### File: sacess/src/method_module/common_solver_operations.c
-- Line 781: Unnecesary allocation of memory
-- Line 612: Unnecesary allocation of memory
+- Line 781: Unnecesary memory allocation
+- Line 612: Unnecesary memory allocation
+#### File: sacess/src/input_module/input_AMIGO.c
+- Line 521: Unnecesary memory allocation
+#### File: sacess/src/input_module/input_module.c
+- Line 938: Unnecesary memory allocation
+- Line 959: Unnecesary memory allocation
+- Line 980: Unnecesary memory allocation
+- Line 1002: Unnecesary memory allocation 
+- Line 61: Function returning after (possible) more than one allocation without freeing
+- The whole file calls extract_element_uniq(...), function that allocates memory but this memory is never freed.
 
 ### Obtaining the xbest values
 #### File: sacess/src/method_module_fortran/eSS/scattersearch.f90

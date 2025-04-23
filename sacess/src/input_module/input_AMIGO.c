@@ -518,7 +518,7 @@ AMIGO_problem* openMatFileAMIGO(const char* file){
 #endif
             
     H5Eset_auto( H5E_DEFAULT, NULL, NULL);
-    file2 = (char *) malloc(100*sizeof(char));
+    // file2 = (char *) malloc(100*sizeof(char));
     file2 = file;
     
     idfile = H5Fopen((const char*) file2, (unsigned) H5F_ACC_RDONLY, driver);
