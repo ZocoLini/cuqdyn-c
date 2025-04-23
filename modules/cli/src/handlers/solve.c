@@ -94,10 +94,6 @@ int handle_solve(int argc, char *argv[])
     // TODO: The f shouldn't be hardcoded and there should be a function called created_lotka_volterra_ode_model
     // TODO: To much hardcoded right now
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, y0, t0);
-    const TimeConstraints time_constraints =
-            create_time_constraints(NV_Ith_S(t, 1), NV_Ith_S(t, t_len - 1), NV_Ith_S(t, 1) - NV_Ith_S(t, 0));
-    const Tolerances tolerances =
-            create_tolerances(SUN_RCONST(1e-08), (realtype[]) {SUN_RCONST(1e-08), SUN_RCONST(1e-08)}, ode_model);
 
 #ifdef MPI2
     int err = MPI_Init(&argc, &argv);
@@ -109,7 +105,11 @@ int handle_solve(int argc, char *argv[])
     }
 #endif
 
-    predict_parameters(t, y, ode_model, time_constraints, tolerances);
+    CuqdynResult *cuqdyn_result = predict_parameters(t, y, ode_model, sacess_config_file, output_dir);
+
+    // TODO: Print the results
+
+    destroy_cuqdyn_result(cuqdyn_result);
 
     return 0;
 }

@@ -2,13 +2,33 @@
 
 #include <stdio.h>
 
-static cuqdyn_conf *config = NULL;
+static CuqdynConf *config = NULL;
 
-void parse_config_file(const char *filename, cuqdyn_conf **config);
+void parse_config_file(const char *filename, CuqdynConf **config);
 
-cuqdyn_conf* init_cuqdyn_conf_from_file(const char *filename)
+CuqdynConf* create_cuqdyn_conf(Tolerances tolerances, TimeConstraints time_constraints)
 {
-    cuqdyn_conf *tmp_config = malloc(sizeof(cuqdyn_conf));
+    CuqdynConf *cuqdyn_conf = malloc(sizeof(CuqdynConf));
+    cuqdyn_conf->tolerances = tolerances;
+    cuqdyn_conf->time_constraints = time_constraints;
+    return cuqdyn_conf;
+}
+
+void destroy_cuqdyn_conf(CuqdynConf *cuqdyn_conf)
+{
+    if (cuqdyn_conf == NULL)
+    {
+        fprintf(stderr, "WARNING: Trying to free NULL Cuqdyn pointer");
+        return;
+    }
+
+    destroy_tolerances(cuqdyn_conf->tolerances);
+    free(cuqdyn_conf);
+}
+
+CuqdynConf* init_cuqdyn_conf_from_file(const char *filename)
+{
+    CuqdynConf *tmp_config = malloc(sizeof(CuqdynConf));
     if (tmp_config == NULL)
     {
         fprintf(stderr, "ERROR: Memory allocation failed in function init_cuqdyn_conf_from_file()\n");
@@ -27,12 +47,22 @@ cuqdyn_conf* init_cuqdyn_conf_from_file(const char *filename)
     return get_cuqdyn_conf();
 }
 
-void parse_config_file(const char *filename, cuqdyn_conf **config)
+void parse_config_file(const char *filename, CuqdynConf **config)
 {
     *config = NULL;
 }
 
-cuqdyn_conf* get_cuqdyn_conf()
+void set_cuqdyn_conf(CuqdynConf *cuqdyn_conf)
+{
+    if (config != NULL)
+    {
+        destroy_cuqdyn_conf(cuqdyn_conf);
+    }
+
+    config = cuqdyn_conf;
+}
+
+CuqdynConf* get_cuqdyn_conf()
 {
     if (config == NULL)
     {
@@ -41,9 +71,4 @@ cuqdyn_conf* get_cuqdyn_conf()
     }
 
     return config;
-}
-
-void destroy_cuqdyn_conf()
-{
-    free(config);
 }

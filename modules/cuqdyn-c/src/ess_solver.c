@@ -10,7 +10,8 @@
         #include <omp.h>
 #endif
 
-double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)(double *, void *))
+// TODO: Use texp and yexp inside the objective function somehow
+double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)(double *, void *), N_Vector texp, DlsMat yexp)
 {
     int id, NPROC, error, i, NPROC_OPENMP;
     experiment_total *exptotal;
@@ -62,7 +63,7 @@ double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)
     exptotal = (experiment_total *) malloc(sizeof(experiment_total));
     init = 1;
     create_expetiment_struct(file, &exptotal[0], NPROC, id, path, init);
-    exptotal[0].test.bench.logindex[0];
+
     // INIT MESSAGE
     NPROC_OPENMP = 1;
     // INIT BENCHMARK

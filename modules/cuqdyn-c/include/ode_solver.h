@@ -1,7 +1,7 @@
 #ifndef EDO_SOLVER_H
 #define EDO_SOLVER_H
 
-#include <nvector_old/nvector_serial.h> /* access to serial N_Vector            */
+#include <nvector_old/nvector_serial.h>
 #include <sundials_old/sundials_direct.h>
 
 typedef struct
@@ -31,9 +31,9 @@ typedef struct
     N_Vector abs_tol;
 } Tolerances;
 
-Tolerances create_tolerances(realtype, realtype *, ODEModel);
+Tolerances create_tolerances(realtype rtol, N_Vector atol);
 void destroy_tolerances(Tolerances);
 
-DlsMat solve_ode(N_Vector, ODEModel, TimeConstraints, Tolerances);
+DlsMat solve_ode(N_Vector, ODEModel);
 
 #endif //EDO_SOLVER_H

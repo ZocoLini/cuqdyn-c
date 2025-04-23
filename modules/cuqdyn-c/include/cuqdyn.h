@@ -19,8 +19,6 @@
 #define Ith(v, i) NV_Ith_S(v, i - 1) /* i-th vector component i=1..n */
 #define IJth(A, i, j) SM_ELEMENT_D(A, i - 1, j - 1) /* (i,j)-th matrix component i,j=1..n */
 
-// function
-
 typedef enum
 {
     LOTKA_VOLTERRA = 0,
@@ -30,31 +28,18 @@ typedef enum
 
 typedef struct
 {
-    FunctionType function_type;
-    N_Vector lower_bounds;
-    N_Vector upper_bounds;
-    N_Vector parameters;
-} Problem;
+    DlsMat predicted_data_median;
+    N_Vector predicted_params_median;
+    DlsMat q_low;
+    DlsMat q_up;
+} CuqdynResult;
 
-Problem create_problem(FunctionType, N_Vector, N_Vector, N_Vector);
+CuqdynResult* create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median,
+    DlsMat q_low, DlsMat q_up);
+void destroy_cuqdyn_result(CuqdynResult* result);
 
-typedef struct
-{
-    int max_iterations;
-    double *log_var_index;
-    int should_save;
-    char solver[5];
-} Options;
-
-Options create_options(int, double *, int, char[5]);
-
-typedef struct
-{
-    N_Vector best;
-} Results;
-
-Results ess_solver(Problem, Options, N_Vector, DlsMat);
-void predict_parameters(N_Vector, DlsMat, ODEModel, TimeConstraints, Tolerances);
+CuqdynResult *predict_parameters(N_Vector times, DlsMat data, ODEModel, const char *sacess_conf_file,
+                                 const char *output_file);
 
 typedef struct
 {

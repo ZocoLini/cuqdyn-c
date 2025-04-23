@@ -4,6 +4,8 @@
 #define OUPUT_PATH "data/ess_output"
 
 #include <assert.h>
+#include <config.h>
+#include <cuqdyn.h>
 #include <functions/lotka_volterra.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +76,10 @@ void test_example()
     // I don't know the real values, these are the returned values the test returned for the first time
     realtype expected[10] = {422, 422, 422, 422, 422, 422, 422, 422, 422, 422};
 
-    realtype *xbest = execute_ess_solver(EXAMPLE_CONF_FILE, OUPUT_PATH, examplefunction);
+    N_Vector texp = N_VNew_Serial(0, get_sun_context());
+    DlsMat yexp = SUNDenseMatrix(0, 0, get_sun_context());
+
+    realtype *xbest = execute_ess_solver(EXAMPLE_CONF_FILE, OUPUT_PATH, examplefunction, texp, yexp);
 
     for (int i = 0; i < 10; ++i)
     {
@@ -84,9 +89,22 @@ void test_example()
 
 void lotka_volterra_ess()
 {
+    realtype *abs_tol = (realtype[]){1.0e-8, 1.0e-8};
+    N_Vector abs_tol_vec = N_VNew_Serial(2, get_sun_context());
+    N_VSetArrayPointer(abs_tol, abs_tol_vec);
+
+    const TimeConstraints time_constraints = create_time_constraints(1.0, 30.0, 1.0);
+    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), abs_tol_vec);
+    CuqdynConf *cuqdyn_conf = create_cuqdyn_conf(tolerances, time_constraints);
+
+    set_cuqdyn_conf(cuqdyn_conf);
+
     realtype expected[4] = { 0.5, 0.02, 0.5, 0.02 };
 
-    realtype *xbest = execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f);
+    N_Vector texp = N_VNew_Serial(0, get_sun_context());
+    DlsMat yexp = SUNDenseMatrix(0, 0, get_sun_context());
+
+    realtype *xbest = execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f, texp, yexp);
 
     for (int i = 0; i < 4; ++i)
     {

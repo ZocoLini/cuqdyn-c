@@ -78,10 +78,8 @@ void* lotka_volterra_obj_f(double *x, void *data)
     const realtype t0 = 0.0;
 
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
-    const TimeConstraints time_constraints = create_time_constraints(1.0, 30.0, 1.0);
-    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), (realtype[]){1.0e-8, 1.0e-8}, ode_model);
 
-    DlsMat result = solve_ode(parameters, ode_model, time_constraints, tolerances);
+    DlsMat result = solve_ode(parameters, ode_model);
 
     // Objective function code:
     realtype J = 0.0;

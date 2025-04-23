@@ -1,5 +1,7 @@
 #include "cuqdyn.h"
 
+#include <ess_solver.h>
+#include <functions/lotka_volterra.h>
 #include <nvector_old/nvector_serial.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,34 +11,27 @@
 #include "matlab.h"
 #include "ode_solver.h"
 
-Problem create_problem(FunctionType function_type, N_Vector lower_bounds, N_Vector upper_bounds, N_Vector parameters)
+CuqdynResult* create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median,
+    DlsMat q_low, DlsMat q_up)
 {
-    Problem problem;
-    problem.function_type = function_type;
-    problem.lower_bounds = lower_bounds;
-    problem.upper_bounds = upper_bounds;
-    problem.parameters = parameters;
-    return problem;
+    CuqdynResult *cuqdyn_result = malloc(sizeof(CuqdynResult));
+    cuqdyn_result->predicted_data_median = predicted_data_median;
+    cuqdyn_result->predicted_params_median = predicted_params_median;
+    cuqdyn_result->q_low = q_low;
+    cuqdyn_result->q_up = q_up;
+    return cuqdyn_result;
+}
+void destroy_cuqdyn_result(CuqdynResult* result)
+{
+    SUNMatDestroy(result->predicted_data_median);
+    SUNMatDestroy(result->q_low);
+    SUNMatDestroy(result->q_up);
+
+    N_VDestroy(result->predicted_params_median);
+    free(result);
 }
 
-Options create_options(const int max_iterations, double *log_var_index, const int should_save, char solver[5])
-{
-    Options options;
-    options.max_iterations = max_iterations;
-    options.log_var_index = log_var_index;
-    options.should_save = should_save;
-    strcpy(options.solver, solver);
-    return options;
-}
-
-Results ess_solver(Problem problem, Options options, N_Vector t, DlsMat x)
-{
-    // TODO: Calls MEIGO in the MATLAB code --> MEIGO(problem,opts,'ESS',texp,yexp);
-    // execute_Solver(NULL, NULL, 0, NULL);
-}
-
-void predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, TimeConstraints time_constraints,
-                        Tolerances tolerances)
+CuqdynResult* predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, const char* sacess_conf_file, const char* output_file)
 {
     long data_rows = SM_ROWS_D(data);
     long times_len = NV_LENGTH_S(times);
@@ -45,7 +40,7 @@ void predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, TimeCon
     long observed_data_cols = SM_COLUMNS_D(data);
     long data_cols = SM_COLUMNS_D(data);
 
-    DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long*){0}, 1));
+    DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long*){1}, 1));
 
     if (times_len != data_rows)
     {
@@ -64,15 +59,9 @@ void predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, TimeCon
      * results of intermediate iterations in eSS_report.mat
      */
 
-    // TODO: This doen't work yet
-    Problem problem = create_problem(LOTKA_VOLTERRA, NULL, NULL, NULL);
-    const Options options = create_options(3000, NULL, 0, "nl2sol");
-
     // TODO: Ask if ignoring the first predicted params is what we want
-    Results results = ess_solver(problem, options, times, data);
-    N_Vector parameters_init = results.best; // Optimal parameters
-    problem.parameters = parameters_init;
     // The original code solves the ode using this params but the result is not used again
+    double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f, times, data);
 
     DlsMat resid_loo = SUNDenseMatrix(data_rows, observed_data_cols, get_sun_context());
     MatrixArray predicted_data_matrix = create_matrix_array(data_rows);
@@ -86,12 +75,12 @@ void predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, TimeCon
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(data, indices_to_remove);
 
-        results = ess_solver(problem, options, texp, yexp);
+        double *pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f, texp, yexp);
+        N_Vector predicted_params = N_VNew_Serial(data_rows - 1, get_sun_context()); // TODO: Free this memory
+        N_VSetArrayPointer(pred_params, predicted_params);
 
-        N_VDestroy_Serial(texp);
+        N_VDestroy(texp);
         SUNMatDestroy(yexp);
-
-        N_Vector predicted_params = results.best; // TODO: Free this memory
 
         // Saving the predicted params obtained
         // This are
@@ -99,8 +88,8 @@ void predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, TimeCon
 
         // Maybe this data is not needed once is proved that this way of predicting params works fine
         // Saving the ode solution data obtained with the predicted params
-        DlsMat ode_solution = solve_ode(predicted_params, ode_model, time_constraints, tolerances);
-        DlsMat predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1}, 1));
+        DlsMat ode_solution = solve_ode(predicted_params, ode_model);
+        DlsMat predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1L}, 1));
 
         SUNMatDestroy(ode_solution);
 
@@ -157,6 +146,9 @@ void predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, TimeCon
     }
 
     destroy_matrix_array(predicted_data_matrix); // This frees the matrix array and all the matrices inside
+
+    CuqdynResult *cuqdyn_result = create_cuqdyn_result(predicted_data_median, predicted_params_median, q_low, q_up);
+    return cuqdyn_result;
 }
 
 LongArray create_array(long *data, const long len)

@@ -1,6 +1,7 @@
+#include <config.h>
 #include <cvodes_old/cvodes.h>
 #include <ode_solver.h>
-#include <stdlib.h>
+#include <string.h>
 #include <sundials_old/sundials_nvector.h>
 
 #include "cuqdyn.h"
@@ -34,15 +35,11 @@ int time_constraints_steps(TimeConstraints constraints)
     return (constraints.tf - constraints.first_output_time) / constraints.tinc;
 }
 
-Tolerances create_tolerances(realtype scalar_rtol, realtype * atol, ODEModel ode_model)
+Tolerances create_tolerances(realtype scalar_rtol, N_Vector atol)
 {
     Tolerances tolerances;
     tolerances.scalar_rtol = scalar_rtol;
-
-    N_Vector atol_vec = N_VNew_Serial(ode_model.number_eq, get_sun_context());
-    N_VSetArrayPointer(atol, atol_vec);
-
-    tolerances.abs_tol = atol_vec;
+    tolerances.abs_tol = atol;
     return tolerances;
 }
 
@@ -67,8 +64,12 @@ static int check_retval(void *, const char *, int);
  *   - Columns 1-n: Solution components (y1, y2, ..., yn)
  *
  */
-DlsMat solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_constraints, Tolerances tolerances)
+DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
 {
+    CuqdynConf *cuqdyn_conf = get_cuqdyn_conf();
+    Tolerances tolerances = cuqdyn_conf->tolerances;
+    TimeConstraints time_constraints = cuqdyn_conf->time_constraints;
+
     int retval;
     void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
     if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
@@ -76,7 +77,11 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model, TimeConstraints time_c
     retval = CVodeInit(cvode_mem, ode_model.f, ode_model.t0, ode_model.initial_values);
     if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
 
-    retval = CVodeSVtolerances(cvode_mem, tolerances.scalar_rtol, tolerances.abs_tol);
+    N_Vector cloned_abs_tol = N_VNew_Serial(ode_model.number_eq, get_sun_context());
+    memcpy(N_VGetArrayPointer(cloned_abs_tol), N_VGetArrayPointer(tolerances.abs_tol), ode_model.number_eq * sizeof(realtype));
+
+    // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
+    retval = CVodeSVtolerances(cvode_mem, tolerances.scalar_rtol, cloned_abs_tol);
     if (check_retval(&retval, "CVodeSVtolerances", 1)) { return NULL; }
 
     retval = CVodeSetUserData(cvode_mem, parameters);
