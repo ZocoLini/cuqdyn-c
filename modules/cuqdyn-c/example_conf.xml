@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<cuqdyn>
+    <config>
+        <tolerances>
+            <relative-tolerance>1e-6</relative-tolerance>
+            <abs-tolerances>1e-6, 1e-6</abs-tolerances>
+        </tolerances>
+        <time-constraints>
+            <start-time>0.0</start-time>
+            <end-time>30.0</end-time>
+            <increment>1.0</increment>
+        </time-constraints>
+    </config>
+</cuqdyn>
