@@ -2299,7 +2299,7 @@ void updateresultsess_(void *exp1_, void *result_, double *totaltime, long *eval
     long fails;
     exp1 = (experiment_total *) exp1_;
 
-    sleep(2);
+    // sleep(2);
     st3 = 0.0;
     idp = exp1->execution.idp;
     NPROC = exp1->execution.NPROC;

@@ -35,3 +35,5 @@
 ### Obtaining the xbest values
 #### File: sacess/src/output/output.c
 - Line 2312: Added result->bestx_value[i] = xbest[i]; to return the xbest values that are printed
+
+- Line 2302: Unnecesary sleep before printing results (?)
