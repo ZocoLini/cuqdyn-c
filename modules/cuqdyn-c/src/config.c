@@ -14,16 +14,18 @@ CuqdynConf* create_cuqdyn_conf(Tolerances tolerances, TimeConstraints time_const
     return cuqdyn_conf;
 }
 
-void destroy_cuqdyn_conf(CuqdynConf *cuqdyn_conf)
+void destroy_cuqdyn_conf()
 {
-    if (cuqdyn_conf == NULL)
+    if (config == NULL)
     {
         fprintf(stderr, "WARNING: Trying to free NULL Cuqdyn pointer");
         return;
     }
 
-    destroy_tolerances(cuqdyn_conf->tolerances);
-    free(cuqdyn_conf);
+    // TODO: This frees causes a double free error somehow
+    // destroy_tolerances(config->tolerances);
+    // free(config);
+    config = NULL;
 }
 
 CuqdynConf* init_cuqdyn_conf_from_file(const char *filename)
@@ -44,7 +46,7 @@ CuqdynConf* init_cuqdyn_conf_from_file(const char *filename)
     }
 
     config = tmp_config;
-    return get_cuqdyn_conf();
+    return config;
 }
 
 void parse_config_file(const char *filename, CuqdynConf **config)
@@ -52,14 +54,15 @@ void parse_config_file(const char *filename, CuqdynConf **config)
     *config = NULL;
 }
 
-void set_cuqdyn_conf(CuqdynConf *cuqdyn_conf)
+CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, TimeConstraints time_constraints)
 {
     if (config != NULL)
     {
         destroy_cuqdyn_conf(config);
     }
 
-    config = cuqdyn_conf;
+    config = create_cuqdyn_conf(tolerances, time_constraints);
+    return config;
 }
 
 CuqdynConf* get_cuqdyn_conf()

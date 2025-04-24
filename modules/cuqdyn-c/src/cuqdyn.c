@@ -40,12 +40,12 @@ CuqdynResult* predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model
     long observed_data_cols = SM_COLUMNS_D(data);
     long data_cols = SM_COLUMNS_D(data);
 
-    DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long*){1}, 1));
+    DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long[]){1L}, 1));
 
     if (times_len != data_rows)
     {
         printf("ERROR: The number of rows in the observed data matrix must match the length of the times vector.\n");
-        return;
+        return NULL;
     }
 
     /*

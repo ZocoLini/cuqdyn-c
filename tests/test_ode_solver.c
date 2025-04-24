@@ -28,15 +28,12 @@ int main(void)
 
 void test_basic_ode()
 {
-    realtype *abs_tol = (realtype[]){1.0e-12};
     N_Vector abs_tol_vec = N_VNew_Serial(1, get_sun_context());
-    N_VSetArrayPointer(abs_tol, abs_tol_vec);
+    N_VGetArrayPointer(abs_tol_vec)[0] = 1.0e-12;
 
     const TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
     const Tolerances tolerances = create_tolerances(1.0e-12, abs_tol_vec);
-
-    CuqdynConf *cuqdyn_conf = create_cuqdyn_conf(tolerances, time_constraints);
-    set_cuqdyn_conf(cuqdyn_conf);
+    init_cuqdyn_conf(tolerances, time_constraints);
 
     N_Vector parameters = N_VNew_Serial(1, get_sun_context());
     NV_Ith_S(parameters, 0) = 3.0;
@@ -63,7 +60,7 @@ void test_basic_ode()
     assert(fabs(SM_ELEMENT_D(result, 6, 1) - 194.672) < 0.0001);
     assert(fabs(SM_ELEMENT_D(result, 9, 1) - 235.298) < 0.0001);
 
-    destroy_cuqdyn_conf(get_cuqdyn_conf());
+    destroy_cuqdyn_conf();
     SUNMatDestroy(result);
     N_VDestroy(parameters);
     destroy_ode_model(ode_model);
@@ -87,8 +84,7 @@ void test_lotka_volterra()
     const TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
     const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-12), abs_tol_vec);
 
-    CuqdynConf *cuqdyn_conf = create_cuqdyn_conf(tolerances, time_constraints);
-    set_cuqdyn_conf(cuqdyn_conf);
+    init_cuqdyn_conf(tolerances, time_constraints);
 
     N_Vector parameters = N_VNew_Serial(4, get_sun_context());
     NV_Ith_S(parameters, 0) = 0.5;
@@ -119,7 +115,7 @@ void test_lotka_volterra()
     assert(fabs(SM_ELEMENT_D(result, 6, 1) - 53.79) < 0.01);
     assert(fabs(SM_ELEMENT_D(result, 6, 2) - 5.456) < 0.001);
 
-    destroy_cuqdyn_conf(get_cuqdyn_conf());
+    destroy_cuqdyn_conf();
     SUNMatDestroy(result);
     N_VDestroy(parameters);
     destroy_ode_model(ode_model);

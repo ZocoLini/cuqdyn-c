@@ -95,9 +95,7 @@ void lotka_volterra_ess()
 
     const TimeConstraints time_constraints = create_time_constraints(1.0, 30.0, 1.0);
     const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), abs_tol_vec);
-    CuqdynConf *cuqdyn_conf = create_cuqdyn_conf(tolerances, time_constraints);
-
-    set_cuqdyn_conf(cuqdyn_conf);
+    init_cuqdyn_conf(tolerances, time_constraints);
 
     realtype expected[4] = { 0.5, 0.02, 0.5, 0.02 };
 
