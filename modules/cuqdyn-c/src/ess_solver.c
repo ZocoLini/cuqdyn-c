@@ -11,7 +11,7 @@
 #endif
 
 // TODO: Use texp and yexp inside the objective function somehow
-double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)(double *, void *), N_Vector texp, DlsMat yexp)
+double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)(double *, void *))
 {
     int id, NPROC, error, i, NPROC_OPENMP;
     experiment_total *exptotal;
@@ -78,12 +78,11 @@ double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     execute_Solver(exptotal, &result, obj_func);
-
-    return result.bestx_value;
-
     destroyexp(exptotal);
 
 #ifdef MPI2
     MPI_Finalize();
 #endif
+
+    return result.bestx_value;
 }

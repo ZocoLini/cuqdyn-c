@@ -58,7 +58,7 @@ CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, TimeConstraints time_constra
 {
     if (config != NULL)
     {
-        destroy_cuqdyn_conf(config);
+        destroy_cuqdyn_conf();
     }
 
     config = create_cuqdyn_conf(tolerances, time_constraints);

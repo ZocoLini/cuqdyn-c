@@ -61,7 +61,8 @@ CuqdynResult* predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model
 
     // TODO: Ask if ignoring the first predicted params is what we want
     // The original code solves the ode using this params but the result is not used again
-    double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f, times, data);
+    set_lotka_volterra_data(times, data);
+    double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f);
 
     DlsMat resid_loo = SUNDenseMatrix(data_rows, observed_data_cols, get_sun_context());
     MatrixArray predicted_data_matrix = create_matrix_array(data_rows);
@@ -75,7 +76,9 @@ CuqdynResult* predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(data, indices_to_remove);
 
-        double *pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f, texp, yexp);
+        set_lotka_volterra_data(texp, yexp);
+
+        double *pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f);
         N_Vector predicted_params = N_VNew_Serial(data_rows - 1, get_sun_context()); // TODO: Free this memory
         N_VSetArrayPointer(pred_params, predicted_params);
 

@@ -1,5 +1,8 @@
-#include <sundials_old/sundials_nvector.h>
+#include <functions/lotka_volterra.h>
 #include <method_module/structure_paralleltestbed.h>
+#include <sundials_old/sundials_nvector.h>
+#include <nvector_old/nvector_serial.h>
+#include <sundials_old/sundials_direct.h>
 
 #include "cuqdyn.h"
 
@@ -18,6 +21,33 @@ int lotka_volterra_f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     return (0);
 }
 
+// TODO: This is a temporal fix. experiment_total should contain this variables
+static N_Vector lotka_volterra_texp = NULL;
+static DlsMat lotka_volterra_yexp = NULL;
+
+void set_lotka_volterra_data(N_Vector texp, DlsMat yexp)
+{
+    destroy_lotka_volterra_data();
+
+    lotka_volterra_texp = texp;
+    lotka_volterra_yexp = yexp;
+}
+
+void destroy_lotka_volterra_data()
+{
+    if (lotka_volterra_texp != NULL)
+    {
+        N_VDestroy(lotka_volterra_texp);
+        lotka_volterra_texp = NULL;
+    }
+
+    if (lotka_volterra_yexp != NULL)
+    {
+        DestroyMat(lotka_volterra_yexp);
+        lotka_volterra_yexp = NULL;
+    }
+}
+
 /*
 * function [J,g,R]=prob_mod_lv(x,texp,yexp)
 * [tout,yout] = ode15s(@prob_mod_dynamics_lv,texp,[10,5],odeset('RelTol',1e-6,'AbsTol',1e-6*ones(1,2)),x);
@@ -30,48 +60,6 @@ int lotka_volterra_f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 void* lotka_volterra_obj_f(double *x, void *data)
 {
     output_function *res = calloc(1, sizeof(output_function));
-
-    // Defining yexp:
-    DlsMat yexp = SUNDenseMatrix(30, 2, get_sun_context());
-
-    realtype yexp_data[30][2] = {
-        {16.4161, 2.14078},
-        {26.9327, 6.95752},
-        {36.199, 3.05692},
-        {53.5232, 8.01177},
-        {75.279, 12.5015},
-        {78.8885, 39.1838},
-        {37.4748, 78.3761},
-        {10.2444, 80.1333},
-        {2.91173, 58.1003},
-        {4.31927, 34.5728},
-        {5.77477, 22.452},
-        {3.02048, 15.9231},
-        {6.87234, 12.3715},
-        {7.02391, 8.00952},
-        {11.5876, 3.70516},
-        {11.6953, 5.03891},
-        {24.0456, 1.8209},
-        {34.2654, 2.18679},
-        {54.8232, 5.018},
-        {74.3034, 9.68863},
-        {83.3479, 37.7167},
-        {45.6403, 78.4525},
-        {10.0775, 80.2856},
-        {6.10055, 57.703},
-        {6.33843, 39.9109},
-        {5.36425, 22.9151},
-        {2.84835, 15.7364},
-        {9.82992, 12.7098},
-        {8.26545, 2.91747},
-        {7.38187, 6.32052}
-    };
-
-    for (int i = 0; i < 30; ++i) {
-        for (int j = 0; j < 2; ++j) {
-            SM_ELEMENT_D(yexp, i, j) = yexp_data[i][j];
-        }
-    }
 
     // Solving the ODE to use in the objetive function
     N_Vector initial_values = N_VNew_Serial(2, get_sun_context());
@@ -97,7 +85,7 @@ void* lotka_volterra_obj_f(double *x, void *data)
 
     for (long int i = 0; i < rows; ++i) {
         for (long int j = 1; j < cols; ++j) {
-            realtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(yexp, i, j - 1);
+            realtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(lotka_volterra_yexp, i, j - 1);
             J += diff * diff;
         }
     }
@@ -105,10 +93,7 @@ void* lotka_volterra_obj_f(double *x, void *data)
     // Free resources
     N_VDestroy(parameters);
     destroy_ode_model(ode_model);
-    // The vector inside tolerances is beeing destroyed by the solve_ode_function when it frees CVode
-    // destroy_tolerances(tolerances);
     SUNMatDestroy(result);
-    SUNMatDestroy(yexp);
 
     res->value = J;
 
