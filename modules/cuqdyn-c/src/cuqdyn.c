@@ -1,5 +1,6 @@
 #include "cuqdyn.h"
 
+#include <data_reader.h>
 #include <ess_solver.h>
 #include <functions/lotka_volterra.h>
 #include <nvector_old/nvector_serial.h>
@@ -11,8 +12,79 @@
 #include "matlab.h"
 #include "ode_solver.h"
 
-CuqdynResult* create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median,
-    DlsMat q_low, DlsMat q_up)
+FunctionType create_function_type(int function_type)
+{
+    FunctionType out;
+
+    switch (function_type)
+    {
+        case 0:
+            out = LOTKA_VOLTERRA;
+            break;
+        case 1:
+            out = ALPHA_PINENE;
+            break;
+        case 2:
+            out = LOGISTIC;
+            break;
+        case 3:
+            out = CUSTOM;
+            break;
+        default:
+            out = NONE;
+    }
+
+    return out;
+}
+
+OdeModelFun obtain_function_type_f(const FunctionType function_type)
+{
+    OdeModelFun out = NULL;
+
+    switch (function_type)
+    {
+        case LOTKA_VOLTERRA:
+            out = lotka_volterra_f;
+            break;
+        case ALPHA_PINENE:
+        case LOGISTIC:
+        case CUSTOM:
+            fprintf(stderr, "Not yet implemented");
+            exit(1);
+            break;
+        default:
+            fprintf(stderr, "Unsupported function type");
+            exit(1);
+    }
+
+    return out;
+}
+
+ObjFunc obtain_function_type_obj_f(const FunctionType function_type)
+{
+    ObjFunc out = NULL;
+
+    switch (function_type)
+    {
+        case LOTKA_VOLTERRA:
+            out = lotka_volterra_obj_f;
+            break;
+        case ALPHA_PINENE:
+        case LOGISTIC:
+        case CUSTOM:
+            fprintf(stderr, "Not yet implemented");
+            exit(1);
+            break;
+        default:
+            fprintf(stderr, "Unsupported function type");
+            exit(1);
+    }
+
+    return out;
+}
+
+CuqdynResult *create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median, DlsMat q_low,
+                                   DlsMat q_up)
 {
     CuqdynResult *cuqdyn_result = malloc(sizeof(CuqdynResult));
     cuqdyn_result->predicted_data_median = predicted_data_median;
@@ -21,7 +93,7 @@ CuqdynResult* create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predic
     cuqdyn_result->q_up = q_up;
     return cuqdyn_result;
 }
-void destroy_cuqdyn_result(CuqdynResult* result)
+void destroy_cuqdyn_result(CuqdynResult *result)
 {
     SUNMatDestroy(result->predicted_data_median);
     SUNMatDestroy(result->q_low);
@@ -31,16 +103,34 @@ void destroy_cuqdyn_result(CuqdynResult* result)
     free(result);
 }
 
-CuqdynResult* predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model, const char* sacess_conf_file, const char* output_file)
+CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, const char *sacess_conf_file,
+                          const char *output_file)
 {
-    long data_rows = SM_ROWS_D(data);
-    long times_len = NV_LENGTH_S(times);
+    N_Vector times = NULL;
+    DlsMat data = NULL;
 
-    long observed_data_rows = data_rows - 1; // The first row is the initial condition
-    long observed_data_cols = SM_COLUMNS_D(data);
-    long data_cols = SM_COLUMNS_D(data);
+    if (read_txt_data_file(data_file, &times, &data) != 0 && read_mat_data_file(data_file, &times, &data) != 0)
+    {
+        fprintf(stderr, "Error reading data file: %s\n", data_file);
+        exit(1);
+    }
 
-    DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long[]){1L}, 1));
+    const realtype t0 = NV_Ith_S(times, 0);
+    N_Vector y0 = copy_matrix_row(data, 0, 0, SM_COLUMNS_D(data));
+
+    OdeModelFun ode_model_fun = obtain_function_type_f(function_type);
+    ObjFunc obj_func = obtain_function_type_obj_f(function_type);
+
+    const ODEModel ode_model = create_ode_model(2, ode_model_fun, y0, t0);
+
+    const long data_rows = SM_ROWS_D(data);
+    const long times_len = NV_LENGTH_S(times);
+
+    const long observed_data_rows = data_rows - 1; // The first row is the initial condition
+    const long observed_data_cols = SM_COLUMNS_D(data);
+    const long data_cols = SM_COLUMNS_D(data);
+
+    DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long[]) {1L}, 1));
 
     if (times_len != data_rows)
     {
@@ -55,14 +145,15 @@ CuqdynResult* predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model
      * problem.x_0=[0.3, 0.3, 0.3, 0.3]; % Initial points
      * opts.maxeval=3e3; % Maximum number of function evaluations (default 1000)
      * opts.log_var=[1:4]; % Indexes of the variables which will be analyzed using a logarithmic distribution instead of
-     * an uniform one opts.local.solver='nl2sol'; % Local solver to perform the local search opts.inter_save=1; %  Saves
-     * results of intermediate iterations in eSS_report.mat
+     * an uniform one
+     * opts.local.solver='nl2sol'; % Local solver to perform the local search
+     * opts.inter_save=1; % Saves results of intermediate iterations in eSS_report.mat
      */
 
     // TODO: Ask if ignoring the first predicted params is what we want
     // The original code solves the ode using this params but the result is not used again
     set_lotka_volterra_data(times, data);
-    double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f);
+    double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
 
     DlsMat resid_loo = SUNDenseMatrix(data_rows, observed_data_cols, get_sun_context());
     MatrixArray predicted_data_matrix = create_matrix_array(data_rows);
@@ -78,7 +169,7 @@ CuqdynResult* predict_parameters(N_Vector times, DlsMat data, ODEModel ode_model
 
         set_lotka_volterra_data(texp, yexp);
 
-        double *pred_params = execute_ess_solver(sacess_conf_file, output_file, lotka_volterra_obj_f);
+        double *pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
         N_Vector predicted_params = N_VNew_Serial(data_rows - 1, get_sun_context()); // TODO: Free this memory
         N_VSetArrayPointer(pred_params, predicted_params);
 
@@ -214,11 +305,13 @@ void matrix_array_set_index(MatrixArray array, long i, DlsMat matrix)
 
 int compare_realtype(const void *a, const void *b)
 {
-    double x = *(realtype *)a;
-    double y = *(realtype *)b;
+    double x = *(realtype *) a;
+    double y = *(realtype *) b;
 
-    if (x < y) return -1;
-    if (x > y) return 1;
+    if (x < y)
+        return -1;
+    if (x > y)
+        return 1;
     return 0;
 }
 

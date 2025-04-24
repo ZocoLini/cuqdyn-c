@@ -11,4 +11,5 @@ target_include_directories(cuqdyn-c
 
 target_link_libraries(cuqdyn-c
         sacess
+        matio
 )

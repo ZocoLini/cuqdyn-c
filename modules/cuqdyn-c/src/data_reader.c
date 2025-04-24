@@ -2,11 +2,18 @@
 #include <nvector_old/nvector_serial.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
-#include "cuqdyn.h"
+#include "../include/cuqdyn.h"
 
 int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
 {
+    const char *ext = strrchr(data_file, '.'); // Busca el último punto
+    if (ext && strcmp(ext, ".txt") != 0)
+    {
+        return 1;
+    }
+
     FILE *f = fopen(data_file, "r");
     if (f == NULL)
     {

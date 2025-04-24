@@ -42,7 +42,6 @@ enable_testing()
 add_subdirectory(modules/cvodes_old)
 add_subdirectory(modules/sacess)
 add_subdirectory(modules/cli)
-add_subdirectory(modules/cli-lib)
 add_subdirectory(modules/dotmat-introspector)
 add_subdirectory(modules/cuqdyn-c)
 

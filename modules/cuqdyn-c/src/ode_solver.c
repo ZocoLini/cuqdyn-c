@@ -6,7 +6,7 @@
 
 #include "cuqdyn.h"
 
-ODEModel create_ode_model(int number_eq, void *f, N_Vector initial_values, realtype t0)
+ODEModel create_ode_model(int number_eq, OdeModelFun f, N_Vector initial_values, realtype t0)
 {
     ODEModel ode_model;
     ode_model.f = f;

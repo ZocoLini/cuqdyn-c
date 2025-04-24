@@ -26,13 +26,23 @@ int handle_help(int argc, char *argv[])
 "- [ Solve command options ] -\n"
 "\n"
 " Options Short    | Type | Description                                                     | Default value   |Example\n"
-" =================+======+================================================================+==================+=====================\n"
+" =================+======+=================================================================+=================+=====================================\n"
 " -c               | Str  | Path to the cuqdyn xml config file                              |                 |-c config/cuqdyn_conf.xml\n"
 " -s               | Str  | Path to the sacess library xml config file                      |                 |-s config/sacess_library_conf.xml\n"
 " -d               | Str  | Path to the data file (Supports text and .mat files)            |                 |-d data/lotka_volterra.txt\n"
 " -o               | Str  | Defines the output folder for the results                       | output          |-o output\n"
+" -f               | Int  | ODE model to use                                                |                 |-f 0\n"
 "\n"
-"Usage: %s [command] [options]...\n";
+"- [ ODE model values ] -\n"
+"\n"
+" Value    | Description \n"
+" =========+====================================================================\n"
+" 0        | Lotka Volterra ODE model (Not yet implemented)\n"
+" 1        | Alpha Pinene ODE model (Not yet implemented)\n"
+" 2        | Logistic ODE model (Not yet implemented)\n"
+" 3        | Curstom ODE model (Not yet implemented)\n"
+"\n"
+"Usage: %s <command> [options]...\n";
 
 
     printf(help_message, "0.1.0", argv[0]);

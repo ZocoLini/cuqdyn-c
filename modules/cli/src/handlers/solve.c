@@ -7,6 +7,7 @@
 #include "handlers/solve.h"
 
 #include <config.h>
+#include <stdlib.h>
 
 #include "cuqdyn.h"
 #include "functions/lotka_volterra.h"
@@ -28,6 +29,7 @@ int handle_solve(int argc, char *argv[])
     char *cuqdyn_config_file = NULL;
     char *sacess_config_file = NULL;
     char *output_dir = NULL;
+    FunctionType function_type = NONE;
 
     while ((opt = getopt(argc, argv, "d:")) != -1)
     {
@@ -45,6 +47,10 @@ int handle_solve(int argc, char *argv[])
             case 'o':
                 output_dir = optarg;
                 break;
+            case 'f':
+                int function_type_int = atoi(optarg);
+                function_type = create_function_type(function_type_int);
+                break;
             default:
                 fprintf(stderr, "ERROR: Wrong arguments, do %s help to see how to use it\n", argv[0]);
                 return 1;
@@ -57,7 +63,8 @@ int handle_solve(int argc, char *argv[])
         return 1;
     }
 
-    if (output_dir == NULL) output_dir = "output";
+    if (output_dir == NULL)
+        output_dir = "output";
 
     if (data_file == NULL)
     {
@@ -77,24 +84,6 @@ int handle_solve(int argc, char *argv[])
         return 1;
     }
 
-    N_Vector t = NULL;
-    DlsMat y = NULL;
-
-    if (read_txt_data_file(data_file, &t, &y) != 0 && read_mat_data_file(data_file, &t, &y) != 0)
-    {
-        fprintf(stderr, "Error reading data file: %s\n", data_file);
-        return 1;
-    }
-
-    const realtype t0 = NV_Ith_S(t, 0);
-    N_Vector y0 = copy_matrix_row(y, 0, 0, SM_COLUMNS_D(y));
-
-    const long t_len = NV_LENGTH_S(t);
-
-    // TODO: The f shouldn't be hardcoded and there should be a function called created_lotka_volterra_ode_model
-    // TODO: To much hardcoded right now
-    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, y0, t0);
-
 #ifdef MPI2
     int err = MPI_Init(&argc, &argv);
 
@@ -105,7 +94,7 @@ int handle_solve(int argc, char *argv[])
     }
 #endif
 
-    CuqdynResult *cuqdyn_result = predict_parameters(t, y, ode_model, sacess_config_file, output_dir);
+    CuqdynResult *cuqdyn_result = cuqdyn_algo(function_type, data_file, sacess_config_file, output_dir);
 
     // TODO: Print the results
 

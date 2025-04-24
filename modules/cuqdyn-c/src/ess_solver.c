@@ -1,3 +1,4 @@
+#include <functions/functions.h>
 #include <stdlib.h>
 
 #include <method_module/structure_paralleltestbed.h>
@@ -11,7 +12,7 @@
 #endif
 
 // TODO: Use texp and yexp inside the objective function somehow
-double* execute_ess_solver(const char *file, const char *path, void *(*obj_func)(double *, void *))
+double* execute_ess_solver(const char *file, const char *path, ObjFunc obj_func)
 {
     int id, NPROC, error, i, NPROC_OPENMP;
     experiment_total *exptotal;

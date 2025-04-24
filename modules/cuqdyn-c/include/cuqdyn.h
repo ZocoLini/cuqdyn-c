@@ -1,10 +1,10 @@
-#ifndef LIB_H
-#define LIB_H
+#ifndef CUQDYN_H
+#define CUQDYN_H
 
-#include <stdlib.h>
 #include <sundials_old/sundials_nvector.h>
 
 #include "ode_solver.h"
+#include "functions/functions.h"
 
 #define SM_ROWS_D(mat) mat->M
 #define SM_COLUMNS_D(mat) mat->N
@@ -21,10 +21,16 @@
 
 typedef enum
 {
+    NONE = -1,
     LOTKA_VOLTERRA = 0,
     ALPHA_PINENE = 1,
-    LOGISTIC = 2
+    LOGISTIC = 2,
+    CUSTOM = 3,
 } FunctionType;
+
+FunctionType create_function_type(int function_type);
+OdeModelFun obtain_function_type_f(FunctionType function_type);
+ObjFunc obtain_function_type_obj_f(FunctionType function_type);
 
 typedef struct
 {
@@ -38,7 +44,7 @@ CuqdynResult* create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predic
     DlsMat q_low, DlsMat q_up);
 void destroy_cuqdyn_result(CuqdynResult* result);
 
-CuqdynResult *predict_parameters(N_Vector times, DlsMat data, ODEModel, const char *sacess_conf_file,
+CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, const char *sacess_conf_file,
                                  const char *output_file);
 
 typedef struct
@@ -66,4 +72,4 @@ N_Vector matrix_array_depth_vector_at(MatrixArray, long i, long j);
 
 N_Vector get_matrix_cols_median(DlsMat);
 
-#endif // LIB_H
+#endif // CUQDYN_H

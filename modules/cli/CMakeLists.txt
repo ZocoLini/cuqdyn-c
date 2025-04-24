@@ -10,5 +10,5 @@ add_executable(cli
 
 target_link_libraries(cli
         PRIVATE
-        cli-lib
+        cuqdyn-c
 )
