@@ -2309,7 +2309,10 @@ void updateresultsess_(void *exp1_, void *result_, double *totaltime, long *eval
     local_s = exp1->ls;
     double totalL, sucessL;
 
-    result->bestx_value = xbest;
+    for (int i = 0; i < D; ++i)
+    {
+        result->bestx_value[i] = xbest[i];
+    }
 
 #ifdef MPI2
     MPI_Reduce(&(local_s->total_local), &totalL, 1, MPI_DOUBLE, MPI_SUM, 0, exp1->execution.topology.comunicator);

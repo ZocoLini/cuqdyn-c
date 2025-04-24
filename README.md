@@ -33,16 +33,5 @@
 - The whole file calls extract_element_uniq(...), function that allocates memory but this memory is never freed.
 
 ### Obtaining the xbest values
-#### File: sacess/src/method_module_fortran/eSS/scattersearch.f90
-- Line 438: Commented so the xbest is not freed
-#### File: sacess/src/method_module_fortran/eSS/acessdist.f90
-- Line 590: Commented so the xbest is not freed
-#### File: sacess/src/method_module_fortran/eSS/cess.f90
-- Line 690: Commented so the xbest is not freed
-#### File: sacess/src/method_module_fortran/eSS/essm.f90
-- Line 575: Commented so the xbest is not freed
-#### File: sacess/src/method_module_fortran/eSS/sacess.f90
-- Line 652: Commented so the xbest is not freed
-
 #### File: sacess/src/output/output.c
-- Line 2312: Added result->bestx_value = xbest; to return the xbest values that are printed
+- Line 2312: Added result->bestx_value[i] = xbest[i]; to return the xbest values that are printed
