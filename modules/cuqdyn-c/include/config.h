@@ -7,6 +7,25 @@
 
 typedef struct
 {
+    realtype tf;
+    realtype tinc;
+    realtype first_output_time;
+} TimeConstraints;
+
+TimeConstraints create_time_constraints(realtype, realtype, realtype);
+int time_constraints_steps(TimeConstraints);
+
+typedef struct
+{
+    realtype scalar_rtol;
+    N_Vector abs_tol;
+} Tolerances;
+
+Tolerances create_tolerances(realtype rtol, N_Vector atol);
+void destroy_tolerances(Tolerances);
+
+typedef struct
+{
     Tolerances tolerances;
     TimeConstraints time_constraints;
 } CuqdynConf;
