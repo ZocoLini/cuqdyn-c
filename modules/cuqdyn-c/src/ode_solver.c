@@ -44,7 +44,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     TimeConstraints time_constraints = cuqdyn_conf->time_constraints;
 
     int retval;
-    void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
+    void *cvode_mem = CVodeCreate(CV_BDF, CV_FUNCTIONAL);
     if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
 
     retval = CVodeInit(cvode_mem, ode_model.f, ode_model.t0, ode_model.initial_values);
@@ -59,6 +59,10 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
 
     retval = CVodeSetUserData(cvode_mem, parameters);
     if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
+
+    retval = CVodeSetMaxNumSteps(cvode_mem, 500000);
+    if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) { return NULL; }
+
 
     /* Time points */
     realtype t;

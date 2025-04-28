@@ -7,6 +7,11 @@
   sudo apt install -y openmpi-bin libopenmpi-dev
 ```
 
+## Limitations of the original sacess-library code
+### Output path
+- The output path should contain a '/' at some point or the code at 
+  sacess/src/input_module/input_module.c line 696 will try to copy from a NULL
+
 ## Modifications to the original sacess-library code
 ### Projects struture
 - The original code was modified to use the CMake build system.

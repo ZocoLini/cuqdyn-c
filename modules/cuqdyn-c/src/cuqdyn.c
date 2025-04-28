@@ -3,6 +3,7 @@
 #include <data_reader.h>
 #include <ess_solver.h>
 #include <functions/lotka_volterra.h>
+#include <math.h>
 #include <nvector_old/nvector_serial.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,19 +119,19 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     const realtype t0 = NV_Ith_S(times, 0);
     N_Vector y0 = copy_matrix_row(data, 0, 0, SM_COLUMNS_D(data));
 
-    OdeModelFun ode_model_fun = obtain_function_type_f(function_type);
-    ObjFunc obj_func = obtain_function_type_obj_f(function_type);
+    const OdeModelFun ode_model_fun = obtain_function_type_f(function_type);
+    const ObjFunc obj_func = obtain_function_type_obj_f(function_type);
 
     const ODEModel ode_model = create_ode_model(2, ode_model_fun, y0, t0);
 
     const long data_rows = SM_ROWS_D(data);
     const long times_len = NV_LENGTH_S(times);
 
-    const long observed_data_rows = data_rows - 1; // The first row is the initial condition
-    const long observed_data_cols = SM_COLUMNS_D(data);
-    const long data_cols = SM_COLUMNS_D(data);
-
+    // The first row is the initial condition
     DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long[]) {1L}, 1));
+
+    const long observed_data_rows = SM_ROWS_D(observed_data);
+    const long observed_data_cols = SM_COLUMNS_D(observed_data);
 
     if (times_len != data_rows)
     {
@@ -152,29 +153,31 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
     // TODO: Ask if ignoring the first predicted params is what we want
     // The original code solves the ode using this params but the result is not used again
-    set_lotka_volterra_data(times, data);
-    double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
+    {
+        LongArray indices_to_remove = create_array((long[]) {}, 0);
+        N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
+        DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
+        set_lotka_volterra_data(texp, yexp);
+        double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
+    }
 
-    DlsMat resid_loo = SUNDenseMatrix(data_rows, observed_data_cols, get_sun_context());
-    MatrixArray predicted_data_matrix = create_matrix_array(data_rows);
-    DlsMat predicted_params_matrix = SUNDenseMatrix(data_rows, observed_data_cols, get_sun_context());
+    DlsMat resid_loo = SUNDenseMatrix(observed_data_rows, observed_data_cols, get_sun_context());
+    MatrixArray predicted_data_matrix = create_matrix_array(observed_data_rows);
+    DlsMat predicted_params_matrix = SUNDenseMatrix(observed_data_rows, observed_data_cols, get_sun_context());
 
     // TODO: This can be done in parallel and the indices can be erroneous
-    for (long i = 0; i < data_rows; ++i)
+    for (long i = 0; i < observed_data_rows; ++i)
     {
         LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
 
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
-        DlsMat yexp = copy_matrix_remove_rows(data, indices_to_remove);
+        DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
         set_lotka_volterra_data(texp, yexp);
 
         double *pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
         N_Vector predicted_params = N_VNew_Serial(data_rows - 1, get_sun_context()); // TODO: Free this memory
         N_VSetArrayPointer(pred_params, predicted_params);
-
-        N_VDestroy(texp);
-        SUNMatDestroy(yexp);
 
         // Saving the predicted params obtained
         // This are
@@ -189,7 +192,10 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
         for (int j = 0; j < observed_data_cols; ++j)
         {
-            SM_ELEMENT_D(resid_loo, i, j) = abs(SM_ELEMENT_D(data, i, j) - SM_ELEMENT_D(predicted_data, i, j));
+            realtype observed = SM_ELEMENT_D(observed_data, i, j);
+            realtype predicted = SM_ELEMENT_D(predicted_data, i, j);
+
+            SM_ELEMENT_D(resid_loo, i, j) = fabs(observed - predicted);
         }
         matrix_array_set_index(predicted_data_matrix, i,
                                predicted_data); // predicted_data_matrix takes ownership of predicted_data
@@ -216,10 +222,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         matrix_array_set_index(m_up, i, SUNDenseMatrix(m, n, get_sun_context()));
     }
 
-    set_matrix_row(q_low, ode_model.initial_values, 0, 0, observed_data_cols);
-    set_matrix_row(q_up, ode_model.initial_values, 0, 0, observed_data_cols);
-
-    for (int i = 1; i < m + 1; ++i)
+    for (int i = 0; i < m; ++i)
     {
         for (int j = 0; j < n; ++j)
         {
