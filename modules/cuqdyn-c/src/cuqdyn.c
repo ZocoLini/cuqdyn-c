@@ -338,14 +338,13 @@ DlsMat matrix_array_get_median(MatrixArray matrix_array)
             for (int z = 0; z < max_z; ++z)
             {
                 DlsMat actual_matrix = matrix_array_get_index(matrix_array, z);
-                values[z] = medians_matrix->data[i * cols + j];
+                values[z] = SM_ELEMENT_D(actual_matrix, i, j);
             }
 
             // Sorting the vector to obtain the median easily
             qsort(values, max_z, sizeof(values[0]), compare_realtype);
 
-            medians[i * cols + j] =
-                    max_z & 0b1 ? values[(max_z - 1) / 2] : (values[max_z / 2 - 1] + values[max_z / 2]) / 2;
+            SM_ELEMENT_D(medians_matrix, i, j) = max_z & 0b1 ? values[(max_z - 1) / 2] : (values[max_z / 2 - 1] + values[max_z / 2]) / 2;
         }
     }
 
