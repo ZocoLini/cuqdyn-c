@@ -4,6 +4,11 @@
 #include <sundials_old/sundials_direct.h>
 #include <sundials_old/sundials_nvector.h>
 
+/* This function wich type of data file is being read (.txt or .mat) and
+ * calls the appropriate function to read it.
+ */
+int read_data_file(const char *data_file, N_Vector *t, DlsMat *y);
+
 /*
  * The file should be two ints, m and n, and a matrix mxn
  *      m n

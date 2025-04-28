@@ -1,3 +1,6 @@
+#include "data_reader.h"
+
+
 #include <matio.h>
 #include <nvector_old/nvector_serial.h>
 #include <stddef.h>
@@ -6,9 +9,26 @@
 
 #include "../include/cuqdyn.h"
 
+int read_data_file(const char *data_file, N_Vector *t, DlsMat *y)
+{
+    const char *ext = strrchr(data_file, '.');
+
+    if (ext && strcmp(ext, ".txt") == 0)
+    {
+        return read_txt_data_file(data_file, t, y);
+    }
+
+    if (ext && strcmp(ext, ".mat") == 0)
+    {
+        return read_mat_data_file(data_file, t, y);
+    }
+
+    return 1;
+}
+
 int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
 {
-    const char *ext = strrchr(data_file, '.'); // Busca el último punto
+    const char *ext = strrchr(data_file, '.');
     if (ext && strcmp(ext, ".txt") != 0)
     {
         return 1;
@@ -47,25 +67,6 @@ int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
     return 0;
 }
 
-/*
- * The file should be a single matrix mxn
- * All the data contained in the matrix is the observed data and has this form:
- *      t0 y00 y01 y02 ... y0n
- *      t1 y10 y11 y12 ... y1n
- *      .                   .
- *      .                   .
- *      .                   .
- *      tm ym0 ym1 ym2 ... ymn
- *
- * The time vector is the first column of the matrix [t0, t1, t2, ..., tm]
- * The y matrix is the entire matrix skipping the first column
- *      y00 y01 y02 ... y0n
- *      y10 y11 y12 ... y1n
- *      .                .
- *      .                .
- *      .                .
- *      ym0 ym1 ym2 ... ymn
- */
 int read_mat_data_file(const char *data_file, N_Vector *t, DlsMat *y)
 {
     mat_t *matfp = Mat_Open(data_file, MAT_ACC_RDONLY);

@@ -110,7 +110,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     N_Vector times = NULL;
     DlsMat data = NULL;
 
-    if (read_txt_data_file(data_file, &times, &data) != 0 && read_mat_data_file(data_file, &times, &data) != 0)
+    if (read_data_file(data_file, &times, &data) != 0)
     {
         fprintf(stderr, "Error reading data file: %s\n", data_file);
         exit(1);
