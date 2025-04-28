@@ -84,7 +84,7 @@ TimeConstraints create_time_constraints(realtype first_output_time, realtype tf,
 
 int time_constraints_steps(TimeConstraints constraints)
 {
-    return (constraints.tf - constraints.first_output_time) / constraints.tinc;
+    return (int) ((constraints.tf - constraints.first_output_time) / constraints.tinc) + 1;
 }
 
 Tolerances create_tolerances(realtype scalar_rtol, N_Vector atol)

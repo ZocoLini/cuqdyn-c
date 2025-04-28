@@ -52,7 +52,7 @@ void test_basic_ode()
     const int cols = SM_COLUMNS_D(result);
 
     assert(cols == 2);
-    assert(rows == 10);
+    assert(rows == 11);
 
     assert(fabs(SM_ELEMENT_D(result, 3, 0) - 4.3) < 0.0001);
     assert(fabs(SM_ELEMENT_D(result, 2, 1) - 148.176) < 0.0001);
@@ -107,7 +107,7 @@ void test_lotka_volterra()
     const int cols = SM_COLUMNS_D(result);
 
     assert(cols == 3);
-    assert(rows == 8);
+    assert(rows == 9);
 
     assert(fabs(SM_ELEMENT_D(result, 0, 0) - 1.0) < 0.0001);
     assert(fabs(SM_ELEMENT_D(result, 0, 1) - 15.10) < 0.01);

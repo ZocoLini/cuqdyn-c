@@ -68,7 +68,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     realtype t;
     realtype tinc = time_constraints.tinc;
     realtype tout = time_constraints.first_output_time;
-    const realtype tf = time_constraints.tf;
+    const realtype tf = time_constraints.tf + tinc;
 
     int retvalr;
     realtype *y_result = N_VGetArrayPointer(ode_model.initial_values);
