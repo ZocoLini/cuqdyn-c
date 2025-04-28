@@ -21,11 +21,11 @@ void test_lotka_volterra()
 
     realtype expected_params[4] = { 0.5, 0.02, 0.5, 0.02 };
 
-    realtype *abs_tol = (realtype[]){1e-6, 1e-6, 1e-6, 1e-6};
+    realtype *abs_tol = (realtype[]){1e-8, 1e-8, 1e-8, 1e-8};
     N_Vector abs_vec = N_VNew_Serial(4, get_sun_context());
     N_VSetArrayPointer(abs_tol, abs_vec);
-    const Tolerances tolerances = create_tolerances(1e-7, abs_vec);
-    const TimeConstraints time_constraints = create_time_constraints(1.0, 30.1, 1.0);
+    const Tolerances tolerances = create_tolerances(1e-8, abs_vec);
+    const TimeConstraints time_constraints = create_time_constraints(1.0, 30.0, 1.0);
     init_cuqdyn_conf(tolerances, time_constraints);
 
     CuqdynResult *cuqdyn_result = cuqdyn_algo(LOTKA_VOLTERRA, data_file, sacess_config_file, output_file);
