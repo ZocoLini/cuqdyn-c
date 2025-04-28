@@ -12,7 +12,7 @@
 #endif
 
 // TODO: Use texp and yexp inside the objective function somehow
-double* execute_ess_solver(const char *file, const char *path, ObjFunc obj_func)
+N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func)
 {
     int id, NPROC, error, i, NPROC_OPENMP;
     experiment_total *exptotal;
@@ -85,5 +85,7 @@ double* execute_ess_solver(const char *file, const char *path, ObjFunc obj_func)
     MPI_Finalize();
 #endif
 
-    return result.bestx_value;
+    N_Vector predicted_params = N_VNew_Serial(exptotal->test.bench.dim);
+    N_VSetArrayPointer(result.bestx_value, predicted_params);
+    return predicted_params;
 }

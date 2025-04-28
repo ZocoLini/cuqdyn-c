@@ -151,19 +151,20 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
      * opts.inter_save=1; % Saves results of intermediate iterations in eSS_report.mat
      */
 
-    // TODO: Ask if ignoring the first predicted params is what we want
+    DlsMat resid_loo = SUNDenseMatrix(observed_data_rows, observed_data_cols, get_sun_context());
+    MatrixArray predicted_data_matrix = create_matrix_array(observed_data_rows);
+    DlsMat predicted_params_matrix = NULL;
+
     // The original code solves the ode using this params but the result is not used again
+    // but we found a usage, using the result to see the number of params
     {
         LongArray indices_to_remove = create_array((long[]) {}, 0);
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
         set_lotka_volterra_data(texp, yexp);
-        double *init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
+        N_Vector init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
+        predicted_params_matrix = SUNDenseMatrix(observed_data_rows, NV_LENGTH_S(init_pred_params), get_sun_context());
     }
-
-    DlsMat resid_loo = SUNDenseMatrix(observed_data_rows, observed_data_cols, get_sun_context());
-    MatrixArray predicted_data_matrix = create_matrix_array(observed_data_rows);
-    DlsMat predicted_params_matrix = SUNDenseMatrix(observed_data_rows, observed_data_cols, get_sun_context());
 
     // TODO: This can be done in parallel and the indices can be erroneous
     for (long i = 0; i < observed_data_rows; ++i)
@@ -175,13 +176,11 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
         set_lotka_volterra_data(texp, yexp);
 
-        double *pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
-        N_Vector predicted_params = N_VNew_Serial(data_rows - 1, get_sun_context()); // TODO: Free this memory
-        N_VSetArrayPointer(pred_params, predicted_params);
+        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
 
         // Saving the predicted params obtained
         // This are
-        set_matrix_row(predicted_params_matrix, predicted_params, i, 0, observed_data_cols);
+        set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
 
         // Maybe this data is not needed once is proved that this way of predicting params works fine
         // Saving the ode solution data obtained with the predicted params

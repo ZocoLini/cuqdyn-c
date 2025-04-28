@@ -87,13 +87,13 @@ void lotka_volterra_ess()
 
     set_lotka_volterra_data(texp, yexp);
 
-    realtype *xbest = execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f);
+    N_Vector xbest = execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f);
 
     destroy_lotka_volterra_data();
 
     for (int i = 0; i < 4; ++i)
     {
-        assert(fabs(xbest[i] - expected[i]) < 0.1);
+        assert(fabs(NV_Ith_S(xbest, i) - expected[i]) < 0.1);
     }
 
     destroy_cuqdyn_conf();
