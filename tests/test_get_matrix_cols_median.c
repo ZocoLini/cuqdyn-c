@@ -31,10 +31,10 @@ void test_even_vec()
 
     for (int j = 0; j < 5; ++j)
     {
-        SM_DATA_D(matrix)[0 * 5 + j] = values1[j];
-        SM_DATA_D(matrix)[1 * 5 + j] = values2[j];
-        SM_DATA_D(matrix)[2 * 5 + j] = values3[j];
-        SM_DATA_D(matrix)[3 * 5 + j] = values4[j];
+        SM_ELEMENT_D(matrix, 0, j) = values1[j];
+        SM_ELEMENT_D(matrix, 1, j) = values2[j];
+        SM_ELEMENT_D(matrix, 2, j) = values3[j];
+        SM_ELEMENT_D(matrix, 3, j) = values4[j];
     }
 
     N_Vector medians_vector = get_matrix_cols_median(matrix);
@@ -64,9 +64,9 @@ void test_odd_vec()
 
     for (int j = 0; j < 5; ++j)
     {
-        SM_DATA_D(matrix)[0 * 5 + j] = values1[j];
-        SM_DATA_D(matrix)[1 * 5 + j] = values2[j];
-        SM_DATA_D(matrix)[2 * 5 + j] = values3[j];
+        SM_ELEMENT_D(matrix, 0, j) = values1[j];
+        SM_ELEMENT_D(matrix, 1, j) = values2[j];
+        SM_ELEMENT_D(matrix, 2, j) = values3[j];
     }
 
     N_Vector medians_vector = get_matrix_cols_median(matrix);

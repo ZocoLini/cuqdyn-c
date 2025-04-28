@@ -377,7 +377,7 @@ N_Vector get_matrix_cols_median(DlsMat matrix)
     {
         for (int i = 0; i < rows; ++i)
         {
-            copied_col[i] = matrix->data[i * cols + j];
+            copied_col[i] = SM_ELEMENT_D(matrix, i, j);
         }
 
         // Sorting the vector to obtain the median easily
