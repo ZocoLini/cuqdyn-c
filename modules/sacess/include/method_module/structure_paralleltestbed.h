@@ -292,6 +292,8 @@ extern "C" {
         const gsl_rng *random;
         double *seed;
         int contadorseed;
+        N_Vector texp;
+        DlsMat yexp;
     }experiment_total;    
     
     typedef struct {
@@ -328,7 +330,7 @@ extern "C" {
     } output_function;
 
     
-int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init);
+    int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, DlsMat yexp);
 
 void init_result_data(result_solver *, int);
     

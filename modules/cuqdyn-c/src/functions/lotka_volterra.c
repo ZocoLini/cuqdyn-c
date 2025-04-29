@@ -21,33 +21,6 @@ int lotka_volterra_f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     return (0);
 }
 
-// TODO: This is a temporal fix. experiment_total should contain this variables
-static N_Vector lotka_volterra_texp = NULL;
-static DlsMat lotka_volterra_yexp = NULL;
-
-void set_lotka_volterra_data(N_Vector texp, DlsMat yexp)
-{
-    destroy_lotka_volterra_data();
-
-    lotka_volterra_texp = texp;
-    lotka_volterra_yexp = yexp;
-}
-
-void destroy_lotka_volterra_data()
-{
-    if (lotka_volterra_texp != NULL)
-    {
-        N_VDestroy(lotka_volterra_texp);
-        lotka_volterra_texp = NULL;
-    }
-
-    if (lotka_volterra_yexp != NULL)
-    {
-        DestroyMat(lotka_volterra_yexp);
-        lotka_volterra_yexp = NULL;
-    }
-}
-
 /*
 * function [J,g,R]=prob_mod_lv(x,texp,yexp)
 * [tout,yout] = ode15s(@prob_mod_dynamics_lv,texp,[10,5],odeset('RelTol',1e-6,'AbsTol',1e-6*ones(1,2)),x);
@@ -59,6 +32,7 @@ void destroy_lotka_volterra_data()
 */
 void* lotka_volterra_obj_f(double *x, void *data)
 {
+    experiment_total *exptotal = data;
     output_function *res = calloc(1, sizeof(output_function));
 
     // Solving the ODE to use in the objetive function
@@ -85,7 +59,7 @@ void* lotka_volterra_obj_f(double *x, void *data)
 
     for (long int i = 0; i < rows; ++i) {
         for (long int j = 1; j < cols; ++j) {
-            realtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(lotka_volterra_yexp, i, j - 1);
+            realtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, i, j - 1);
             J += diff * diff;
         }
     }

@@ -85,11 +85,7 @@ void lotka_volterra_ess()
         }
     }
 
-    set_lotka_volterra_data(texp, yexp);
-
-    N_Vector xbest = execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f);
-
-    destroy_lotka_volterra_data();
+    N_Vector xbest = execute_ess_solver(LOTKA_VOLTERRA_CONF_FILE, OUPUT_PATH, lotka_volterra_obj_f, texp, yexp);
 
     for (int i = 0; i < 4; ++i)
     {

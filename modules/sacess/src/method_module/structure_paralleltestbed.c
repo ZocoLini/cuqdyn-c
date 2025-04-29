@@ -118,7 +118,7 @@ int returnfailevals_(void *exp_){
 
 }
 
-int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init){
+int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, DlsMat yexp){
     int error, counter;
 	exptotal->test.bench.max_dom = NULL;
 	exptotal->test.bench.min_dom = NULL;
@@ -138,6 +138,8 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
 	(*exptotal).test.output_gant_log = NULL;
 	(*exptotal).test.result_output = NULL;
 
+    exptotal->texp = texp;
+    exptotal->yexp = yexp;
 
     exptotal->execution.idp = id;
     exptotal->execution.NPROC = NPROC; 
@@ -303,6 +305,10 @@ void destroyexp(experiment_total *exp) {
     const char *matlabproblem;
 
     matlabproblem="matlabproblem";
+
+    N_VDestroy(exp->texp);
+    DestroyMat(exp->yexp);
+
 #ifdef MATLAB
      if (strcmp((*exp).test.bench.type, matlabproblem) == 0) {
 #ifdef GNU

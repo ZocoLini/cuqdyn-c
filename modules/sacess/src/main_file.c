@@ -87,7 +87,7 @@ int codigo_ejemplo(int argc, char** argv) {
     exptotal = (experiment_total *) malloc(sizeof(experiment_total));
 // PARSE THE OPTIONS OF THE SOLVER    
     init=1;
-    create_expetiment_struct(file, exptotal, NPROC, id, path, init);
+    //create_expetiment_struct(file, exptotal, NPROC, id, path, init);
 // INIT MESSAGE 
     NPROC_OPENMP=1;   
     if (id == 0) init_message(NPROC, &exptotal[0], NPROC_OPENMP ) ;

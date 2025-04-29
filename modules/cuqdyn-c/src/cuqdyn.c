@@ -161,8 +161,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         LongArray indices_to_remove = create_array((long[]) {}, 0);
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
-        set_lotka_volterra_data(texp, yexp);
-        N_Vector init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
+        N_Vector init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp);
         predicted_params_matrix = SUNDenseMatrix(observed_data_rows, NV_LENGTH_S(init_pred_params), get_sun_context());
     }
 
@@ -174,9 +173,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
-        set_lotka_volterra_data(texp, yexp);
-
-        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, obj_func);
+        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp);
 
         // Saving the predicted params obtained
         // This are
