@@ -38,10 +38,7 @@ void test_lotka_volterra()
     for (int i = 0; i < NV_LENGTH_S(predicted_params); ++i)
     {
         printf("\t%f", NV_Ith_S(predicted_params, i));
-        for (int i = 0; i < 4; ++i)
-        {
-            assert(fabs(NV_Ith_S(predicted_params, i) - expected_params[i]) < 0.1);
-        }
+        assert(fabs(NV_Ith_S(predicted_params, i) - expected_params[i]) < 0.1);
     }
     printf("\n");
     printf("Predicted data median:\n");
