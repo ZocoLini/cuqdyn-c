@@ -108,36 +108,24 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
                           const char *output_file)
 {
     N_Vector times = NULL;
-    DlsMat data = NULL;
+    DlsMat observed_data = NULL;
 
-    if (read_data_file(data_file, &times, &data) != 0)
+    if (read_data_file(data_file, &times, &observed_data) != 0)
     {
         fprintf(stderr, "Error reading data file: %s\n", data_file);
         exit(1);
     }
 
     const realtype t0 = NV_Ith_S(times, 0);
-    N_Vector y0 = copy_matrix_row(data, 0, 0, SM_COLUMNS_D(data));
+    N_Vector initial_values = copy_matrix_row(observed_data, 0, 0, SM_COLUMNS_D(observed_data));
+
+    const long m = SM_ROWS_D(observed_data);
+    const long n = SM_COLUMNS_D(observed_data);
 
     const OdeModelFun ode_model_fun = obtain_function_type_f(function_type);
     const ObjFunc obj_func = obtain_function_type_obj_f(function_type);
 
-    const ODEModel ode_model = create_ode_model(2, ode_model_fun, y0, t0);
-
-    const long data_rows = SM_ROWS_D(data);
-    const long times_len = NV_LENGTH_S(times);
-
-    // The first row is the initial condition
-    DlsMat observed_data = copy_matrix_remove_rows(data, create_array((long[]) {1L}, 1));
-
-    const long observed_data_rows = SM_ROWS_D(observed_data);
-    const long observed_data_cols = SM_COLUMNS_D(observed_data);
-
-    if (times_len != data_rows)
-    {
-        printf("ERROR: The number of rows in the observed data matrix must match the length of the times vector.\n");
-        return NULL;
-    }
+    const ODEModel ode_model = create_ode_model(2, ode_model_fun, initial_values, t0);
 
     /*
      * problem.f='prob_mod_lv';
@@ -151,8 +139,8 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
      * opts.inter_save=1; % Saves results of intermediate iterations in eSS_report.mat
      */
 
-    DlsMat resid_loo = SUNDenseMatrix(observed_data_rows, observed_data_cols, get_sun_context());
-    MatrixArray predicted_data_matrix = create_matrix_array(observed_data_rows);
+    DlsMat resid_loo = SUNDenseMatrix(m, n, get_sun_context());
+    MatrixArray media_matrix = create_matrix_array(m - 1);
     DlsMat predicted_params_matrix = NULL;
 
     // The original code solves the ode using this params but the result is not used again
@@ -162,11 +150,11 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
         N_Vector init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp);
-        predicted_params_matrix = SUNDenseMatrix(observed_data_rows, NV_LENGTH_S(init_pred_params), get_sun_context());
+        predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
     }
 
     // TODO: This can be done in parallel and the indices can be erroneous
-    for (long i = 0; i < observed_data_rows; ++i)
+    for (long i = 1; i < m; ++i)
     {
         LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
 
@@ -176,38 +164,37 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp);
 
         // Saving the predicted params obtained
-        // This are
         set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
 
-        // Maybe this data is not needed once is proved that this way of predicting params works fine
         // Saving the ode solution data obtained with the predicted params
         DlsMat ode_solution = solve_ode(predicted_params, ode_model);
         DlsMat predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1L}, 1));
 
         SUNMatDestroy(ode_solution);
 
-        for (int j = 0; j < observed_data_cols; ++j)
+        for (int j = 0; j < n; ++j)
         {
             realtype observed = SM_ELEMENT_D(observed_data, i, j);
             realtype predicted = SM_ELEMENT_D(predicted_data, i, j);
 
             SM_ELEMENT_D(resid_loo, i, j) = fabs(observed - predicted);
         }
-        matrix_array_set_index(predicted_data_matrix, i,
-                               predicted_data); // predicted_data_matrix takes ownership of predicted_data
+        matrix_array_set_index(media_matrix, i - 1, predicted_data);
     }
 
-    // TODO: Output some of this data or all
-    DlsMat predicted_data_median = matrix_array_get_median(predicted_data_matrix);
+    DlsMat predicted_data_median = matrix_array_get_median(media_matrix);
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
 
     double alp = 0.05;
 
-    long m = observed_data_rows;
-    long n = observed_data_cols;
-
     DlsMat q_low = SUNDenseMatrix(m, n, get_sun_context());
     DlsMat q_up = SUNDenseMatrix(m, n, get_sun_context());
+
+    for (int i = 0; i < n; ++i)
+    {
+        SM_ELEMENT_D(q_low, 0, i) = NV_Ith_S(initial_values, i);
+        SM_ELEMENT_D(q_up, 0, i) = NV_Ith_S(initial_values, i);
+    }
 
     MatrixArray m_low = create_matrix_array(m);
     MatrixArray m_up = create_matrix_array(m);
@@ -218,19 +205,19 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         matrix_array_set_index(m_up, i, SUNDenseMatrix(m, n, get_sun_context()));
     }
 
-    for (int i = 0; i < m; ++i)
+    for (int i = 1; i < m; ++i)
     {
         for (int j = 0; j < n; ++j)
         {
-            for (int k = 0; k < (m - 1); ++k)
+            for (int k = 1; k < m; ++k)
             {
-                SM_ELEMENT_D(matrix_array_get_index(m_low, k), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(predicted_data_matrix, k + 1), i, j) -
-                        SM_ELEMENT_D(resid_loo, k + 1, j);
+                SM_ELEMENT_D(matrix_array_get_index(m_low, k - 1), i, j) =
+                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) -
+                        SM_ELEMENT_D(resid_loo, k, j);
 
-                SM_ELEMENT_D(matrix_array_get_index(m_up, k), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(predicted_data_matrix, k + 1), i, j) +
-                        SM_ELEMENT_D(resid_loo, k + 1, j);
+                SM_ELEMENT_D(matrix_array_get_index(m_up, k - 1), i, j) =
+                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) +
+                        SM_ELEMENT_D(resid_loo, k, j);
             }
 
             SM_ELEMENT_D(q_low, i, j) = quantile(matrix_array_depth_vector_at(m_low, i, j), alp);
@@ -238,7 +225,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         }
     }
 
-    destroy_matrix_array(predicted_data_matrix); // This frees the matrix array and all the matrices inside
+    destroy_matrix_array(media_matrix); // This frees the matrix array and all the matrices inside
 
     CuqdynResult *cuqdyn_result = create_cuqdyn_result(predicted_data_median, predicted_params_median, q_low, q_up);
     return cuqdyn_result;
