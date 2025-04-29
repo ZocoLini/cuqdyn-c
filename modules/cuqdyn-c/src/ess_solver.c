@@ -12,7 +12,7 @@
 #endif
 
 // TODO: Use texp and yexp inside the objective function somehow
-N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func, N_Vector texp, DlsMat yexp)
+N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func, N_Vector texp, DlsMat yexp, N_Vector initial_values)
 {
     int id, NPROC, error, i, NPROC_OPENMP;
     experiment_total *exptotal;
@@ -45,7 +45,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func
     for (i = 0; i < NPROC_OPENMP; i++)
     {
         // PARSE THE OPTIONS OF THE SOLVER
-        create_expetiment_struct(file, &(exptotal[i]), NPROC, id, path, init, texp, yexp);
+        create_expetiment_struct(file, &(exptotal[i]), NPROC, id, path, init, texp, yexp, initial_values);
         init = 0;
     }
     // // INIT MESSAGE
@@ -63,7 +63,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func
 #else
     exptotal = (experiment_total *) malloc(sizeof(experiment_total));
     init = 1;
-    create_expetiment_struct(file, &exptotal[0], NPROC, id, path, init, texp, yexp);
+    create_expetiment_struct(file, &exptotal[0], NPROC, id, path, init, texp, yexp, initial_values);
 
     // INIT MESSAGE
     NPROC_OPENMP = 1;

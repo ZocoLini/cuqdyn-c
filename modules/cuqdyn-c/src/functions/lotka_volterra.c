@@ -36,22 +36,19 @@ void* lotka_volterra_obj_f(double *x, void *data)
     experiment_total *exptotal = data;
     output_function *res = calloc(1, sizeof(output_function));
 
-    // TODO: This shouldn't be here
-    // Solving the ODE to use in the objetive function
-    N_Vector initial_values = N_VNew_Serial(2, get_sun_context());
-    NV_Ith_S(initial_values, 0) = 10;
-    NV_Ith_S(initial_values, 1) = 5;
-
     N_Vector parameters = N_VNew_Serial(4, get_sun_context());
     NV_Ith_S(parameters, 0) = x[0];
     NV_Ith_S(parameters, 1) = x[1];
     NV_Ith_S(parameters, 2) = x[2];
     NV_Ith_S(parameters, 3) = x[3];
 
-    const realtype t0 = 0.0;
+    N_Vector initial_values = N_VNew_Serial(NV_LENGTH_S(exptotal->initial_values), get_sun_context());
+    memcpy(N_VGetArrayPointer(initial_values), N_VGetArrayPointer(exptotal->initial_values), NV_LENGTH_S(exptotal->initial_values) * sizeof(realtype));
 
     N_Vector times = N_VNew_Serial(NV_LENGTH_S(exptotal->texp), get_sun_context());
     memcpy(N_VGetArrayPointer(times), N_VGetArrayPointer(exptotal->texp), NV_LENGTH_S(exptotal->texp) * sizeof(realtype));
+
+    const realtype t0 = NV_Ith_S(times, 0);
 
     const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0, times);
 

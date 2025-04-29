@@ -294,6 +294,7 @@ extern "C" {
         int contadorseed;
         N_Vector texp;
         DlsMat yexp;
+        N_Vector initial_values;
     }experiment_total;    
     
     typedef struct {
@@ -330,7 +331,7 @@ extern "C" {
     } output_function;
 
     
-    int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, DlsMat yexp);
+    int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, DlsMat yexp, N_Vector initial_values);
 
 void init_result_data(result_solver *, int);
     
