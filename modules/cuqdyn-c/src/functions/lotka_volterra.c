@@ -1,8 +1,9 @@
 #include <functions/lotka_volterra.h>
 #include <method_module/structure_paralleltestbed.h>
-#include <sundials_old/sundials_nvector.h>
 #include <nvector_old/nvector_serial.h>
+#include <string.h>
 #include <sundials_old/sundials_direct.h>
+#include <sundials_old/sundials_nvector.h>
 
 #include "cuqdyn.h"
 
@@ -35,6 +36,7 @@ void* lotka_volterra_obj_f(double *x, void *data)
     experiment_total *exptotal = data;
     output_function *res = calloc(1, sizeof(output_function));
 
+    // TODO: This shouldn't be here
     // Solving the ODE to use in the objetive function
     N_Vector initial_values = N_VNew_Serial(2, get_sun_context());
     NV_Ith_S(initial_values, 0) = 10;
@@ -48,7 +50,10 @@ void* lotka_volterra_obj_f(double *x, void *data)
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0, exptotal->texp);
+    N_Vector times = N_VNew_Serial(NV_LENGTH_S(exptotal->texp), get_sun_context());
+    memcpy(N_VGetArrayPointer(times), N_VGetArrayPointer(exptotal->texp), NV_LENGTH_S(exptotal->texp) * sizeof(realtype));
+
+    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0, times);
 
     DlsMat result = solve_ode(parameters, ode_model);
 

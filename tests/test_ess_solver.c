@@ -43,7 +43,12 @@ void lotka_volterra_ess()
 
     realtype expected[4] = { 0.5, 0.02, 0.5, 0.02 };
 
-    N_Vector texp = N_VNew_Serial(0, get_sun_context());
+    N_Vector texp = N_VNew_Serial(31, get_sun_context());
+    for (int i = 0; i < 31; ++i)
+    {
+        NV_Ith_S(texp, i) = i + 1;
+    }
+
     DlsMat yexp = SUNDenseMatrix(30, 2, get_sun_context());
 
     realtype yexp_data[30][2] = {
