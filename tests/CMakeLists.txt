@@ -8,7 +8,6 @@ foreach(test_name
         test_data_reader
         test_ess_solver
         test_cuqdyn_algo
-        test_time_constraints_steps
 )
     add_executable(${test_name} ${test_name}.c)
     target_link_libraries(${test_name} cuqdyn-c)

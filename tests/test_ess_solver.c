@@ -37,9 +37,8 @@ void lotka_volterra_ess()
     N_Vector abs_tol_vec = N_VNew_Serial(2, get_sun_context());
     N_VSetArrayPointer(abs_tol, abs_tol_vec);
 
-    const TimeConstraints time_constraints = create_time_constraints(1.0, 30.0, 1.0);
     const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), abs_tol_vec);
-    init_cuqdyn_conf(tolerances, time_constraints);
+    init_cuqdyn_conf(tolerances);
 
     realtype expected[4] = { 0.5, 0.02, 0.5, 0.02 };
 

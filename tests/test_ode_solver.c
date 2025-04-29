@@ -31,9 +31,8 @@ void test_basic_ode()
     N_Vector abs_tol_vec = N_VNew_Serial(1, get_sun_context());
     N_VGetArrayPointer(abs_tol_vec)[0] = 1.0e-12;
 
-    const TimeConstraints time_constraints = create_time_constraints(4.0, 5.0, 0.1);
     const Tolerances tolerances = create_tolerances(1.0e-12, abs_tol_vec);
-    init_cuqdyn_conf(tolerances, time_constraints);
+    init_cuqdyn_conf(tolerances);
 
     N_Vector times = N_VNew_Serial(11, get_sun_context());
     NV_Ith_S(times, 0) = 4.0;
@@ -94,10 +93,9 @@ void test_lotka_volterra()
     N_Vector abs_tol_vec = N_VNew_Serial(2, get_sun_context());
     N_VSetArrayPointer(abs_tol, abs_tol_vec);
 
-    const TimeConstraints time_constraints = create_time_constraints(1.0, 5.0, 0.5);
     const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-12), abs_tol_vec);
 
-    init_cuqdyn_conf(tolerances, time_constraints);
+    init_cuqdyn_conf(tolerances);
 
     N_Vector times = N_VNew_Serial(9, get_sun_context());
     NV_Ith_S(times, 0) = 1.0;

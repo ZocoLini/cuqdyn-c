@@ -7,16 +7,6 @@
 
 typedef struct
 {
-    realtype tf;
-    realtype tinc;
-    realtype first_output_time;
-} TimeConstraints;
-
-TimeConstraints create_time_constraints(realtype, realtype, realtype);
-int time_constraints_steps(TimeConstraints);
-
-typedef struct
-{
     realtype scalar_rtol;
     N_Vector abs_tol;
 } Tolerances;
@@ -27,11 +17,10 @@ void destroy_tolerances(Tolerances);
 typedef struct
 {
     Tolerances tolerances;
-    TimeConstraints time_constraints;
 } CuqdynConf;
 
 CuqdynConf *init_cuqdyn_conf_from_file(const char *filename);
-CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, TimeConstraints time_constraints);
+CuqdynConf *init_cuqdyn_conf(Tolerances tolerances);
 void destroy_cuqdyn_conf();
 CuqdynConf * get_cuqdyn_conf();
 
