@@ -11,9 +11,10 @@ typedef struct
     OdeModelFun f;
     N_Vector initial_values;
     realtype t0;
+    N_Vector times;
 } ODEModel;
 
-ODEModel create_ode_model(int number_eq, OdeModelFun f, N_Vector initial_values, realtype t0);
+ODEModel create_ode_model(int number_eq, OdeModelFun f, N_Vector initial_values, realtype t0, N_Vector times);
 void destroy_ode_model(ODEModel);
 
 DlsMat solve_ode(N_Vector, ODEModel);

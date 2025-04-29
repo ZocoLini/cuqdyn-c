@@ -125,7 +125,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     const OdeModelFun ode_model_fun = obtain_function_type_f(function_type);
     const ObjFunc obj_func = obtain_function_type_obj_f(function_type);
 
-    const ODEModel ode_model = create_ode_model(2, ode_model_fun, initial_values, t0);
+    const ODEModel ode_model = create_ode_model(2, ode_model_fun, initial_values, t0, times);
 
     /*
      * problem.f='prob_mod_lv';

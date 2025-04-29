@@ -6,19 +6,21 @@
 
 #include "cuqdyn.h"
 
-ODEModel create_ode_model(int number_eq, OdeModelFun f, N_Vector initial_values, realtype t0)
+ODEModel create_ode_model(int number_eq, OdeModelFun f, N_Vector initial_values, realtype t0, N_Vector times)
 {
     ODEModel ode_model;
     ode_model.f = f;
     ode_model.number_eq = number_eq;
     ode_model.initial_values = initial_values;
     ode_model.t0 = t0;
+    ode_model.times = times;
     return ode_model;
 }
 
 void destroy_ode_model(ODEModel model)
 {
     N_VDestroy(model.initial_values);
+    N_VDestroy(model.times);
 }
 
 static int check_retval(void *, const char *, int);
@@ -41,7 +43,6 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
 {
     CuqdynConf *cuqdyn_conf = get_cuqdyn_conf();
     Tolerances tolerances = cuqdyn_conf->tolerances;
-    TimeConstraints time_constraints = cuqdyn_conf->time_constraints;
 
     int retval;
     void *cvode_mem = CVodeCreate(CV_BDF, CV_FUNCTIONAL);
@@ -63,25 +64,30 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     retval = CVodeSetMaxNumSteps(cvode_mem, 500000);
     if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) { return NULL; }
 
-
     /* Time points */
     realtype t;
-    realtype tinc = time_constraints.tinc;
-    realtype tout = time_constraints.first_output_time;
-    const realtype tf = time_constraints.tf + tinc;
+    N_Vector times = ode_model.times;
 
     int retvalr;
-    realtype *y_result = N_VGetArrayPointer(ode_model.initial_values);
 
-    int result_rows = time_constraints_steps(time_constraints);
+    N_Vector yout = N_VNew_Serial(NV_LENGTH_S(ode_model.initial_values), get_sun_context());
     int result_cols = ode_model.number_eq + 1; // We add the time col
-    DlsMat result = SUNDenseMatrix(result_rows, result_cols, get_sun_context());
+    DlsMat result = SUNDenseMatrix(NV_LENGTH_S(times), result_cols, get_sun_context());
 
-    int actual_result_matrix_row = 0;
-
-    while (tout < tf)
+    for (int i = 0; i < NV_LENGTH_S(times); ++i)
     {
-        retval = CVode(cvode_mem, tout, ode_model.initial_values, &t, CV_NORMAL);
+        const realtype actual_time = NV_Ith_S(times, i);
+
+        if (actual_time == ode_model.t0)
+        {
+            for (int j = 0; j < ode_model.number_eq; j++)
+            {
+                SM_ELEMENT_D(result, i, j + 1) = NV_Ith_S(ode_model.initial_values, j);
+            }
+            continue;
+        }
+
+        retval = CVode(cvode_mem, actual_time, yout, &t, CV_NORMAL);
 
         if (retval == CV_ROOT_RETURN)
         {
@@ -97,22 +103,16 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
         {
             return NULL;
         }
-        if (retval == CV_SUCCESS)
+
+        SM_ELEMENT_D(result, i, 0) = t;
+
+        for (int j = 0; j < ode_model.number_eq; j++)
         {
-            tout += tinc;
+            SM_ELEMENT_D(result, i, j + 1) = NV_Ith_S(yout, j);
         }
-
-        // We are adding the time (t) as the first column but maybe we don't need it
-        SM_ELEMENT_D(result, actual_result_matrix_row, 0) = t;
-
-        for (int i = 0; i < ode_model.number_eq; i++)
-        {
-            SM_ELEMENT_D(result, actual_result_matrix_row, i + 1) = y_result[i];
-        }
-
-        actual_result_matrix_row++;
     }
 
+    N_VDestroy(yout);
     CVodeFree(&cvode_mem);
 
     return result;

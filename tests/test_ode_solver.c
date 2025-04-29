@@ -35,6 +35,19 @@ void test_basic_ode()
     const Tolerances tolerances = create_tolerances(1.0e-12, abs_tol_vec);
     init_cuqdyn_conf(tolerances, time_constraints);
 
+    N_Vector times = N_VNew_Serial(11, get_sun_context());
+    NV_Ith_S(times, 0) = 4.0;
+    NV_Ith_S(times, 1) = 4.1;
+    NV_Ith_S(times, 2) = 4.2;
+    NV_Ith_S(times, 3) = 4.3;
+    NV_Ith_S(times, 4) = 4.4;
+    NV_Ith_S(times, 5) = 4.5;
+    NV_Ith_S(times, 6) = 4.6;
+    NV_Ith_S(times, 7) = 4.7;
+    NV_Ith_S(times, 8) = 4.8;
+    NV_Ith_S(times, 9) = 4.9;
+    NV_Ith_S(times, 10) = 5.0;
+
     N_Vector parameters = N_VNew_Serial(1, get_sun_context());
     NV_Ith_S(parameters, 0) = 3.0;
 
@@ -43,7 +56,7 @@ void test_basic_ode()
 
     const realtype t0 = 3.0;
 
-    const ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0);
+    const ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0, times);
     DlsMat result = solve_ode(parameters, ode_model);
 
     assert(result != NULL);
@@ -86,6 +99,17 @@ void test_lotka_volterra()
 
     init_cuqdyn_conf(tolerances, time_constraints);
 
+    N_Vector times = N_VNew_Serial(9, get_sun_context());
+    NV_Ith_S(times, 0) = 1.0;
+    NV_Ith_S(times, 1) = 1.5;
+    NV_Ith_S(times, 2) = 2.0;
+    NV_Ith_S(times, 3) = 2.5;
+    NV_Ith_S(times, 4) = 3.0;
+    NV_Ith_S(times, 5) = 3.5;
+    NV_Ith_S(times, 6) = 4.0;
+    NV_Ith_S(times, 7) = 4.5;
+    NV_Ith_S(times, 8) = 5.0;
+
     N_Vector parameters = N_VNew_Serial(4, get_sun_context());
     NV_Ith_S(parameters, 0) = 0.5;
     NV_Ith_S(parameters, 1) = 0.02;
@@ -98,7 +122,7 @@ void test_lotka_volterra()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
+    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0, times);
     DlsMat result = solve_ode(parameters, ode_model);
 
     assert(result != NULL);

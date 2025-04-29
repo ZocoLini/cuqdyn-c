@@ -48,7 +48,7 @@ void* lotka_volterra_obj_f(double *x, void *data)
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0);
+    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0, exptotal->texp);
 
     DlsMat result = solve_ode(parameters, ode_model);
 
