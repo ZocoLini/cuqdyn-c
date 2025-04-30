@@ -26,8 +26,8 @@ project(ess-c LANGUAGES C Fortran)
 ## ScatterSearch solver
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_Fortran_COMPILER gfortran)
-set(CMAKE_C_FLAGS " -cpp -DGNU -lstdc++ -lpthread -lrt -lgfortran  -cpp -MMD -lm -ldl -lz")
-set(CMAKE_Fortran_FLAGS "-cpp -DGNU -fallow-argument-mismatch -std=gnu")
+set(CMAKE_C_FLAGS "-O1 -cpp -DGNU -lstdc++ -lrt -lgfortran -MMD -lm -ldl -lz")
+set(CMAKE_Fortran_FLAGS "-O3 -cpp -DGNU -fallow-argument-mismatch -std=gnu")
 
 set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/gnu")
 ######################################################################
