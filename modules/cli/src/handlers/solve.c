@@ -31,7 +31,7 @@ int handle_solve(int argc, char *argv[])
     char *output_dir = NULL;
     FunctionType function_type = NONE;
 
-    while ((opt = getopt(argc, argv, "d:")) != -1)
+    while ((opt = getopt(argc, argv, "d:c:s:o:f:")) != -1)
     {
         switch (opt)
         {

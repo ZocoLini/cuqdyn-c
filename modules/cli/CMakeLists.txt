@@ -11,7 +11,7 @@ if (NOT TAG_RESULT EQUAL 0 OR GIT_VERSION STREQUAL "")
 endif()
 
 message(STATUS "CLI_VERSION: ${GIT_VERSION}")
-add_compile_definitions(-DCLI_VERSION="${GIT_VERSION}")
+add_definitions(-DCLI_VERSION=\"${GIT_VERSION}\")
 
 file(GLOB CLI_SRC CONFIGURE_DEPENDS src/*.c src/handlers/*.c)
 

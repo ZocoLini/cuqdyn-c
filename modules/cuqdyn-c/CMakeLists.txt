@@ -16,7 +16,7 @@ configure_file(
 )
 
 message(STATUS "CUQDYN_C_VERSION: ${GIT_VERSION}")
-add_compile_definitions(-DCUQDYN_C_VERSION="${GIT_VERSION}")
+add_definitions(-DCUQDYN_C_VERSION=\"${GIT_VERSION}\")
 
 file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c)
 
