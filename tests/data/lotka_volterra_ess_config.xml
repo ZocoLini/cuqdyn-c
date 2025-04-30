@@ -26,9 +26,9 @@
             <n_stuck>default</n_stuck>
         </global_options>
         <local_options>
-            <solver>dhc</solver>
-            <tol>2</tol>
-            <evalmax>500</evalmax>
+            <solver>nl2sol.dn2gb</solver>
+            <tol>0</tol>
+            <evalmax>3e3</evalmax>
             <iterprint>0</iterprint>
             <n1>1</n1>
             <n2>10</n2>
@@ -58,6 +58,9 @@
         <ub>
             1.000, 1.000, 1.000, 1.000
         </ub>
+        <initial_point>
+            0.3, 0.3, 0.3, 0.3
+        </initial_point>
     </problem>
 
 </xml>

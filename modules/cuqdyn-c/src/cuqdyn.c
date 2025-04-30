@@ -200,18 +200,18 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         SM_ELEMENT_D(q_up, 0, i) = NV_Ith_S(initial_values, i);
     }
 
-    MatrixArray m_low = create_matrix_array(m);
-    MatrixArray m_up = create_matrix_array(m);
+    MatrixArray m_low = create_matrix_array(m - 1);
+    MatrixArray m_up = create_matrix_array(m - 1);
 
-    for (int i = 0; i < m; ++i)
+    for (int i = 0; i < m - 1; ++i)
     {
         matrix_array_set_index(m_low, i, SUNDenseMatrix(m, n, get_sun_context()));
         matrix_array_set_index(m_up, i, SUNDenseMatrix(m, n, get_sun_context()));
     }
 
-    for (int i = 1; i < m; ++i)
+    for (int j = 0; j < n; ++j)
     {
-        for (int j = 0; j < n; ++j)
+        for (int i = 1; i < m; ++i)
         {
             for (int k = 1; k < m; ++k)
             {
