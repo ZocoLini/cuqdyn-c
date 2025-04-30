@@ -1,13 +1,16 @@
 #include "config.h"
 
+#include <ctype.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <libxml/xmlstring.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static CuqdynConf *config = NULL;
 
-void parse_config_file(const char *filename, CuqdynConf **config);
-
-CuqdynConf* create_cuqdyn_conf(Tolerances tolerances)
+CuqdynConf *create_cuqdyn_conf(Tolerances tolerances)
 {
     CuqdynConf *cuqdyn_conf = malloc(sizeof(CuqdynConf));
     cuqdyn_conf->tolerances = tolerances;
@@ -27,7 +30,7 @@ void destroy_cuqdyn_conf()
     config = NULL;
 }
 
-CuqdynConf* init_cuqdyn_conf_from_file(const char *filename)
+CuqdynConf *init_cuqdyn_conf_from_file(const char *filename)
 {
     CuqdynConf *tmp_config = malloc(sizeof(CuqdynConf));
     if (tmp_config == NULL)
@@ -36,9 +39,9 @@ CuqdynConf* init_cuqdyn_conf_from_file(const char *filename)
         exit(1);
     }
 
-    parse_config_file(filename, &tmp_config);
+    int flag = parse_cuqdyn_conf(filename, tmp_config);
 
-    if (tmp_config == NULL)
+    if (flag != 0)
     {
         fprintf(stderr, "ERROR: Unable to parse cuqdyn config file \"%s\"\n", filename);
         exit(1);
@@ -48,9 +51,81 @@ CuqdynConf* init_cuqdyn_conf_from_file(const char *filename)
     return config;
 }
 
-void parse_config_file(const char *filename, CuqdynConf **config)
+int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
 {
-    *config = NULL;
+    xmlDocPtr doc = xmlReadFile(filename, NULL, 0);
+    if (!doc)
+    {
+        fprintf(stderr, "Error: could not load XML file: %s\n", filename);
+        return -1;
+    }
+
+    xmlNodePtr root = xmlDocGetRootElement(doc);
+    xmlNodePtr cur = root->children;
+
+    realtype rtol = 1e-6;
+    N_Vector atol = NULL;
+
+    for (; cur; cur = cur->next)
+    {
+        if (cur->type != XML_ELEMENT_NODE)
+            continue;
+
+        if (!xmlStrcmp(cur->name, (const xmlChar *) "tolerances"))
+        {
+            xmlNodePtr tolNode = cur->children;
+            for (; tolNode; tolNode = tolNode->next)
+            {
+                if (tolNode->type != XML_ELEMENT_NODE)
+                    continue;
+
+                if (!xmlStrcmp(tolNode->name, (const xmlChar *) "rtol"))
+                {
+                    xmlChar *key = xmlNodeGetContent(tolNode);
+                    rtol = atof((char *) key);
+                    xmlFree(key);
+                }
+                else if (!xmlStrcmp(tolNode->name, (const xmlChar *) "atol"))
+                {
+                    xmlChar *key = xmlNodeGetContent(tolNode);
+                    char *key_str = (char *) key;
+
+                    // Primera pasada: contar elementos
+                    size_t count = 0;
+                    char *tmp1 = strdup(key_str);
+                    char *token = strtok(tmp1, ",");
+                    while (token) {
+                        count++;
+                        token = strtok(NULL, ",");
+                    }
+                    free(tmp1);
+
+                    atol = N_VNew_Serial(count, get_sun_context());
+                    if (!atol) {
+                        fprintf(stderr, "Error: failed to allocate atol N_Vector\n");
+                        xmlFree(key);
+                        xmlFreeDoc(doc);
+                        return -1;
+                    }
+
+                    // Segunda pasada: parsear los valores
+                    size_t i = 0;
+                    char *tmp2 = strdup(key_str);
+                    token = strtok(tmp2, ",");
+                    while (token && i < count) {
+                        NV_Ith_S(atol, i++) = atof(token);
+                        token = strtok(NULL, ",");
+                    }
+                    free(tmp2);
+                    xmlFree(key);
+                }
+            }
+        }
+    }
+
+    config->tolerances = create_tolerances(rtol, atol);
+    xmlFreeDoc(doc);
+    return 0;
 }
 
 CuqdynConf *init_cuqdyn_conf(Tolerances tolerances)
@@ -61,7 +136,7 @@ CuqdynConf *init_cuqdyn_conf(Tolerances tolerances)
     return config;
 }
 
-CuqdynConf* get_cuqdyn_conf()
+CuqdynConf *get_cuqdyn_conf()
 {
     if (config == NULL)
     {
@@ -75,12 +150,9 @@ CuqdynConf* get_cuqdyn_conf()
 Tolerances create_tolerances(realtype scalar_rtol, N_Vector atol)
 {
     Tolerances tolerances;
-    tolerances.scalar_rtol = scalar_rtol;
-    tolerances.abs_tol = atol;
+    tolerances.rtol = scalar_rtol;
+    tolerances.atol = atol;
     return tolerances;
 }
 
-void destroy_tolerances(Tolerances tolerances)
-{
-    N_VDestroy(tolerances.abs_tol);
-}
+void destroy_tolerances(Tolerances tolerances) { N_VDestroy(tolerances.atol); }

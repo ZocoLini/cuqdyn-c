@@ -7,6 +7,7 @@ foreach(test_name
         test_get_matrix_cols_median
         test_data_reader
         test_ess_solver
+        test_parse_cuqdyn_conf
         test_cuqdyn_algo
 )
     add_executable(${test_name} ${test_name}.c)

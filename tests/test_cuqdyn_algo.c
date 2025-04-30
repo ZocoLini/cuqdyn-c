@@ -19,8 +19,8 @@ void test_lotka_volterra()
     char *sacess_config_file = "data/lotka_volterra_ess_config.xml";
     char *output_file = "data/output";
 
-    realtype *abs_tol = (realtype[]){1e-8, 1e-8, 1e-8, 1e-8};
-    N_Vector abs_vec = N_VNew_Serial(4, get_sun_context());
+    realtype *abs_tol = (realtype[]){1e-8, 1e-8};
+    N_Vector abs_vec = N_VNew_Serial(2, get_sun_context());
     N_VSetArrayPointer(abs_tol, abs_vec);
     const Tolerances tolerances = create_tolerances(1e-8, abs_vec);
     init_cuqdyn_conf(tolerances);
