@@ -1,3 +1,3 @@
 #pragma once
 
-#define CUQDYN_C_VERSION "dev"
+#define CUQDYN_C_VERSION "v0.1.0"

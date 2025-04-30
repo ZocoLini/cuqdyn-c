@@ -1,5 +1,5 @@
 execute_process(
-        COMMAND bash -c "git tag --sort=-creatordate | grep '^cuqdyn-c/' | head -n 1"
+        COMMAND bash -c "git tag --sort=-creatordate | grep '^cuqdyn-c/' | head -n 1 | sed -E 's:.*/(v[0-9]+\.[0-9]+\.[0-9]+):\\1:'"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_VERSION
         RESULT_VARIABLE TAG_RESULT
