@@ -13,8 +13,6 @@ Handler create_help_handler()
 int handle_help(int argc, char *argv[])
 {
     const char* help_message =
-"cuqdyn-c v%s - A rewrite of the ... (by Borja Castellano)\n"
-"\n"
 "- [ Commands ] -\n"
 "\n"
 " Command   | Description                                                         \n"
@@ -45,6 +43,6 @@ int handle_help(int argc, char *argv[])
 "Usage: %s <command> [options]...\n";
 
 
-    printf(help_message, "0.1.0", argv[0]);
+    printf(help_message, argv[0]);
     return 0;
 }

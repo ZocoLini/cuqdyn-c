@@ -1,7 +1,8 @@
-#include <handlers/solve.h>
 #include <string.h>
 
 #include "handlers/help.h"
+#include "handlers/solve.h"
+#include "handlers/version.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,7 +17,12 @@ int main(int argc, char *argv[])
     if (strcmp(argv[1], "solve") == 0)
     {
         handler = create_solve_handler();
-    }else
+    }
+    else if (strcmp(argv[1], "version") == 0)
+    {
+        handler = create_version_handler();
+    }
+    else
     {
         handler = create_help_handler();
     }
