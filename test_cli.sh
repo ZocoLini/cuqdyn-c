@@ -16,5 +16,6 @@ cp plot.py "$CLI_TEST_DIR"
     -d data/lotka_volterra_paper_data.txt \
     -o data/output \
     -f 0
-  python3 plot.py test/test_data/cli_test_output.txt
 )
+
+.venv/bin/python plot.py "$CLI_TEST_DIR/data/output/cuqdyn-results.txt"

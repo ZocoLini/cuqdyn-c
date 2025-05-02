@@ -8,12 +8,15 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "cuqdyn.h"
 #include "functions/lotka_volterra.h"
 #include "matlab.h"
 
 int handle_solve(int argc, char *argv[]);
+void print_matrix(DlsMat mat, FILE *output_file, char *name);
+void print_vector(N_Vector vec, FILE *output_file, char *name);
 
 Handler create_solve_handler()
 {
@@ -96,9 +99,51 @@ int handle_solve(int argc, char *argv[])
 
     CuqdynResult *cuqdyn_result = cuqdyn_algo(function_type, data_file, sacess_config_file, output_dir);
 
-    // TODO: Print the results
+    N_Vector params_median = cuqdyn_result->predicted_params_median;
+    DlsMat data_median = cuqdyn_result->predicted_data_median;
 
+    DlsMat q_low = cuqdyn_result->q_low;
+    DlsMat q_up = cuqdyn_result->q_up;
+
+    char *output_file_path = malloc(strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1);
+    strcpy(output_file_path, output_dir);
+    strcat(output_file_path, "/cuqdyn-results.txt");
+
+    FILE *output_file = fopen(output_file_path, "w");
+
+    print_vector(params_median, output_file, "Params");
+    print_matrix(data_median, output_file, "Data");
+    print_matrix(q_low, output_file, "Q_low");
+    print_matrix(q_up, output_file, "Q_up");
+
+    free(output_file_path);
     destroy_cuqdyn_result(cuqdyn_result);
 
     return 0;
+}
+
+void print_matrix(DlsMat mat, FILE *output_file, char *name)
+{
+    fprintf(output_file, "[%s]\n", name);
+    fprintf(output_file, "%ld %ld\n", SM_ROWS_D(mat), SM_COLUMNS_D(mat));
+
+    for (int i = 0; i < SM_ROWS_D(mat); i++)
+    {
+        for (int j = 0; j < SM_COLUMNS_D(mat); j++)
+        {
+            fprintf(output_file, "%lf ", SM_ELEMENT_D(mat, i, j));
+        }
+        fprintf(output_file, "\n");
+    }
+}
+
+void print_vector(N_Vector vec, FILE *output_file, char *name)
+{
+    fprintf(output_file, "[%s]\n", name);
+    fprintf(output_file, "%ld\n", NV_LENGTH_S(vec));
+    for (int i = 0; i < NV_LENGTH_S(vec); i++)
+    {
+        fprintf(output_file, "%lf ", NV_Ith_S(vec, i));
+    }
+    fprintf(output_file, "\n");
 }

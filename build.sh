@@ -7,4 +7,6 @@ mkdir build
   cd build || exit 1
   cmake ..
   make
+
+  cp modules/cli/cli cli
 )
