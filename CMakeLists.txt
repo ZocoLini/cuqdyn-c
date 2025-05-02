@@ -34,9 +34,6 @@ set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/gnu")
 
 set(CMAKE_C_STANDARD 11)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(MATIO REQUIRED matio)
-
 enable_testing()
 
 add_subdirectory(modules/cvodes_old)
