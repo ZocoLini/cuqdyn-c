@@ -20,16 +20,18 @@ project(ess-c LANGUAGES C Fortran)
 # set(CMAKE_Fortran_FLAGS "-O3 -ipo -xHost -fpp -DEXPORT -DINTEL -cxxlib")
 #
 # set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/intel")
+# set(LIBRARIES "mpi ifcore ifport imf")
 ######################################################################
 
 ######################################################################
 ## ScatterSearch solver
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_Fortran_COMPILER gfortran)
-set(CMAKE_C_FLAGS "-O1 -cpp -DGNU -lstdc++ -lrt -lgfortran -MMD -lm -ldl -lz")
+set(CMAKE_C_FLAGS "-O1 -DGNU")
 set(CMAKE_Fortran_FLAGS "-O3 -cpp -DGNU -fallow-argument-mismatch -std=gnu")
 
 set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/gnu")
+set(LIBRARIES "")
 ######################################################################
 
 set(CMAKE_C_STANDARD 11)
