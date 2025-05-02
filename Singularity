@@ -13,6 +13,7 @@ From: ubuntu:22.04
     apt install -y \
         build-essential \
         cmake \
+        libhdf5-serial-dev \
         gfortran
 
     cd /opt/cuqdyn-c
