@@ -40,6 +40,12 @@ target_include_directories(cuqdyn-c
         PUBLIC
         include
         generated
+        ${PROJECT_SOURCE_DIR}/deps/matio-1.5.28/include
+)
+
+target_link_directories(cuqdyn-c
+        PUBLIC
+        ${PROJECT_SOURCE_DIR}/deps/matio-1.5.28/lib
 )
 
 target_link_libraries(cuqdyn-c
