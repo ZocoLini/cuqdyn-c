@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(ess-c LANGUAGES C Fortran)
+project(cuqdyn LANGUAGES C Fortran)
 
 #####################################################################
 ## saCeSS solver
