@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="Black">
-    <option name="sdkName" value="Python 3.10 (conformal-prediction-dbs)" />
-  </component>
   <component name="CMakePythonSetting">
     <option name="pythonIntegrationState" value="YES" />
   </component>
@@ -17,8 +14,10 @@
       <file path="$PROJECT_DIR$/cuqdyn-c/src" />
       <file path="$PROJECT_DIR$/dotmat-introspector/src" />
     </sourceRoots>
-    <excludeRoots>
+    <libraryRoots>
       <file path="$PROJECT_DIR$/deps" />
+    </libraryRoots>
+    <excludeRoots>
       <file path="$PROJECT_DIR$/sundials" />
     </excludeRoots>
   </component>

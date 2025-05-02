@@ -40,14 +40,14 @@ target_include_directories(sacess
         include/method_module_fortran
 
         ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/include
-        ${PROJECT_SOURCE_DIR}/deps/libxml2/include
+        ${PROJECT_SOURCE_DIR}/deps/xml2-2.9.1/include
         ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/include
 )
 
 target_link_directories(sacess
         PUBLIC
         ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/lib
-        ${PROJECT_SOURCE_DIR}/deps/libxml2/lib
+        ${PROJECT_SOURCE_DIR}/deps/xml2-2.9.1/lib
         ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/lib
         ${MISQP_LIBRARY_DIR}
 )
