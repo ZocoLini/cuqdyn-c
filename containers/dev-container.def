@@ -5,16 +5,11 @@ From: ubuntu:22.04
     Author Borja Castellano
     Version 0.1.0
 
-%files
-    . /opt/cuqdyn-c
-
 %post
     apt update
     apt install -y \
+        git \
         build-essential \
         cmake \
         libhdf5-serial-dev \
         gfortran
-
-    cd /opt/cuqdyn-c
-    ./build.sh
