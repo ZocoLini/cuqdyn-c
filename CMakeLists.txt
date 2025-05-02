@@ -15,24 +15,24 @@ project(ess-c LANGUAGES C Fortran)
 
 ######################################################################
 ## ScatterSearch solver
-set(CMAKE_C_COMPILER icc)
-set(CMAKE_Fortran_COMPILER ifort)
-set(CMAKE_C_FLAGS "-O3 -ipo -xHost -DINTEL -diag-disable=10441")
-set(CMAKE_Fortran_FLAGS "-O3 -ipo -xHost -fpp -DEXPORT -DINTEL")
-
-set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/intel")
-set(LIBRARIES ifcore)
+# set(CMAKE_C_COMPILER icc)
+# set(CMAKE_Fortran_COMPILER ifort)
+# set(CMAKE_C_FLAGS "-O3 -ipo -xHost -DINTEL -diag-disable=10441")
+# set(CMAKE_Fortran_FLAGS "-O3 -ipo -xHost -fpp -DEXPORT -DINTEL")
+#
+# set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/intel")
+# set(LIBRARIES ifcore)
 ######################################################################
 
 ######################################################################
 ## ScatterSearch solver
-# set(CMAKE_C_COMPILER gcc)
-# set(CMAKE_Fortran_COMPILER gfortran)
-# set(CMAKE_C_FLAGS "-O1 -DGNU")
-# set(CMAKE_Fortran_FLAGS "-O3 -cpp -DGNU -fallow-argument-mismatch -std=gnu")
-#
-# set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/gnu")
-# set(LIBRARIES "")
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_Fortran_COMPILER gfortran)
+set(CMAKE_C_FLAGS "-O1 -MMD -DGNU")
+set(CMAKE_Fortran_FLAGS "-O3 -cpp -DGNU -fallow-argument-mismatch -std=gnu")
+
+set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/gnu")
+set(LIBRARIES "")
 ######################################################################
 
 set(CMAKE_C_STANDARD 11)
