@@ -1,8 +1,7 @@
 import sys
+from pathlib import Path
 
 import matplotlib.pyplot as plt
-import os
-from pathlib import Path
 
 def read_data(filepath):
     with open(filepath) as f:
@@ -17,11 +16,9 @@ def read_data(filepath):
             section = line[1:-1]
             i += 1
 
-            # Leer dimensiones: ej. "31 2" o "4"
             dims = list(map(int, lines[i].split(" ")))
             i += 1
 
-            # Número de filas y columnas
             rows = dims[0]
             cols = dims[1] if len(dims) > 1 else 1
 
@@ -46,8 +43,6 @@ def read_data(filepath):
 
     return sections
 
-
-
 if len(sys.argv) < 2:
     print("Usage: python plot.py <data_file>")
     sys.exit(1)
@@ -67,7 +62,7 @@ q_low = data["Q_low"]["data"]
 q_up = data["Q_up"]["data"]
 
 # Crear carpeta de salida
-os.makedirs("output", exist_ok=True)
+output_folder = ruta.parent
 
 plt.figure(figsize=(8, 6))
 
@@ -93,5 +88,5 @@ for j in range(num_colums):
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(f"output/y{j}.png", dpi=300)
+    plt.savefig(f"{output_folder}/y{j}.png", dpi=300)
     plt.close()
