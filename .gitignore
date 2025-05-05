@@ -94,3 +94,4 @@ fabric.properties
 build/
 dev-container/
 output/
+.venv/

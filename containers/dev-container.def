@@ -13,9 +13,3 @@ From: ubuntu:22.04
         cmake \
         libhdf5-serial-dev \
         gfortran
-
-    apt install -y \
-        python3 \
-        python3-pip
-
-    pip install matplotlib

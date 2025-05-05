@@ -18,4 +18,5 @@ cp plot.py "$CLI_TEST_DIR"
     -f 0
 )
 
+.venv/bin/pip install matplotlib
 .venv/bin/python plot.py "$CLI_TEST_DIR/data/output/cuqdyn-results.txt"
