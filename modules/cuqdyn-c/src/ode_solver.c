@@ -25,20 +25,6 @@ void destroy_ode_model(ODEModel model)
 
 static int check_retval(void *, const char *, int);
 
-/*
- * Solves the ODE system using the ode45 solver
- *
- * initial_values: data_matrix(1,2:end);
- * times: data_matrix(:,1);
- * parameters: constants to use in the ode
- *
- * Returns:
- *   DlsMat where:
- *   - Each row corresponds to a time point
- *   - Column 0: Time values (t)
- *   - Columns 1-n: Solution components (y1, y2, ..., yn)
- *
- */
 DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
 {
     CuqdynConf *cuqdyn_conf = get_cuqdyn_conf();

@@ -3,16 +3,28 @@
 
 #include <cuqdyn.h>
 
-N_Vector copy_vector_remove_indices(N_Vector, LongArray);
-DlsMat copy_matrix_remove_rows(DlsMat, LongArray);
-DlsMat copy_matrix_remove_columns(DlsMat, LongArray);
-DlsMat copy_matrix_remove_rows_and_columns(DlsMat, LongArray, LongArray);
+// Return a copy of a vector removing the indices passed as argument.
+// The indices should be sorted in ascending order and 1-based.
+N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices);
+// Return a copy of a matrix removing the indicated rows.
+// The indices should be sorted in ascending order and 1-based.
+DlsMat copy_matrix_remove_rows(DlsMat matrix, LongArray indices);
+// Return a copy of a matrix removing the indicated cols.
+// // The indices should be sorted in ascending order and 1-based.
+DlsMat copy_matrix_remove_columns(DlsMat matrix, LongArray indices);
+// Return a copy of a matrix removing the indicated rows and cols.
+// // The indices should be sorted in ascending order and 1-based.
+DlsMat copy_matrix_remove_rows_and_columns(DlsMat matrix, LongArray row_indices, LongArray col_indices);
 
-void set_matrix_row(DlsMat, N_Vector, long row_index, long start, long end);
-void set_matrix_column(DlsMat, N_Vector, long col_index, long start, long end);
+// Set a row of a matrix with the values of a vector from start (inclusive) to end (exclusive)
+void set_matrix_row(DlsMat matrix, N_Vector vec, long row_index, long start, long end);
+// Set a column of a matrix with the values of a vector from start (inclusive) to end (exclusive)
+void set_matrix_column(DlsMat matrix, N_Vector vec, long col_index, long start, long end);
 
-N_Vector copy_matrix_row(DlsMat, long row_index, long start, long end);
-N_Vector copy_matrix_column(DlsMat, long col_index, long start, long end);
+// Copy a row of a matrix into a vector from start (inclusive) to end (exclusive)
+N_Vector copy_matrix_row(DlsMat matrix, long row_index, long start, long end);
+// Copy a column of a matrix into a vector from start (inclusive) to end (exclusive)
+N_Vector copy_matrix_column(DlsMat matrix, long col_index, long start, long end);
 
 /*
  * Sums matrix a + b. Note that 'b' can have fewer cols or rows than 'a' but not otherwise
