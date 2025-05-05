@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y openmpi-bin libopenmpi-dev
+          sudo apt install -y openmpi-bin libopenmpi-dev libhdf5-serial-dev
 
       - name: Make test.sh executable
         run: chmod +x ./test.sh
