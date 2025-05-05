@@ -11,7 +11,6 @@
         #include <omp.h>
 #endif
 
-// TODO: Use texp and yexp inside the objective function somehow
 N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func, N_Vector texp, DlsMat yexp, N_Vector initial_values)
 {
     int id, NPROC, error, i, NPROC_OPENMP;

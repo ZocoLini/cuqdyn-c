@@ -5,9 +5,6 @@
 
 #include "cuqdyn.h"
 
-// Num_indices are the indices to be removed from the original vector.
-// Should be sorted in ascending order.
-// The indices are 1-based, so the first element is 1, not 0.
 N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 {
     realtype *original_data = N_VGetArrayPointer(original);

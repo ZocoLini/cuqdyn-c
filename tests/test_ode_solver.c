@@ -82,7 +82,7 @@ int basic_f(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     N_Vector parameters = user_data;
 
-    Ith(ydot, 1) = (Ith(parameters, 1) / t) * Ith(y, 1);
+    MIth(ydot, 1) = (MIth(parameters, 1) / t) * MIth(y, 1);
 
     return 0;
 }
