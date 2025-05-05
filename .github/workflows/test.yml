@@ -20,7 +20,9 @@ jobs:
           sudo apt install -y openmpi-bin libopenmpi-dev libhdf5-serial-dev
 
       - name: Make test.sh executable
-        run: chmod +x ./test.sh
+        run: |
+          chmod +x ./test.sh
+          chmod +x ./build.sh
 
       - name: Run test script
-        run: ./test.sh
+        run: ./build.sh && ./test.sh
