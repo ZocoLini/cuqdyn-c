@@ -1,3 +1,4 @@
+# TODO: If the packages are not found, build them from source
 find_package(HDF5 REQUIRED)
 find_package(GSL REQUIRED)
 
