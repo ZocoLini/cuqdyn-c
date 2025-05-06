@@ -56,7 +56,7 @@ target_link_libraries(sacess
         PUBLIC
         cvodes_old
         xml2
-        misqp
+        misqp # Needed by modules/sacess/src/method_module_fortran/eSS/localsolvers/misqp/misqp_interface.f90
 
         GSL::gsl
         hdf5::hdf5
