@@ -85,7 +85,7 @@ ObjFunc obtain_function_type_obj_f(const FunctionType function_type)
 }
 
 CuqdynResult *create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median, DlsMat q_low,
-                                   DlsMat q_up)
+                                   DlsMat q_up, N_Vector times)
 {
     CuqdynResult *cuqdyn_result = malloc(sizeof(CuqdynResult));
     cuqdyn_result->predicted_data_median = predicted_data_median;
@@ -101,6 +101,7 @@ void destroy_cuqdyn_result(CuqdynResult *result)
     SUNMatDestroy(result->q_up);
 
     N_VDestroy(result->predicted_params_median);
+    N_VDestroy(result->times);
     free(result);
 }
 
@@ -155,7 +156,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
     }
 
-    // TODO: This can be done in parallel and the indices can be erroneous
+    // TODO: This can be done in parallel
     for (long i = 1; i < m; ++i)
     {
         LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
@@ -175,6 +176,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         DlsMat predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1L}, 1));
 
         SUNMatDestroy(ode_solution);
+        N_VDestroy(predicted_params);
 
         for (int j = 0; j < n; ++j)
         {
@@ -229,10 +231,19 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         }
     }
 
-    destroy_matrix_array(media_matrix); // This frees the matrix array and all the matrices inside
+    destroy_matrix_array(m_low);
+    destroy_matrix_array(m_up);
+    destroy_matrix_array(media_matrix);
+    N_VDestroy(initial_values);
+    SUNMatDestroy(observed_data);
 
-    CuqdynResult *cuqdyn_result = create_cuqdyn_result(predicted_data_median, predicted_params_median, q_low, q_up);
-    return cuqdyn_result;
+    return create_cuqdyn_result(
+        predicted_data_median,
+        predicted_params_median,
+        q_low,
+        q_up,
+        times
+        );
 }
 
 LongArray create_array(long *data, const long len)

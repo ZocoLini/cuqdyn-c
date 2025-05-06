@@ -104,6 +104,7 @@ int handle_solve(int argc, char *argv[])
 
     DlsMat q_low = cuqdyn_result->q_low;
     DlsMat q_up = cuqdyn_result->q_up;
+    N_Vector times = cuqdyn_result->times;
 
     char *output_file_path = malloc(strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1);
     strcpy(output_file_path, output_dir);
@@ -115,6 +116,7 @@ int handle_solve(int argc, char *argv[])
     print_matrix(data_median, output_file, "Data");
     print_matrix(q_low, output_file, "Q_low");
     print_matrix(q_up, output_file, "Q_up");
+    print_vector(times, output_file, "Times");
 
     free(output_file_path);
     destroy_cuqdyn_result(cuqdyn_result);

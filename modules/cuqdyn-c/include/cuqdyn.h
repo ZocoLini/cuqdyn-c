@@ -39,10 +39,11 @@ typedef struct
     N_Vector predicted_params_median;
     DlsMat q_low;
     DlsMat q_up;
+    N_Vector times;
 } CuqdynResult;
 
 CuqdynResult* create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median,
-    DlsMat q_low, DlsMat q_up);
+    DlsMat q_low, DlsMat q_up, N_Vector times);
 void destroy_cuqdyn_result(CuqdynResult* result);
 
 CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, const char *sacess_conf_file,
