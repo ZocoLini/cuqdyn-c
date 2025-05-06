@@ -1,3 +1,5 @@
+find_package(HDF5 REQUIRED)
+
 file(GLOB SRC_C CONFIGURE_DEPENDS
         src/input_module/*.c
         src/output/*.c
@@ -41,14 +43,12 @@ target_include_directories(sacess
 
         ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/include
         ${PROJECT_SOURCE_DIR}/deps/xml2-2.9.1/include
-        ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/include
 )
 
 target_link_directories(sacess
         PUBLIC
         ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/lib
         ${PROJECT_SOURCE_DIR}/deps/xml2-2.9.1/lib
-        ${PROJECT_SOURCE_DIR}/deps/hdf5-1.8.12/lib
         ${MISQP_LIBRARY_DIR}
 )
 
@@ -58,7 +58,7 @@ target_link_libraries(sacess
         xml2
         gsl
         misqp
-        hdf5
+        hdf5::hdf5
 
         ${LIBRARIES}
 )

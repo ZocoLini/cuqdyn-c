@@ -6,7 +6,7 @@
 #include "include_amigo/AMIGO_model.h"
 #include "include_amigo/AMIGO_problem.h"
 #include "include_amigo/AMIGO_pe.h"
-#include <hdf5.h>
+#include <hdf5/serial/hdf5.h>
 
 void insert_group_dataset_int_value(hid_t group_id, const char *dataname,  int *value ) {
         hid_t dataset_id, driver;

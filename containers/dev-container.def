@@ -11,5 +11,7 @@ From: ubuntu:22.04
         git \
         build-essential \
         cmake \
-        libhdf5-serial-dev \
         gfortran
+
+    apt install -y \
+        libhdf5-dev

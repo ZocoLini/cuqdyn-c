@@ -15,7 +15,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <error/def_errors.h>
-#include <hdf5.h>
+#include <hdf5/serial/hdf5.h>
 #if  defined(OPENMP) 
     #include <omp.h>
 #endif
