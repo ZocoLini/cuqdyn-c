@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          apt install -y \
+          sudo apt install -y \
               libhdf5-dev \
               libgsl-dev
 
