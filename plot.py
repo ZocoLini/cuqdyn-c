@@ -60,6 +60,7 @@ params = data["Params"]["data"]
 data_matrix = data["Data"]["data"]
 q_low = data["Q_low"]["data"]
 q_up = data["Q_up"]["data"]
+times = data["Times"]["data"]
 
 # Crear carpeta de salida
 output_folder = ruta.parent
@@ -72,7 +73,6 @@ plt.legend()
 plt.grid(True)
 
 num_colums = len(data_matrix[0])
-times = range(0, len(data_matrix)) # TODO: Replace with actual time values if available
 
 for j in range(num_colums):
     plt.figure(figsize=(8, 6))
