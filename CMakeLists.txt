@@ -1,6 +1,7 @@
-cmake_minimum_required(VERSION 3.22.1)
+cmake_minimum_required(VERSION 3.11)
 
-project(cuqdyn LANGUAGES C Fortran)
+project(cuqdyn LANGUAGES C Fortran CXX)
+include(FetchContent)
 
 #####################################################################
 ## saCeSS solver
@@ -26,8 +27,9 @@ project(cuqdyn LANGUAGES C Fortran)
 
 ######################################################################
 ## ScatterSearch solver
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_Fortran_COMPILER gfortran)
+# set(CMAKE_C_COMPILER gcc)
+# set(CMAKE_CXX_COMPILER g++)
+# set(CMAKE_Fortran_COMPILER gfortran)
 set(CMAKE_C_FLAGS "-O1 -MMD -DGNU")
 set(CMAKE_Fortran_FLAGS "-O3 -cpp -DGNU -fallow-argument-mismatch -std=gnu -w")
 
@@ -37,12 +39,12 @@ set(LIBRARIES "")
 
 set(CMAKE_C_STANDARD 11)
 
-enable_testing()
-
 add_subdirectory(modules/cvodes_old)
 add_subdirectory(modules/sacess)
 add_subdirectory(modules/cli)
 add_subdirectory(modules/dotmat-introspector)
 add_subdirectory(modules/cuqdyn-c)
+
+enable_testing()
 
 add_subdirectory(tests)

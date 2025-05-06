@@ -30,6 +30,15 @@ configure_file(
 message(STATUS "CUQDYN_C_VERSION: ${GIT_VERSION}")
 add_definitions(-DCUQDYN_C_VERSION=\"${GIT_VERSION}\")
 
+
+FetchContent_Declare(
+        matio
+        GIT_REPOSITORY https://github.com/tbeu/matio.git
+        GIT_TAG v1.5.28
+)
+
+FetchContent_MakeAvailable(matio)
+
 file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c)
 
 add_library(cuqdyn-c
@@ -40,12 +49,7 @@ target_include_directories(cuqdyn-c
         PUBLIC
         include
         generated
-        ${PROJECT_SOURCE_DIR}/deps/matio-1.5.28/include
-)
-
-target_link_directories(cuqdyn-c
-        PUBLIC
-        ${PROJECT_SOURCE_DIR}/deps/matio-1.5.28/lib
+        ${matio_SOURCE_DIR}/src
 )
 
 target_link_libraries(cuqdyn-c
