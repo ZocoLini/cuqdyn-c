@@ -92,6 +92,7 @@ CuqdynResult *create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predic
     cuqdyn_result->predicted_params_median = predicted_params_median;
     cuqdyn_result->q_low = q_low;
     cuqdyn_result->q_up = q_up;
+    cuqdyn_result->times = times;
     return cuqdyn_result;
 }
 void destroy_cuqdyn_result(CuqdynResult *result)
@@ -237,13 +238,15 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     N_VDestroy(initial_values);
     SUNMatDestroy(observed_data);
 
-    return create_cuqdyn_result(
+    CuqdynResult *result = create_cuqdyn_result(
         predicted_data_median,
         predicted_params_median,
         q_low,
         q_up,
         times
         );
+
+    return result;
 }
 
 LongArray create_array(long *data, const long len)
