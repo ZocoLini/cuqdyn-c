@@ -96,3 +96,4 @@ dev-container/
 output/
 .venv/
 fort.1
+ESTADO.md
