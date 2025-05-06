@@ -14,4 +14,6 @@ From: ubuntu:22.04
         gfortran
 
     apt install -y \
-        libhdf5-dev
+        libhdf5-dev \
+        libgsl-dev
+

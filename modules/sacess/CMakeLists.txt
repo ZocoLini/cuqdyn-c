@@ -1,4 +1,5 @@
 find_package(HDF5 REQUIRED)
+find_package(GSL REQUIRED)
 
 file(GLOB SRC_C CONFIGURE_DEPENDS
         src/input_module/*.c
@@ -41,13 +42,11 @@ target_include_directories(sacess
 
         include/method_module_fortran
 
-        ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/include
         ${PROJECT_SOURCE_DIR}/deps/xml2-2.9.1/include
 )
 
 target_link_directories(sacess
         PUBLIC
-        ${PROJECT_SOURCE_DIR}/deps/gsl-1.14/lib
         ${PROJECT_SOURCE_DIR}/deps/xml2-2.9.1/lib
         ${MISQP_LIBRARY_DIR}
 )
@@ -56,8 +55,9 @@ target_link_libraries(sacess
         PUBLIC
         cvodes_old
         xml2
-        gsl
         misqp
+
+        GSL::gsl
         hdf5::hdf5
 
         ${LIBRARIES}
