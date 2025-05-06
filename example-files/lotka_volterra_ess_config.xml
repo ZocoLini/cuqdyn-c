@@ -7,7 +7,7 @@
         <verbose>1</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>3e3</maxevaluation>
+            <maxevaluation>9e3</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>
@@ -28,7 +28,7 @@
         <local_options>
             <solver>nl2sol.dn2gb</solver>
             <tol>0</tol>
-            <evalmax>3e3</evalmax>
+            <evalmax>9e3</evalmax>
             <iterprint>0</iterprint>
             <n1>1</n1>
             <n2>10</n2>
