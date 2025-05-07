@@ -5,6 +5,7 @@ defined in this [paper](https://zenodo.org/records/13838652).
 
 ## Index
   - [Project Structure](#project-structure)
+  - [Dependencies](#dependencies)
   - [Building the project](#building-the-project)
   - [Using the CLI](#using-the-cli)
   - [Input files](#input-files)
@@ -19,9 +20,15 @@ The project is structured as follows:
    - `cvodes_old/`: Old version of the cvodes library that was used in the sacess library.
    - `dotmat-introspector/`: Console app to introspect the contents of a .mat file.
    - `sacess/`: [External proyect](https://bitbucket.org/DavidPenas/sacess-library) adapted to enable the 
-   use of the eSS in C.
+   use of eSS in C.
  - `tests/`: Constains the tests of the cuqdyn-c library.
  - `CUQDyn/`: Contains the original Matlab project.
+
+## Dependencies
+- xml2-2.9.1
+- matio-2.9.1
+- hdf5-1.8.12
+- gsl-1.14
 
 ## Building the project
 The project has a `build.sh` script that builds the project using CMake.

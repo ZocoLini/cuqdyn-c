@@ -2,14 +2,6 @@
 find_package(HDF5 REQUIRED)
 find_package(GSL REQUIRED)
 
-FetchContent_Declare(
-        xml2
-        GIT_REPOSITORY https://gitlab.gnome.org/GNOME/libxml2.git
-        GIT_TAG v2.9.1
-)
-
-FetchContent_MakeAvailable(xml2)
-
 set(HDF5_INCLUDE_DIR "/usr/include/hdf5/serial" CACHE PATH "Path to the dir that contains hdf5.h")
 if(EXISTS "${HDF5_INCLUDE_DIR}/hdf5.h")
     include_directories(${HDF5_INCLUDE_DIR})
