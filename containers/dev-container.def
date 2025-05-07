@@ -13,7 +13,3 @@ From: ubuntu:22.04
         cmake \
         gfortran
 
-    apt install -y \
-        libhdf5-dev \
-        libgsl-dev
-

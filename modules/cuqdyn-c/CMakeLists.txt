@@ -1,7 +1,7 @@
 execute_process(
         COMMAND bash -c "
         branch=\$(git rev-parse --abbrev-ref HEAD)
-        version=\$(git tag --sort=-creatordate | grep '^cli/' | head -n 1 | sed -E 's:.*/(v[0-9]+\.[0-9]+\.[0-9]+):\\1:')
+        version=\$(git tag --sort=-creatordate | grep '^cli/' | head -n 1 | sed -E 's:.*/(v[0-9]+\\.[0-9]+\\.[0-9]+):\\1:')
         if [ \"\$branch\" = \"main\" ]; then
             echo \"\$version\"
         else
@@ -29,15 +29,6 @@ configure_file(
 
 message(STATUS "CUQDYN_C_VERSION: ${GIT_VERSION}")
 add_definitions(-DCUQDYN_C_VERSION=\"${GIT_VERSION}\")
-
-
-FetchContent_Declare(
-        matio
-        GIT_REPOSITORY https://github.com/tbeu/matio.git
-        GIT_TAG v1.5.28
-)
-
-FetchContent_MakeAvailable(matio)
 
 file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c)
 

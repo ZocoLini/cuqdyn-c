@@ -21,6 +21,7 @@
       <file path="$PROJECT_DIR$/deps" />
     </libraryRoots>
     <excludeRoots>
+      <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/sundials" />
     </excludeRoots>
   </component>

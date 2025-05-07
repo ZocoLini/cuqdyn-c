@@ -1,14 +1,3 @@
-# TODO: If the packages are not found, build them from source
-find_package(HDF5 1.8 REQUIRED)
-find_package(GSL 1.14 REQUIRED)
-
-set(HDF5_INCLUDE_DIR "/usr/include/hdf5/serial" CACHE PATH "Path to the dir that contains hdf5.h")
-if(EXISTS "${HDF5_INCLUDE_DIR}/hdf5.h")
-    include_directories(${HDF5_INCLUDE_DIR})
-else()
-    message(FATAL_ERROR "hdf5.h not found in ${HDF5_INCLUDE_DIR}")
-endif()
-
 file(GLOB SRC_C CONFIGURE_DEPENDS
         src/input_module/*.c
         src/output/*.c
@@ -50,7 +39,11 @@ target_include_directories(sacess
 
         include/method_module_fortran
 
-        ${HDF5_INCLUDE_DIR}
+        ${GSL_INCLUDE_DIR}
+
+        ${hdf5_SOURCE_DIR}/src
+        ${hdf5_BINARY_DIR}
+
         ${PROJECT_SOURCE_DIR}/deps/xml2-2.9.1/include
 )
 
@@ -64,10 +57,12 @@ target_link_libraries(sacess
         PUBLIC
         cvodes_old
         xml2
-        misqp # Needed by modules/sacess/src/method_module_fortran/eSS/localsolvers/misqp/misqp_interface.f90
 
-        GSL::gsl
-        hdf5::hdf5
+        # Needed by modules/sacess/src/method_module_fortran/eSS/localsolvers/misqp/misqp_interface.f90
+        misqp
+
+        ${GSL_LIBRARY}
+        hdf5
 
         ${LIBRARIES}
 )

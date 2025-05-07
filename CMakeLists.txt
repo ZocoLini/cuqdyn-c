@@ -39,11 +39,69 @@ set(LIBRARIES "")
 
 set(CMAKE_C_STANDARD 11)
 
+# HDF5 dependency
+
+set(HDF5_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(HDF5_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(HDF5_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(HDF5_BUILD_HL_LIB OFF CACHE BOOL "" FORCE)
+set(HDF5_ENABLE_Z_LIB_SUPPORT OFF CACHE BOOL "" FORCE)
+set(HDF5_ENABLE_SZIP_SUPPORT OFF CACHE BOOL "" FORCE)
+set(HDF5_ENABLE_THREADSAFE OFF CACHE BOOL "" FORCE)
+set(HDF5_ENABLE_PARALLEL OFF CACHE BOOL "" FORCE)
+set(HDF5_ENABLE_CPP_LIB OFF CACHE BOOL "" FORCE)
+set(HDF5_DEFAULT_API_VERSION v18 CACHE STRING "")
+
+FetchContent_Declare(
+    hdf5
+    GIT_REPOSITORY https://github.com/HDFGroup/hdf5.git
+    GIT_TAG hdf5-1_8_12
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(hdf5)
+
+set(HDF5_FOUND TRUE CACHE BOOL "HDF5 found" FORCE)
+set(HDF5_INCLUDE_DIRS "${hdf5_SOURCE_DIR}/src" "${hdf5_BINARY_DIR}" CACHE PATH "HDF5 includes" FORCE)
+set(HDF5_LIBRARIES "${hdf5_BINARY_DIR}/src/libhdf5.a" CACHE STRING "HDF5 libs" FORCE)
+
+# Building Matio dependency
+set(MATIO_WITH_ZLIB OFF CACHE BOOL "" FORCE)
+set(MATIO_WITH_HDF5 ON CACHE BOOL "" FORCE)
+set(MATIO_WITH_MAT73 ON CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+        matio
+        GIT_REPOSITORY https://github.com/tbeu/matio.git
+        GIT_TAG v1.5.28
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(matio)
+
+# Building GSL dependency
+find_package(GSL 2.7)
+
+if (NOT GSL_FOUND)
+    option(GSL_DISABLE_TESTS 1)
+    FetchContent_Declare(
+        gsl
+        GIT_REPOSITORY https://github.com/ampl/gsl.git
+        GIT_TAG v2.7.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(gsl)
+    set(GSL_INCLUDE_DIR ${gsl_SOURCE_DIR} ${gsl_BINARY_DIR})
+    set(GSL_LIBRARY "gsl")
+else()
+    set(GSL_LIBRARY "GSL::gsl")
+endif()
+
 add_subdirectory(modules/cvodes_old)
 add_subdirectory(modules/sacess)
+add_subdirectory(modules/cuqdyn-c)
 add_subdirectory(modules/cli)
 add_subdirectory(modules/dotmat-introspector)
-add_subdirectory(modules/cuqdyn-c)
 
 enable_testing()
 
