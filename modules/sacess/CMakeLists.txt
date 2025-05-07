@@ -1,6 +1,6 @@
 # TODO: If the packages are not found, build them from source
-find_package(HDF5 REQUIRED)
-find_package(GSL REQUIRED)
+find_package(HDF5 1.8 REQUIRED)
+find_package(GSL 1.14 REQUIRED)
 
 set(HDF5_INCLUDE_DIR "/usr/include/hdf5/serial" CACHE PATH "Path to the dir that contains hdf5.h")
 if(EXISTS "${HDF5_INCLUDE_DIR}/hdf5.h")
