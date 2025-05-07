@@ -13,7 +13,7 @@
 #include <configuration.h>
 #include <output/read_a_file_line_by_line.h>
 #include <method_module/common_solver_operations.h>
-#include <hdf5/serial/hdf5.h>
+#include <hdf5.h>
 #include <method_module/benchmark_functions_SystemBiology.h>
 #ifdef MPI2
         #include <mpi.h>
