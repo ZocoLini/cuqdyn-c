@@ -39,12 +39,30 @@ set(LIBRARIES "")
 
 set(CMAKE_C_STANDARD 11)
 
+# Building GSL dependency
+find_package(GSL 2.7)
+
+if (NOT GSL_FOUND)
+    option(GSL_DISABLE_TESTS 1)
+    FetchContent_Declare(
+        gsl
+        GIT_REPOSITORY https://github.com/ampl/gsl.git
+        GIT_TAG v2.7.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(gsl)
+    set(GSL_INCLUDE_DIR ${gsl_SOURCE_DIR} ${gsl_BINARY_DIR})
+    set(GSL_LIBRARY "gsl")
+else()
+    set(GSL_LIBRARY "GSL::gsl")
+endif()
+
 # HDF5 dependency
 
 set(HDF5_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(HDF5_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(HDF5_BUILD_TESTING OFF CACHE BOOL "" FORCE)
-set(HDF5_BUILD_HL_LIB OFF CACHE BOOL "" FORCE)
+set(HDF5_BUILD_HL_LIB ON CACHE BOOL "" FORCE)
 set(HDF5_ENABLE_Z_LIB_SUPPORT OFF CACHE BOOL "" FORCE)
 set(HDF5_ENABLE_SZIP_SUPPORT OFF CACHE BOOL "" FORCE)
 set(HDF5_ENABLE_THREADSAFE OFF CACHE BOOL "" FORCE)
@@ -63,15 +81,18 @@ FetchContent_MakeAvailable(hdf5)
 
 set(HDF5_FOUND TRUE CACHE BOOL "HDF5 found" FORCE)
 set(HDF5_INCLUDE_DIRS "${hdf5_SOURCE_DIR}/src" "${hdf5_BINARY_DIR}" CACHE PATH "HDF5 includes" FORCE)
-set(HDF5_LIBRARIES "${hdf5_BINARY_DIR}/src/libhdf5.a" CACHE STRING "HDF5 libs" FORCE)
+set(HDF5_LIBRARIES "${hdf5_BINARY_DIR}/src/libhdf5.a" "${hdf5_BINARY_DIR}/src/libhdf5_hl.a" CACHE STRING "HDF5 libs" FORCE)
 
 set(HAVE_HDF5 TRUE CACHE BOOL "Pretend we have HDF5" FORCE)
 set(MATIO_MAT73 ON CACHE BOOL "Enable MAT73 support" FORCE)
 
 # Building Matio dependency
 set(MATIO_WITH_ZLIB OFF CACHE BOOL "" FORCE)
-set(MATIO_WITH_HDF5 ON CACHE BOOL "" FORCE)
+set(MATIO_WITH_HDF5 OFF CACHE BOOL "" FORCE)
 set(MATIO_WITH_MAT73 ON CACHE BOOL "" FORCE)
+set(MATIO_SHARED OFF CACHE BOOL "" FORCE)
+
+include_directories(${hdf5_SOURCE_DIR}/src ${hdf5_BINARY_DIR})
 
 FetchContent_Declare(
         matio
@@ -81,24 +102,6 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(matio)
-
-# Building GSL dependency
-find_package(GSL 2.7)
-
-if (NOT GSL_FOUND)
-    option(GSL_DISABLE_TESTS 1)
-    FetchContent_Declare(
-        gsl
-        GIT_REPOSITORY https://github.com/ampl/gsl.git
-        GIT_TAG v2.7.0
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(gsl)
-    set(GSL_INCLUDE_DIR ${gsl_SOURCE_DIR} ${gsl_BINARY_DIR})
-    set(GSL_LIBRARY "gsl")
-else()
-    set(GSL_LIBRARY "GSL::gsl")
-endif()
 
 add_subdirectory(modules/cvodes_old)
 add_subdirectory(modules/sacess)
