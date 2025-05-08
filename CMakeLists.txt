@@ -108,6 +108,12 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(matio)
 
+execute_process(
+  COMMAND sed -i "s|find_package(HDF5)|find_package(HDF5 CONFIG)|" ${matio_SOURCE_DIR}/cmake/thirdParties.cmake
+)
+
+message("done")
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY .)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY .)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY .)
