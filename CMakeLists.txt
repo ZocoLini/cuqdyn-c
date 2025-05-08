@@ -79,12 +79,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(hdf5)
 
-set(HDF5_FOUND TRUE CACHE BOOL "HDF5 found" FORCE)
-set(HDF5_INCLUDE_DIRS "${hdf5_SOURCE_DIR}/src" "${hdf5_BINARY_DIR}" CACHE PATH "HDF5 includes" FORCE)
-set(HDF5_LIBRARIES "${hdf5_BINARY_DIR}/bin/libhdf5.a" "${hdf5_BINARY_DIR}/bin/libhdf5_hl.a" CACHE STRING "HDF5 libs" FORCE)
+set(HDF5_INCLUDE_DIR "${hdf5_SOURCE_DIR}/src")
+set(HDF5_INCLUDE_DIRS "${hdf5_SOURCE_DIR}/src;${hdf5_BINARY_DIR}")
+set(HDF5_LIBRARY "${hdf5_BINARY_DIR}/bin/libhdf5.a")
+set(HDF5_LIBRARIES "${HDF5_LIBRARY}")
+set(HDF5_FOUND TRUE)
 
 set(HAVE_HDF5 TRUE CACHE BOOL "Pretend we have HDF5" FORCE)
-set(MATIO_MAT73 ON CACHE BOOL "Enable MAT73 support" FORCE)
+# set(MATIO_MAT73 ON CACHE BOOL "Enable MAT73 support" FORCE)
 
 # Building Matio dependency
 set(MATIO_WITH_ZLIB ON CACHE BOOL "" FORCE)
