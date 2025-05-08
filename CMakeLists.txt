@@ -79,6 +79,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(hdf5)
 
+set(HDF5_DIR "${hdf5_BINARY_DIR}/CMakeFiles")
+
 set(HDF5_INCLUDE_DIR "${hdf5_SOURCE_DIR}/src")
 set(HDF5_INCLUDE_DIRS "${hdf5_SOURCE_DIR}/src;${hdf5_BINARY_DIR}")
 set(HDF5_LIBRARY "${hdf5_BINARY_DIR}/bin/libhdf5.a")
