@@ -26,15 +26,22 @@ The project is structured as follows:
 
 ## Dependencies
 - xml2-2.9.1
-- matio-2.9.1
-- hdf5-1.8.12
-- gsl-1.14
+- matio-2.9.1 (Builded by CMake)
+- hdf5-1.8.12 (Builded by CMake)
+- gsl-1.14 (Builded by CMake if not present)
 
 ## Building the project
 The project has a `build.sh` script that builds the project using CMake.
 A `build/` directory will be created and the project will be built inside it.
 After this, running `test.sh` is a good way to know if the cuqdyn library works as expected.
 
+As an alternative, you can build the project using the following commands:
+```bash
+mkdir build
+cd build
+cmake ..
+make -j $(nproc)
+````
 
 ## Using the CLI
 After building using the `build.sh` script, you can execute this command to run the CLI

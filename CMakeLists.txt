@@ -106,13 +106,13 @@ FetchContent_Declare(
         GIT_SHALLOW TRUE
 )
 
-FetchContent_MakeAvailable(matio)
+FetchContent_Populate(matio)
 
 execute_process(
-  COMMAND sed -i "s|find_package(HDF5)|find_package(HDF5 CONFIG)|" ${matio_SOURCE_DIR}/cmake/thirdParties.cmake
+        COMMAND sed -i "s|find_package(HDF5)|find_package(HDF5 CONFIG)|" ${matio_SOURCE_DIR}/cmake/thirdParties.cmake
 )
 
-message("done")
+add_subdirectory(${matio_SOURCE_DIR} ${matio_BINARY_DIR})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY .)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY .)
