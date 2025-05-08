@@ -50,10 +50,11 @@ int handle_solve(int argc, char *argv[])
             case 'o':
                 output_dir = optarg;
                 break;
-            case 'f':
-                int function_type_int = atoi(optarg);
-                function_type = create_function_type(function_type_int);
-                break;
+            case 'f': {
+                    int function_type_int = atoi(optarg);
+                    function_type = create_function_type(function_type_int);
+                    break;
+                }
             default:
                 fprintf(stderr, "ERROR: Wrong arguments, do %s help to see how to use it\n", argv[0]);
                 return 1;
