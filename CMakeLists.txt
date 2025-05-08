@@ -43,7 +43,7 @@ set(CMAKE_C_STANDARD 11)
 find_package(GSL 2.7)
 
 if (NOT GSL_FOUND)
-    option(GSL_DISABLE_TESTS 1)
+    set(GSL_DISABLE_TESTS 1)
     FetchContent_Declare(
         gsl
         GIT_REPOSITORY https://github.com/ampl/gsl.git
@@ -102,6 +102,10 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(matio)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY .)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY .)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY .)
 
 add_subdirectory(modules/cvodes_old)
 add_subdirectory(modules/sacess)
