@@ -68,7 +68,7 @@ int handle_solve(int argc, char *argv[])
     }
 
     if (output_dir == NULL)
-        output_dir = "output";
+        output_dir = "output/";
 
     if (data_file == NULL)
     {
