@@ -2,7 +2,7 @@
 #define LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2FB "data/lotka_volterra_ess_config_nl2sol.dn2fb.xml"
 #define LOTKA_VOLTERRA_CONF_FILE_DHC "data/lotka_volterra_ess_config_dhc.xml"
 #define LOTKA_VOLTERRA_CONF_FILE_MISQP "data/lotka_volterra_ess_config_misqp.xml"
-#define OUPUT_PATH "data/ess_output"
+#define OUPUT_PATH "ess_output"
 
 #include <assert.h>
 #include <config.h>

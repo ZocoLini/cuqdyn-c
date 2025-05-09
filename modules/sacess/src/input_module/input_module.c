@@ -693,7 +693,16 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
     // EXTRACT TEST ELEMENTS      
     extract_element_test(doc, &root, &exptotal->test);
     exptotal->execution.nameMatlab = (char *) malloc(100*sizeof(char));
-    memmove( exptotal->execution.nameMatlab, strchr(exptotal->test.output_graph, '/') +1, strlen(strchr(exptotal->test.output_graph, '/'))  );
+
+    // OLD: memmove( exptotal->execution.nameMatlab, strchr(exptotal->test.output_graph, '/') +1, strlen(strchr(exptotal->test.output_graph, '/'))  );
+    // NEW:
+    char *p = strchr(exptotal->test.output_graph, '/');
+    if (p && *(p + 1)) {
+        const size_t len = strlen(p + 1);
+        memmove(exptotal->execution.nameMatlab, p + 1, len);
+        exptotal->execution.nameMatlab[len] = '\0';
+    }
+
     exptotal->test.namexml = (const char*) docname;
     exptotal->test.init_repetition = 0;
 
