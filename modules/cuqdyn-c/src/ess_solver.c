@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include <method_module/structure_paralleltestbed.h>
+#include "method_module/solversinterface.h"
 
 #ifdef MPI2
         #include <mpi.h>

@@ -13,14 +13,12 @@ extern "C"
 {
 #endif
 
+// NEW: Fixed wrong header and function implementations. GCC was doing wrong optimizations due to this
+
 #include <method_module/structure_paralleltestbed.h>
-    int execute_Solver(experiment_total *, result_solver *, double, void *function(double *, void *));
+    int execute_Solver(experiment_total *, result_solver *, void *function(double *, void *));
     int execute_serial_solver(experiment_total *, result_solver *, long, double, void *function(double *, void *));
-
-#ifdef MPI2
     int execute_parallel_solver(experiment_total *, result_solver *, long, double, void *function(double *, void *));
-
-#endif
 
 #ifdef __cplusplus
 }

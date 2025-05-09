@@ -11,6 +11,8 @@
 #include <string.h>
 #include <error/def_errors.h>
 
+#include <method_module/solversinterface.h>
+
 #ifdef OPENMP
 #include <omp.h>
 #endif
@@ -33,15 +35,15 @@ int  execute_Solver(experiment_total *exp1, result_solver *result, void*(*functi
     if (is_parallel(*exp1)) isparallel = 1;
     else isparallel = 0;    
     if (isparallel == 1) {
-        error = execute_parallel_solver(exp1, result,maxfunevals, (*exp1).test.VTR, function);
+        error = execute_parallel_solver(exp1, result,maxfunevals, exp1->test.VTR, function);
     } else {
-        error = execute_serial_solver(exp1, result,maxfunevals, (*exp1).test.VTR, function);
+        error = execute_serial_solver(exp1, result,maxfunevals, exp1->test.VTR, function);
     }
     return error;
 }
 
 
-int execute_parallel_solver(experiment_total *exp, result_solver *result, long maxfunevals, void*(*function)(double*,void*)) {
+int execute_parallel_solver(experiment_total *exp, result_solver *result, long maxfunevals, double unused, void*(*function)(double*,void*)) {
     int error, i, idsolver;
     int id;
     int NPROC;    
@@ -120,17 +122,17 @@ if ((*exp).methodScatterSearch != NULL) {
     return error;
 }
 
-int execute_serial_solver(experiment_total *exp, result_solver *result, long maxfunevals,  void*(*function)(double*,void*)) {
-    int error;
-    error = 0;
+int execute_serial_solver(experiment_total *exp, result_solver *result, long maxfunevals, double unused, void*(*function)(double*,void*)) {
+    int error = 0;
 
-    if ((*exp).methodScatterSearch != NULL) {
+    if ((*exp).methodScatterSearch == NULL) return error;
+
 #ifdef GNU
-            error = __scattersearch_MOD_sscattersearch((void *) exp,  function, (void *) result, &maxfunevals, &(*exp).test.VTR);
+    error = __scattersearch_MOD_sscattersearch((void *) exp,  function, (void *) result, &maxfunevals, &(*exp).test.VTR);
 #elif defined(INTEL)
-            error = scattersearch_mp_sscattersearch_((void *) exp,  function, (void *) result, &maxfunevals, &(*exp).test.VTR);
+    error = scattersearch_mp_sscattersearch_((void *) exp,  function, (void *) result, &maxfunevals, &(*exp).test.VTR);
 #endif
-    }
+
     return error;
 }
 
