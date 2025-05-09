@@ -21,8 +21,10 @@
       <file path="$PROJECT_DIR$/deps" />
     </libraryRoots>
     <excludeRoots>
+      <file path="$PROJECT_DIR$/.venv" />
       <file path="$PROJECT_DIR$/build" />
-      <file path="$PROJECT_DIR$/sundials" />
+      <file path="$PROJECT_DIR$/cmake-build-debug" />
+      <file path="$PROJECT_DIR$/dev-container" />
     </excludeRoots>
   </component>
 </project>
