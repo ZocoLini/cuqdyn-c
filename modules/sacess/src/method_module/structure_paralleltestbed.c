@@ -30,7 +30,7 @@ int returninitsol_( void *exp_ ){
 }
 
 int getuseamigo_(void * exp_) {
-    experiment_total *exp; 
+    experiment_total *exp;
 
     exp = (experiment_total *) exp_;
     return exp->test.bench.use_amigo;
@@ -40,7 +40,7 @@ void setdistcriteria_(void *exp_, int *dist) {
     experiment_total *exp;
 
     exp = (experiment_total *) exp_;
-    exp->execution.dist_stopping_criteria= *dist;    	
+    exp->execution.dist_stopping_criteria= *dist;
 }
 
 void getdistcriteria_(void *exp_,  int *dist) {
@@ -97,23 +97,23 @@ void returnvectorcfortran_(void *vector,double *out, int *nvar){
    for (i=0;i<*nvar;i++) {
           out[i] = aux[i];
    }
-   
+
 
 }
 
 
 void sumfailevals_(void *exp_){
     experiment_total *exp;
-    exp = (experiment_total *) exp_;    
-    
+    exp = (experiment_total *) exp_;
+
     exp->execution.failevals = exp->execution.failevals + 1;
 
 }
 
 int returnfailevals_(void *exp_){
     experiment_total *exp;
-    exp = (experiment_total *) exp_;    
-    
+    exp = (experiment_total *) exp_;
+
     return exp->execution.failevals;
 
 }
@@ -144,33 +144,33 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
     exptotal->initial_values = initial_values;
 
     exptotal->execution.idp = id;
-    exptotal->execution.NPROC = NPROC; 
+    exptotal->execution.NPROC = NPROC;
     exptotal->execution.file = (char *) calloc(300,sizeof(char));
-    strcpy(exptotal->execution.file,file);   
-   
+    strcpy(exptotal->execution.file,file);
+
     exptotal->test.output_graph = (char *) calloc(1000, sizeof(char));
     strcpy(exptotal->test.output_graph,path);
     exptotal->test.output_path = (char *) calloc(1000, sizeof(char));
-    
-     
-    if (id == 0) {
-      error = -1;
-      counter = 0;
-      if (init==1) {
-        while (error == -1) {
-            strcpy(exptotal->test.output_path,exptotal->test.output_graph);
-            error = mkdir( (const char *) exptotal->test.output_graph,0777);
-            if ((error != -1)&&(error != 0)) {
-                exit(EXIT_FAILURE);
-            } else if (error == -1){
-                counter++;
-                sprintf(exptotal->test.output_graph, "%s_%d", path, counter);
-	        strcpy(exptotal->test.output_path,exptotal->test.output_graph);
-            }
-        }
-      }
-    }
-    
+
+    mkdir( (const char *) exptotal->test.output_graph,0777);
+    // if (id == 0) {
+    //   error = -1;
+    //   counter = 0;
+    //   if (init==1) {
+    //     while (error == -1) {
+    //         strcpy(exptotal->test.output_path,exptotal->test.output_graph);
+    //         error = mkdir( (const char *) exptotal->test.output_graph,0777);
+    //         if ((error != -1)&&(error != 0)) {
+    //             exit(EXIT_FAILURE);
+    //         } else if (error == -1){
+    //             counter++;
+    //             sprintf(exptotal->test.output_graph, "%s_%d", path, counter);
+	//         strcpy(exptotal->test.output_path,exptotal->test.output_graph);
+    //         }
+    //     }
+    //   }
+    // }
+
 #ifdef MPI2
     MPI_Bcast(exptotal->test.output_graph, 1000, MPI_CHAR, 0, MPI_COMM_WORLD);
 #endif
@@ -178,8 +178,8 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
         if (id == 0)
             printf(" Error in load configuration\n\n");
         exit(0);
-    } 
-        
+    }
+
     exptotal->execution.failevals = 0;
     exptotal->execution.initpath = 1;
     exptotal->execution.rep = NPROC + 10;
@@ -187,13 +187,13 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
     exptotal->ls = (local_solver *) malloc(sizeof (local_solver));
     exptotal->output = (output_struct *) malloc(sizeof (output_struct));
     exptotal->amigo=NULL;
-    return 1; 
+    return 1;
 }
 
 void init_result_data(result_solver *result, int size) {
         // init result var
     int i;
-    
+
         result->eval_value = 0;
         result->time_value = 0.0;
         result->time_vtr_value = 0.0;
@@ -203,23 +203,23 @@ void init_result_data(result_solver *result, int size) {
         result->paralleltime = 0.0;
         result->localsolvertime = 0.0;
         result->bestx_value = (double *) malloc(size * sizeof(double));
-        
+
 }
 
 
 void destroy_result_data(result_solver *result) {
     free(result->bestx_value);
 }
-    
+
 
 
 
 void updatenp_(void *exp_, int *dim_refset){
     experiment_total *exp;
     exp = (experiment_total *) exp_;
-    
+
     exp->methodScatterSearch->_NP = *dim_refset;
-    
+
 }
 
 const char* getname(experiment_total *exp) {
@@ -233,10 +233,10 @@ const char* getname(experiment_total *exp) {
 }
 
 int getnumversion(experiment_total *exptotal){
-    
+
     if (strcmp(exptotal->methodScatterSearch->eSSversion, "ScatterSearch") == 0) {
         return 0;
-    } 
+    }
     else if (strcmp(exptotal->methodScatterSearch->eSSversion, "CeSS") == 0) {
         return 1;
     }
@@ -253,23 +253,23 @@ int getnumversion(experiment_total *exptotal){
 
 const char* getversioness(int i){
     const char *retchar;
-    
+
     if (i==0) {
         retchar="sequential eSS";
-    } 
+    }
     else if (i==1) {
         retchar="CeSS - COOPERATIVE eSS";
     }
     else if (i==2) {
-        retchar="aCeSS_dist - ASYNCHONOUS COOPERATIVE eSS";        
+        retchar="aCeSS_dist - ASYNCHONOUS COOPERATIVE eSS";
     }
     else if (i==3) {
-        retchar="saCeSS - SELF-ADAPTED ASYNCHONOUS COOPERATIVE eSS";                
+        retchar="saCeSS - SELF-ADAPTED ASYNCHONOUS COOPERATIVE eSS";
     }
     else if (i==4) {
-        retchar="eSSm - eSS with multiple configuration and without communications";                
-    }    
-    
+        retchar="eSSm - eSS with multiple configuration and without communications";
+    }
+
     return retchar;
 }
 
@@ -280,27 +280,27 @@ const char * getlsess(experiment_total *exp){
 
 const char* gettopologyess(int i){
     const char *retchar;
-    
-        
-    
+
+
+
         if (i==0) {
             retchar="no communications";
-        } 
+        }
         else if (i==1) {
             retchar="master-slave";
         }
         else if (i==2) {
-            retchar="ring topology, without master";        
+            retchar="ring topology, without master";
         }
         else if (i==3) {
-            retchar="mixture between master-slave and star topology";                
+            retchar="mixture between master-slave and star topology";
         }
         else if (i==4) {
-            retchar="no communications";                
-        }   
-    
+            retchar="no communications";
+        }
+
     return retchar;
-    
+
 }
 
 void destroyexp(experiment_total *exp) {
@@ -319,8 +319,8 @@ void destroyexp(experiment_total *exp) {
 #elif defined(INTEL)
         matlabproblem_mp_closematlab_(&exp->execution.ep_matlab);
 #endif
-    }     
-#endif 
+    }
+#endif
 
     if (exp->test.bench.max_dom != NULL) {
         free(exp->test.bench.max_dom);
@@ -330,7 +330,7 @@ void destroyexp(experiment_total *exp) {
         free(exp->test.bench.min_dom);
         exp->test.bench.min_dom = NULL;
     }
-    if ( exp->test.ineq > 0 ) { 
+    if ( exp->test.ineq > 0 ) {
     	if (exp->test.bench.CL != NULL) {
     	    free(exp->test.bench.CL);
     	    exp->test.bench.CL = NULL;
@@ -383,7 +383,7 @@ void destroyexp(experiment_total *exp) {
         free((*exp).test.log_output);
         (*exp).test.log_output=NULL;
     }
-    
+
     if ((*exp).test.log_percentage != NULL) {
         free((*exp).test.log_percentage);
         (*exp).test.log_percentage=NULL;
@@ -396,7 +396,7 @@ void destroyexp(experiment_total *exp) {
         free((*exp).test.result_output);
         (*exp).test.result_output=NULL;
     }
-    
+
 }
 
 
@@ -418,9 +418,9 @@ int destroySystemBiology(experiment_total *exp) {
 
 int destroybenchmark(experiment_total *exp){
     int benchmark;
-    
+
     benchmark = number_benchmark(exp);
-    
+
     if (benchmark == 0)
     destroyBBOB(exp);
     if (benchmark == 1)
@@ -473,7 +473,7 @@ void check_fun(experiment_total exp, int current_bench, int noise_funcion) {
     char const *system;
     char const *test;
     char const *LSGO;
-    
+
     noiseBBOB = "noiseBBOB";
     noiselessBBOB = "noiselessBBOB";
     system = "systemBiology";
@@ -497,24 +497,24 @@ void check_fun(experiment_total exp, int current_bench, int noise_funcion) {
     } else if (strcmp(exp.test.bench.type, LSGO) == 0) {
         if (current_bench > 20) perror("ERROR FUNCTION");
         if (current_bench < 1) perror("ERROR FUNCTION");
-    }    
+    }
 }
 
 int chargedimension_(void *exp1_, int *D) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp1_;
-            
+
     *D = exp1[0].test.bench.dim;
-    
+
     return 1;
 }
 
 int chargedimensionopenmp_(void *exp1_, int *D) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp1_;
-    
+
     *D = exp1[0].test.bench.dim;
-    
+
     return 1;
 }
 
@@ -526,12 +526,12 @@ int chargeuseroptions_(void *exp_, double *maxtime, int *weight, double *tolc, d
     int i;
 
     exp = (experiment_total *) exp_;
-    exp[0].test.output_stop = 0;  
+    exp[0].test.output_stop = 0;
     exp[0].test.jfprint = 0;
     if (exp[0].methodScatterSearch != NULL) {
-          
+
         if (exp[0].methodScatterSearch->uoptions != NULL) {
-                       
+
             *maxtime=exp[0].test.maxtime;
             *weight = exp[0].methodScatterSearch->uoptions->weight;
             *tolc = exp[0].methodScatterSearch->uoptions->tolc;
@@ -555,7 +555,7 @@ int chargeuseroptions_(void *exp_, double *maxtime, int *weight, double *tolc, d
                                 log_var[i] = 0;
                 }
 		*logvar=0;
-	    } 
+	    }
             *init_point=0;
             return 1;
         } else return 0;
@@ -563,29 +563,29 @@ int chargeuseroptions_(void *exp_, double *maxtime, int *weight, double *tolc, d
     return 1;
 }
 
-int chargeglobaloptions_( void *exp_, int *dim_ref, int *ndiverse, int *initiate, int *combination, int *regenerate, 
+int chargeglobaloptions_( void *exp_, int *dim_ref, int *ndiverse, int *initiate, int *combination, int *regenerate,
         char* delete, int *intens, double * tolf, int *diverse_criteria, double * tolx, int *n_stuck) {
     experiment_method_ScatterSearch *method;
     experiment_total *exp;
     const char *NULLchar;
-    
+
     NULLchar = "\0";
-    
+
     exp = (experiment_total *) exp_;
     method = exp[0].methodScatterSearch;
-    if (method != NULL) {   
+    if (method != NULL) {
         if (method->goptions != NULL) {
             *dim_ref = method->goptions->dim_ref;
             *ndiverse = method->goptions->ndiverse;
             *initiate = method->goptions->initiate;
             *combination = method->goptions->combination;
             *regenerate = method->goptions->regenerate;
-           
+
             if (method->goptions->delete1 == NULL ) {
                 method->goptions->delete1 = strtok(method->goptions->delete1, NULLchar);
                 sprintf(delete,"%s", (const char *) method->goptions->delete1);
             }
-            *intens = method->goptions->intens; 
+            *intens = method->goptions->intens;
             *tolf = method->goptions->tolf;
             *diverse_criteria = method->goptions->diverse_criteria;
             *tolx = method->goptions->tolx;
@@ -593,34 +593,34 @@ int chargeglobaloptions_( void *exp_, int *dim_ref, int *ndiverse, int *initiate
             return 1;
         } else return 0;
     } else return 0;
-       
-    return 1;     
+
+    return 1;
 }
 
 int chargelsevalmax_( void *exp_, long *lsevals){
     experiment_total *exp;
     experiment_method_ScatterSearch *method;
     exp = (experiment_total *) exp_;
-    
+
     if (exp[0].test.local_search == 1) {
         method = exp[0].methodScatterSearch;
         if (method != NULL) {
             *lsevals = method->loptions->evalmax;
         }
     }
-    
+
 }
 
 
-int chargelocaloptions_( void *exp_, int *tol, int *iterprint, int *n1, int *n2, double * balance, 
-        char * finish, int *bestx, int *merit_filter, int *distance_filter, double *thfactor, 
-        double *maxdistfactor, int *wait_maxdist_limit, int *wait_th_limit, char *solver, 
+int chargelocaloptions_( void *exp_, int *tol, int *iterprint, int *n1, int *n2, double * balance,
+        char * finish, int *bestx, int *merit_filter, int *distance_filter, double *thfactor,
+        double *maxdistfactor, int *wait_maxdist_limit, int *wait_th_limit, char *solver,
         double *threshold_local) {
     experiment_method_ScatterSearch *method;
     experiment_total *exp;
     const char *NULLchar;
     NULLchar = "\0";
-    
+
     exp = (experiment_total *) exp_;
 
     *balance=0.0;
@@ -669,8 +669,8 @@ int chargeproblemargs_(void *exp_, int *ineq, int *int_var, int *bin_var, int *n
     *ineq = exp1[0].test.ineq;
     *neq = exp1[0].test.neq;
     *int_var = exp1[0].test.int_var;
-    *bin_var = exp1[0].test.bin_var;  
-    
+    *bin_var = exp1[0].test.bin_var;
+
     return 1;
 }
 
@@ -686,7 +686,7 @@ int chargeboundsnconst_(void *exp_, double *XU, double *XL, int *nvar , double *
     experiment_total *exp1;
     int i;
     exp1 = (experiment_total *) exp_;
-    
+
     for (i=0;i<*nvar;i++) {
                 XU[i] = exp1[0].test.bench.max_dom[i];
                 XL[i] = exp1[0].test.bench.min_dom[i];
@@ -697,7 +697,7 @@ int chargeboundsnconst_(void *exp_, double *XU, double *XL, int *nvar , double *
             CU[i] = exp1[0].test.bench.CU[i];
         }
     }
-    
+
     if (exp1[0].test.bench.CL != NULL && (*ineq> 0)) {
         for (i = 0; i<*ineq; i++) {
             CL[i] = exp1[0].test.bench.CL[i];
@@ -712,13 +712,13 @@ int chargebounds_(void *exp_, double *XU, double *XL, int *nvar) {
     experiment_total *exp1;
     int i;
     exp1 = (experiment_total *) exp_;
-    
-    
+
+
     for (i=0;i<*nvar;i++) {
                 XU[i] = exp1[0].test.bench.max_dom[i];
                 XL[i] = exp1[0].test.bench.min_dom[i];
     }
-    
+
     return 1;
 }
 
@@ -727,7 +727,7 @@ int chargebounds_(void *exp_, double *XU, double *XL, int *nvar) {
 void getbench_(void *exp_, int *id) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp_;
-    
+
     *id = exp1->test.bench.current_bench;
 }
 
@@ -754,18 +754,18 @@ int ishete_(void *exp_) {
     exp1 = (experiment_total *) exp_;
     char *homo;
     char *hete;
-    
+
     homo = "homo";
     hete = "hete";
-    
-            
+
+
     if (strcmp(exp1->par_st->islandstrategy,homo)==0) {
         return 0;
     }
     else if (strcmp(exp1->par_st->islandstrategy,hete)==0 ){
         return 1;
     } else return 0;
-    
+
 }
 
 
@@ -775,18 +775,18 @@ int iscoop_(void *exp_) {
     exp1 = (experiment_total *) exp_;
     char *coop;
     char *island;
-    
-    
+
+
     island="island";
     coop="cooperative";
-            
+
     if (strcmp(exp1->par_st->type,island)==0) {
         return 0;
     }
     else if (strcmp(exp1->par_st->type,coop)==0 ){
         return 1;
     } else return 1;
-    
+
 }
 
 double getparalleltime_( result_solver *timestruct) {
@@ -795,7 +795,7 @@ double getparalleltime_( result_solver *timestruct) {
 
 double getlocalsolvertime_( result_solver *timestruct) {
     return timestruct->localsolvertime;
-    
+
 }
 
 
@@ -816,18 +816,18 @@ void setlocalsolvertime_(result_solver *timestruct, double *time){
 void setiteration_(void *exp_, int *ite) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp_;
-    
+
     exp1->execution.iteration = *ite;
-    
+
 }
 
 
 void setnumit_(void *exp_, int *ite) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp_;
-    
+
     exp1->execution.num_it = *ite;
-    
+
 }
 
 
@@ -835,29 +835,29 @@ void setnumit_(void *exp_, int *ite) {
 int getidp_(void *exp_) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp_;
-    
-    
+
+
     return exp1->execution.idp;
 }
 
 void saveinittime_(void *exp_, double *starttime) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp_;
-    
+
     exp1->execution.initTIME = *starttime;
 }
 
 double returninittime_(void *exp_) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp_;
-    
+
     return exp1->execution.initTIME;
 }
 
 void setamigolocalevals_(void *exp_, int *levals)  {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp_;
-    
+
     exp1->amigo->local_max_evals = *levals;
 }
 
