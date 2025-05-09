@@ -1,17 +1,5 @@
 execute_process(
-        COMMAND bash -c "
-        branch=\$(git rev-parse --abbrev-ref HEAD)
-        version=\$(git tag --sort=-creatordate | grep '^cli/' | head -n 1 | sed -E 's:.*/(v[0-9]+\\.[0-9]+\\.[0-9]+):\\1:')
-        if [ \"\$branch\" = \"main\" ]; then
-            echo \"\$version\"
-        else
-            if [ -n \"\$version\" ]; then
-                echo \"\$version-$branch\"
-            else
-                echo \"dev\"
-            fi
-        fi
-    "
+        COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/get_module_version.sh cuqdyn-c
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_VERSION
         RESULT_VARIABLE TAG_RESULT
@@ -28,7 +16,7 @@ configure_file(
 )
 
 message(STATUS "CUQDYN_C_VERSION: ${GIT_VERSION}")
-add_definitions(-DCUQDYN_C_VERSION=\"${GIT_VERSION}\")
+target_compile_definitions(sacess PUBLIC SACESS_C_VERSION="${GIT_VERSION}")
 
 file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c)
 

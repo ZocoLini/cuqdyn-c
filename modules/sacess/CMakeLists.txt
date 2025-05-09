@@ -1,3 +1,23 @@
+execute_process(
+        COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/get_module_version.sh sacess
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_VERSION
+        RESULT_VARIABLE TAG_RESULT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if (NOT TAG_RESULT EQUAL 0 OR GIT_VERSION STREQUAL "")
+    set(GIT_VERSION "dev")
+endif ()
+
+configure_file(
+        include/sacess_version.in.h
+        ${PROJECT_SOURCE_DIR}/modules/sacess/generated/sacess_version.h
+)
+
+message(STATUS "SACESS_C_VERSION: ${GIT_VERSION}")
+add_definitions(-DSACESS_C_VERSION=\"${GIT_VERSION}\")
+
 file(GLOB SRC_C CONFIGURE_DEPENDS
         src/input_module/*.c
         src/output/*.c
@@ -33,6 +53,7 @@ add_library(sacess
 
 target_include_directories(sacess
         PUBLIC
+        generated
         include
         benchmarks
         libAMIGO/include
