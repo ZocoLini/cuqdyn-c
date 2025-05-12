@@ -5,8 +5,8 @@ mkdir build
 
 (
   cd build || exit 1
-  cmake ..
-  make -j $(nproc)
+  cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake ..
+  make -j "$(nproc)"
 
   cp modules/cli/cli cli
 )
