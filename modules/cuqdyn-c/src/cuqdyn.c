@@ -144,9 +144,11 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
         N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context());
-        memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
+        memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values),
+               NV_LENGTH_S(initial_values) * sizeof(realtype));
 
-        N_Vector init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+        N_Vector init_pred_params =
+                execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
 
         predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
     }
@@ -159,10 +161,11 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
         N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context());
-        memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
+        memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values),
+               NV_LENGTH_S(initial_values) * sizeof(realtype));
 
-        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
-
+        N_Vector predicted_params =
+                execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
         // Saving the predicted params obtained
         set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
 
@@ -180,13 +183,21 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
             SM_ELEMENT_D(resid_loo, i, j) = fabs(observed - predicted);
         }
+
         matrix_array_set_index(media_matrix, i - 1, predicted_data);
+#ifdef MPI2
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
     }
 
-    // TODO: We should wait to all of them to make the calculations and then gather the results
-#ifdef MPI2
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    if (rank != 0)
+    {
+        destroy_matrix_array(media_matrix);
+        N_VDestroy(initial_values);
+        SUNMatDestroy(observed_data);
+        SUNMatDestroy(resid_loo);
+        return NULL;
+    }
 
     DlsMat predicted_data_median = matrix_array_get_median(media_matrix);
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
@@ -218,12 +229,10 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
             for (int k = 1; k < m; ++k)
             {
                 SM_ELEMENT_D(matrix_array_get_index(m_low, k - 1), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) -
-                        SM_ELEMENT_D(resid_loo, k, j);
+                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) - SM_ELEMENT_D(resid_loo, k, j);
 
                 SM_ELEMENT_D(matrix_array_get_index(m_up, k - 1), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) +
-                        SM_ELEMENT_D(resid_loo, k, j);
+                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) + SM_ELEMENT_D(resid_loo, k, j);
             }
 
             SM_ELEMENT_D(q_low, i, j) = quantile(matrix_array_depth_vector_at(m_low, i, j), alp);
@@ -236,14 +245,9 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     destroy_matrix_array(media_matrix);
     N_VDestroy(initial_values);
     SUNMatDestroy(observed_data);
+    SUNMatDestroy(resid_loo);
 
-    CuqdynResult *result = create_cuqdyn_result(
-        predicted_data_median,
-        predicted_params_median,
-        q_low,
-        q_up,
-        times
-        );
+    CuqdynResult *result = create_cuqdyn_result(predicted_data_median, predicted_params_median, q_low, q_up, times);
 
     return result;
 }
@@ -344,7 +348,8 @@ DlsMat matrix_array_get_median(MatrixArray matrix_array)
             // Sorting the vector to obtain the median easily
             qsort(values, max_z, sizeof(values[0]), compare_realtype);
 
-            SM_ELEMENT_D(medians_matrix, i, j) = max_z & 0b1 ? values[(max_z - 1) / 2] : (values[max_z / 2 - 1] + values[max_z / 2]) / 2;
+            SM_ELEMENT_D(medians_matrix, i, j) =
+                    max_z & 0b1 ? values[(max_z - 1) / 2] : (values[max_z / 2 - 1] + values[max_z / 2]) / 2;
         }
     }
 

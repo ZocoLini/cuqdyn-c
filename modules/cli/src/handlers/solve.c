@@ -117,31 +117,35 @@ int handle_solve(int argc, char *argv[])
 
     CuqdynResult *cuqdyn_result = cuqdyn_algo(function_type, data_file, sacess_config_file, output_dir, rank, nproc);
 
+    if (rank == 0)
+    {
+
+        N_Vector params_median = cuqdyn_result->predicted_params_median;
+        DlsMat data_median = cuqdyn_result->predicted_data_median;
+
+        DlsMat q_low = cuqdyn_result->q_low;
+        DlsMat q_up = cuqdyn_result->q_up;
+        N_Vector times = cuqdyn_result->times;
+
+        char *output_file_path = malloc(strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1);
+        strcpy(output_file_path, output_dir);
+        strcat(output_file_path, "/cuqdyn-results.txt");
+
+        FILE *output_file = fopen(output_file_path, "w");
+
+        print_vector(params_median, output_file, "Params");
+        print_matrix(data_median, output_file, "Data");
+        print_matrix(q_low, output_file, "Q_low");
+        print_matrix(q_up, output_file, "Q_up");
+        print_vector(times, output_file, "Times");
+
+        free(output_file_path);
+        destroy_cuqdyn_result(cuqdyn_result);
+    }
+
 #ifdef MPI2
     MPI_Finalize();
 #endif
-
-    N_Vector params_median = cuqdyn_result->predicted_params_median;
-    DlsMat data_median = cuqdyn_result->predicted_data_median;
-
-    DlsMat q_low = cuqdyn_result->q_low;
-    DlsMat q_up = cuqdyn_result->q_up;
-    N_Vector times = cuqdyn_result->times;
-
-    char *output_file_path = malloc(strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1);
-    strcpy(output_file_path, output_dir);
-    strcat(output_file_path, "/cuqdyn-results.txt");
-
-    FILE *output_file = fopen(output_file_path, "w");
-
-    print_vector(params_median, output_file, "Params");
-    print_matrix(data_median, output_file, "Data");
-    print_matrix(q_low, output_file, "Q_low");
-    print_matrix(q_up, output_file, "Q_up");
-    print_vector(times, output_file, "Times");
-
-    free(output_file_path);
-    destroy_cuqdyn_result(cuqdyn_result);
 
     return 0;
 }
