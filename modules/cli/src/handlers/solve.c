@@ -103,6 +103,10 @@ int handle_solve(int argc, char *argv[])
 
     CuqdynResult *cuqdyn_result = cuqdyn_algo(function_type, data_file, sacess_config_file, output_dir);
 
+#ifdef MPI2
+    MPI_Finalize();
+#endif
+
     N_Vector params_median = cuqdyn_result->predicted_params_median;
     DlsMat data_median = cuqdyn_result->predicted_data_median;
 

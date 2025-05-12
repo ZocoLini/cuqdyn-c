@@ -13,6 +13,10 @@
 #include "matlab.h"
 #include "ode_solver.h"
 
+#ifdef MPI2
+#include <mpi.h>
+#endif
+
 FunctionType create_function_type(int function_type)
 {
     FunctionType out;
@@ -176,6 +180,11 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         }
         matrix_array_set_index(media_matrix, i - 1, predicted_data);
     }
+
+    // TODO: We should wait to all of them to make the calculations and then gather the results
+#ifdef MPI2
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
     DlsMat predicted_data_median = matrix_array_get_median(media_matrix);
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);

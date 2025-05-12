@@ -1,3 +1,5 @@
+#pragma once
+#include "structure_paralleltestbed.h"
 void deallocateoutputfunction_(output_function *, void *);
 
 void DE_correction_bounds(double *, int, double* , double* );

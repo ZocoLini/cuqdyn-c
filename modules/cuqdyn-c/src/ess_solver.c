@@ -1,5 +1,6 @@
 #include <functions/functions.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <method_module/structure_paralleltestbed.h>
 #include "method_module/solversinterface.h"
@@ -12,6 +13,7 @@
         #include <omp.h>
 #endif
 
+// TODO: Maybe MPI should be started at the calling lvl
 N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func, N_Vector texp, DlsMat yexp, N_Vector initial_values)
 {
     int id, NPROC, error, i, NPROC_OPENMP;
@@ -30,8 +32,8 @@ N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func
 
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
 #else
-    id = 0;
-    NPROC = 1;
+    id = 0;  // This is the primary process
+    NPROC = 1;  // Only one process
 #endif
 
 #ifdef OPENMP
@@ -78,12 +80,11 @@ N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func
 #ifdef MPI2
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-    execute_Solver(exptotal, &result, obj_func);
-    destroyexp(exptotal);
 
-#ifdef MPI2
-    MPI_Finalize();
-#endif
+    // TODO: This brakes when using MPI2
+    execute_Solver(exptotal, &result, obj_func);
+
+    destroyexp(exptotal);
 
     N_Vector predicted_params = N_VNew_Serial(exptotal->test.bench.dim);
     N_VSetArrayPointer(result.bestx_value, predicted_params);
