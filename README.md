@@ -56,6 +56,18 @@ mkdir output
     -o output/ \
     -f 0
 ```
+
+Or, if you compilued using MPI
+```bash
+mkdir output
+./build/cli solve \
+    -c example-files/lotka_volterra_cuqdyn_config.xml \
+    -s example-files/lotka_volterra_parallel_ess_config.xml \
+    -d example-files/lotka_volterra_paper_data.txt \
+    -o output/ \
+    -f 0
+```
+
 After this, the file `output/cuqdyn-results.txt` contains the results of the 
 algorithm but reading it as a plain text is not very useful. 
 To fix this, you can run: (Needs python3 and matplotlib installed)

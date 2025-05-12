@@ -129,18 +129,6 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
     const ODEModel ode_model = create_ode_model(2, ode_model_fun, initial_values, t0, times);
 
-    /*
-     * problem.f='prob_mod_lv';
-     * problem.x_L=0.001*ones(1,4); % Lower bounds of the variables
-     * problem.x_U=ones(1,4); % Upper bounds of the variables
-     * problem.x_0=[0.3, 0.3, 0.3, 0.3]; % Initial points
-     * opts.maxeval=3e3; % Maximum number of function evaluations (default 1000)
-     * opts.log_var=[1:4]; % Indexes of the variables which will be analyzed using a logarithmic distribution instead of
-     * an uniform one
-     * opts.local.solver='nl2sol'; % Local solver to perform the local search
-     * opts.inter_save=1; % Saves results of intermediate iterations in eSS_report.mat
-     */
-
     DlsMat resid_loo = SUNDenseMatrix(m, n, get_sun_context());
     MatrixArray media_matrix = create_matrix_array(m - 1);
     DlsMat predicted_params_matrix = NULL;

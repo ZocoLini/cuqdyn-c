@@ -20,7 +20,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func
     int first, init;
 
 #ifdef MPI2
-    // Original call MPI_Init(&argc, &argv);
+    // Original call MPI_Init(&argc, &argv); this should be called from the executable that implments this lib
     int err = MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
 
     if (err != MPI_SUCCESS) {

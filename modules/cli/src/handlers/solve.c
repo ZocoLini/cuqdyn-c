@@ -12,7 +12,11 @@
 
 #include "cuqdyn.h"
 #include "functions/lotka_volterra.h"
-#include "matlab.h"
+
+
+#ifdef MPI2
+#include <mpi.h>
+#endif
 
 int handle_solve(int argc, char *argv[]);
 void print_matrix(DlsMat mat, FILE *output_file, char *name);
