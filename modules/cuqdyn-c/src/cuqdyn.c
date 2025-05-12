@@ -111,7 +111,7 @@ void destroy_cuqdyn_result(CuqdynResult *result)
 }
 
 CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, const char *sacess_conf_file,
-                          const char *output_file)
+                          const char *output_file, int rank, int nproc)
 {
     N_Vector times = NULL;
     DlsMat observed_data = NULL;
@@ -145,11 +145,12 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
         N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context());
         memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
-        N_Vector init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals);
+
+        N_Vector init_pred_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+
         predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
     }
 
-    // TODO: This can be done in parallel
     for (long i = 1; i < m; ++i)
     {
         LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
@@ -159,7 +160,8 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
         N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context());
         memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
-        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals);
+
+        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
 
         // Saving the predicted params obtained
         set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));

@@ -143,7 +143,7 @@ function setup_benchmark(experiment_total *exp, int idp, int *first) {
         *first=0;
     }
     /// to order the printf messages
-    sleep(1);
+    // sleep(1);
     
     return func;
 }

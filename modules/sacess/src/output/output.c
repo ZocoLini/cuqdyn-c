@@ -2364,7 +2364,7 @@ void updateresultsess_(void *exp1_, void *result_, double *totaltime, long *eval
 
         MPI_Barrier(MPI_COMM_WORLD);
         print_end_file_(exp1,bestglobalx,&bestglobal,result);
-        sleep(2);
+        // sleep(2);
         MPI_Barrier(MPI_COMM_WORLD);
 
         memmove(result->bestx_value, bestglobalx, D*sizeof(double));

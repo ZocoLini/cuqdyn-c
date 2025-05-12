@@ -99,9 +99,23 @@ int handle_solve(int argc, char *argv[])
         fprintf(stderr, "MPI_Init failed\n");
         exit(1);
     }
+
+    int rank, nproc;
+    err = MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    if (err != MPI_SUCCESS)
+    {
+        fprintf(stderr, "MPI_COMM_WORLD failed\n");
+        exit(1);
+    }
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#else
+    int rank = 0;
+    int nproc = 1;
 #endif
 
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(function_type, data_file, sacess_config_file, output_dir);
+    CuqdynResult *cuqdyn_result = cuqdyn_algo(function_type, data_file, sacess_config_file, output_dir, rank, nproc);
 
 #ifdef MPI2
     MPI_Finalize();

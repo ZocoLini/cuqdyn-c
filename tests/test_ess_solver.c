@@ -19,16 +19,6 @@ void lotka_volterra_ess();
 
 int main(int argc, char **argv)
 {
-#ifdef MPI2
-    int err = MPI_Init(&argc, &argv);
-
-    if (err != MPI_SUCCESS)
-    {
-        fprintf(stderr, "MPI_Init failed\n");
-        exit(1);
-    }
-#endif
-
     lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB);
     printf("\tTest 1 passed NL2SOL_DN2GB\n");
 
@@ -83,7 +73,7 @@ void lotka_volterra_ess(char *conf_file)
         }
     }
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, lotka_volterra_obj_f, texp, yexp, initial_values);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, lotka_volterra_obj_f, texp, yexp, initial_values, 0, 1);
 
     for (int i = 0; i < 4; ++i)
     {
