@@ -39,7 +39,7 @@ As an alternative, you can build the project using the following commands:
 ```bash
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake ..
 make -j $(nproc)
 ````
 
