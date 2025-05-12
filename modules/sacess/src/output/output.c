@@ -2169,12 +2169,7 @@ void initoutputvars_(void *exp1_){
     output->st1=0.0;
     output->st2=0.0;
     output->st3=0.0;
-
-
-
 }
-
-
 
 void updateresultsandprint_(void *exp1_, void *result_, double *totaltime, long *evaluation, double *fx, double *xbest) {
     int idp, NPROC, D;
@@ -2274,8 +2269,6 @@ void updateresultsandprint_(void *exp1_, void *result_, double *totaltime, long 
 
 
 }
-
-
 
 /**
  * @brief this function gathers the different results of all processors in
@@ -2421,16 +2414,15 @@ int updateresultsrandomsearch_(void *exp1_, void *result_, double *totaltime, do
 
 
 
-
+// NEW: Added the methods called to the respective header and modified their body to always return a value
 void init_message(int NPROC, experiment_total *exp, int NTHREAD) {
-    const char *namealg,*nameversionalg,*nametopologyalg,*namels;
-    int idsolver;
 
-    idsolver = getnumversion(exp);
-    namealg  = getname(exp);
-    nameversionalg = getversioness(idsolver);
-    nametopologyalg = gettopologyess(idsolver);
-    namels = getlsess(exp);
+    int idsolver = getnumversion(exp);
+
+    const char *namealg = getname(exp);
+    const char *nameversionalg = getversioness(idsolver);
+    const char *nametopologyalg = gettopologyess(idsolver);
+    const char *namels = getlsess(exp);
 
     printf("\n\n=====================================================\n");
     printf("== PARALLEL SACESS OPTIMIZATION LIBRARY =============\n");
@@ -2441,11 +2433,11 @@ void init_message(int NPROC, experiment_total *exp, int NTHREAD) {
     printf("* SOLVER :: %s\n", namealg);
     printf("    Version solver : %s\n", nameversionalg);
     printf("    Topology       : %s\n", nametopologyalg);
-    printf("    Max.Evals      : %.1lf\n", (*exp).test.max_eval );
-    printf("    Max.Time(s)    : %.1lf\n", (*exp).test.maxtime );
+    printf("    Max.Evals      : %.1lf\n", exp->test.max_eval );
+    printf("    Max.Time(s)    : %.1lf\n", exp->test.maxtime );
 
     if ( exp[0].test.local_search == 0) {
-        printf("    Local Solver   : none\n\n", namels);
+        printf("    Local Solver   : %s\n\n", namels);
     } else {
         printf("    Local Solver   : %s\n\n", namels);
     }

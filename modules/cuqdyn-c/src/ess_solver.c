@@ -4,6 +4,7 @@
 
 #include <method_module/structure_paralleltestbed.h>
 #include "method_module/solversinterface.h"
+#include "output/output.h"
 
 #ifdef MPI2
         #include <mpi.h>
@@ -50,10 +51,13 @@ N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func
         create_expetiment_struct(file, &(exptotal[i]), NPROC, id, path, init, texp, yexp, initial_values);
         init = 0;
     }
-    // // INIT MESSAGE
-    // if ((id == 0))
-    //     init_message(NPROC, &(exptotal[0]), NPROC_OPENMP);
-    // // INIT BENCHMARK
+
+    // INIT MESSAGE
+    if ((id == 0))
+    {
+        init_message(NPROC, &(exptotal[0]), NPROC_OPENMP);
+    }
+    // INIT BENCHMARK
     // first = 1;
     // for (int i = 0; i < NPROC_OPENMP; i++)
     // {
@@ -81,7 +85,6 @@ N_Vector execute_ess_solver(const char *file, const char *path, ObjFunc obj_func
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-    // TODO: This brakes when using MPI2
     execute_Solver(exptotal, &result, obj_func);
 
     destroyexp(exptotal);

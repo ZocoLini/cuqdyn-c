@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   structure_paralleltestbed.h
  * Author: david
  *
@@ -11,21 +11,21 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-    
+
 #include <bbob/bbobStructures.h>
 #include <include_amigo/AMIGO_problem.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <time.h>
-    
+
 #ifdef	MPI2
     #include <structure_data/dynamic_list.h>
-    #include <mpi.h> 
-#endif    
+    #include <mpi.h>
+#endif
 
 //#include <Python.h>
     typedef struct paramStruct ParamS;
-    
+
     typedef struct {
         int *rigth;
         int num_r;
@@ -34,22 +34,22 @@ extern "C" {
         #ifdef MPI2
                 MPI_Comm comunicator;
         #endif
-    } topology_data; 
-    
+    } topology_data;
+
     typedef struct {
         int current_bench;
         double *min_dom;
         double *max_dom;
         double *log_min_dom;
-        double *log_max_dom;  
+        double *log_max_dom;
         int * logindex;
         int idtype;
-        int use_amigo;      
+        int use_amigo;
         int estime_init_cond;
         double *CL;
-        double *CU;           
+        double *CU;
         int dim;
-        const char* type;   
+        const char* type;
         double *BestSol;
         int translation;
 	int openmp;
@@ -57,7 +57,7 @@ extern "C" {
 	double *F0;
 	int number_init_sol;
     } experiment_benchmark;
-    
+
     typedef struct {
         double _F;
         double _CR;
@@ -66,12 +66,12 @@ extern "C" {
 	int ls_counter;
 	double ls_threshold;
         const char *mutation_strategy;
-        const char *name; 
-        const char *solver;   
+        const char *name;
+        const char *solver;
         int num_proc;
     } experiment_method_DE;
-    
-    
+
+
     typedef struct {
         int weight;
         double tolc;
@@ -80,7 +80,7 @@ extern "C" {
         int strategy;
         int inter_save;
     } user_options;
-    
+
     typedef struct {
         int dim_ref;
         int dim_ref_global;
@@ -94,8 +94,8 @@ extern "C" {
         int diverse_criteria;
         double tolx;
         int n_stuck;
-    } global_options; 
-    
+    } global_options;
+
     typedef struct {
         int *texp;
         double *yexp;
@@ -104,7 +104,7 @@ extern "C" {
         double k3;
         double k4;
     } extraparametters;
-    
+
     typedef struct {
         int tol;
         int iterprint;
@@ -120,7 +120,7 @@ extern "C" {
         double maxdistfactor;
         int wait_maxdist_limit;
         int wait_th_limit;
-        long evalmax;        
+        long evalmax;
         extraparametters extrap;
     } local_options;
 
@@ -129,7 +129,7 @@ extern "C" {
         int cache;
 	int ls_counter;
 	double ls_threshold;
-        const char *name;  
+        const char *name;
         user_options *uoptions;
         global_options *goptions;
         local_options *loptions;
@@ -137,8 +137,8 @@ extern "C" {
         int asynchronous;
         char *eSSversion;
 
-    } experiment_method_ScatterSearch;  
-    
+    } experiment_method_ScatterSearch;
+
     typedef struct {
         int instances;
         int init_point;
@@ -149,10 +149,10 @@ extern "C" {
         double jf;
         int jfprint;
         double   repetitions;
-        const char* type;   
-        const char* namexml;   
+        const char* type;
+        const char* namexml;
         int _log;
-	char* output_path; 
+	char* output_path;
         char* output_graph;
         char* output_gant_log;
         int output;
@@ -169,13 +169,13 @@ extern "C" {
         int bin_var;
         int neq;
         int ineq;
-    } experiment_testbed; 
-    
+    } experiment_testbed;
+
     typedef struct {
         int NPROC;
         int NPROC_OPENMP;
         int migration_size;
-        int migration_freq_ite;    
+        int migration_freq_ite;
         double max_time_ite;
         const char* type;
         const char* commu;
@@ -189,9 +189,9 @@ extern "C" {
 	int reception_threshold;
         double max_time;
     }parallelization_strategy;
-    
-    
-    
+
+
+
     typedef struct {
         char *nameMatlab;
         topology_data topology;
@@ -229,25 +229,25 @@ extern "C" {
         MPI_Request *receptionrequestmaster; // recv in master
         MPI_Request *sendrequestmaster; // send to slave
         MPI_Request *receptionrequestslave;
-        MPI_Request *sendrequestslave; 
+        MPI_Request *sendrequestslave;
         MPI_Request *adaptation_master_send;
         MPI_Request *adaptation_slave_send;
         MPI_Request *adaptation_master_recv;
-        MPI_Request *adaptation_slave_recv;        
+        MPI_Request *adaptation_slave_recv;
         int *adaptation_master_buffer_recv;
         double **adaptation_master_buffer_send;
         int *adaptation_slave_buffer_send;
         double *adaptation_slave_buffer_recv;
         double **receptionbuffermaster;
-        double *receptionbufferslave; 
+        double *receptionbufferslave;
         double **sendbuffermaster;
         double *sendbufferslave;
         int *resetbuffer;
         long *masterlistrecp;
         double mastertime;
         double currentmastertime;
-#endif  
-        char *file; 
+#endif
+        char *file;
         long failevals;
 	int dist_stopping_criteria;
 	long inner_ls_evals;
@@ -257,8 +257,8 @@ extern "C" {
         const char *file_python_name;
         int python_active;
     } execution_vars;
-    
-    
+
+
     typedef struct {
         int counter;
         int state_ls;
@@ -268,7 +268,7 @@ extern "C" {
         int sucess_interval;
         double enter_value;
     } local_solver;
-    
+
     typedef struct {
         double st1;
         double st2;
@@ -277,7 +277,7 @@ extern "C" {
         int point_counter;
         double oldbest;
     }output_struct;
-       
+
     typedef struct {
         experiment_testbed test;
         experiment_method_DE  *methodDE;
@@ -287,7 +287,7 @@ extern "C" {
         output_struct *output;
 	void *fp;
         ParamS *param;
-        AMIGO_problem *amigo;        
+        AMIGO_problem *amigo;
         execution_vars execution;
         const gsl_rng *random;
         double *seed;
@@ -295,10 +295,10 @@ extern "C" {
         N_Vector texp;
         DlsMat yexp;
         N_Vector initial_values;
-    }experiment_total;    
-    
+    }experiment_total;
+
     typedef struct {
-        double eval_avg; 
+        double eval_avg;
         double time_avg;
         double best_value_all;
         double restart;
@@ -307,20 +307,20 @@ extern "C" {
         int dim;
         int id;
     }result_values;
-    
-    
+
+
     typedef struct {
-        long eval_value; 
+        long eval_value;
         double time_value;
         double time_vtr_value;
         double iterations_value;
-        double best_value; 
-        double *bestx_value; 
+        double best_value;
+        double *bestx_value;
         double totaltime;
         double paralleltime;
-        double localsolvertime;        
+        double localsolvertime;
     } result_solver;
-    
+
     typedef struct {
         double value;
         double *g;
@@ -330,22 +330,22 @@ extern "C" {
 	int size_j;
     } output_function;
 
-    
+
     int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, DlsMat yexp, N_Vector initial_values);
 
 void init_result_data(result_solver *, int);
-    
+
 const char* getname(experiment_total *);
-    
-void updatenp_(void *, int *);    
-    
+
+void updatenp_(void *, int *);
+
 void destroyexp(experiment_total *) ;
 
 int is_asynchronous(experiment_total);
 
-int is_parallel(experiment_total);    
+int is_parallel(experiment_total);
 
-int is_noise(experiment_total);  
+int is_noise(experiment_total);
 
 void check_fun(experiment_total, int , int );
 
@@ -376,17 +376,17 @@ int chargeproblemargs_(void *, int *, int *, int *, int *);
 int chargeuseroptions_(void *, double *, int *, double *, double *,
         int *, int *, int *, int *, int *, int *, int *, int *);
 
-int chargeglobaloptions_( void *, int *, int *, int *, int *, int *, 
+int chargeglobaloptions_( void *, int *, int *, int *, int *, int *,
         char* , int *, double * , int *, double * , int *);
 
-int chargelocaloptions_( void *, int *, int *, int *, int *, double * , 
-        char * , int *, int *, int *, double *, 
+int chargelocaloptions_( void *, int *, int *, int *, int *, double * ,
+        char * , int *, int *, int *, double *,
         double *, int *, int *, char *, double *) ;
 
 int chargeboundsnconst_(void *, double *, double *, int * , double *, double *, int *);
 
 
-int chargebounds_(void *, double *, double *, int *);    
+int chargebounds_(void *, double *, double *, int *);
 
 int number_benchmark(experiment_total *);
 
@@ -400,7 +400,7 @@ int destroybenchmark(experiment_total *);
 
 void setparallelsacessfieldsmaster_(void *, double *);
 
-void setparallelsacessfieldsslaves_(void *,  double *, int *, int *);  
+void setparallelsacessfieldsslaves_(void *,  double *, int *, int *);
 
 int getopenmpoption_(void *);
 
@@ -412,6 +412,10 @@ void setdistcriteria_(void *, int *);
 
 void getdistcriteria_(void *,  int *);
 
+int getnumversion(experiment_total *);
+    const char *getversioness(int);
+    const char *gettopologyess(int);
+    const char * getlsess(experiment_total *);
 
 #ifdef	__cplusplus
 }

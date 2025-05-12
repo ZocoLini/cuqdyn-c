@@ -1,4 +1,4 @@
-
+#pragma once
 int savehdf5solutions_(double *, int *, int *);
 int savehdf5solutionspar_(double *, int *, int *, int *, const char *);
 void initprintfile_(void *, double *, int *, int *, double *, long *, int *);

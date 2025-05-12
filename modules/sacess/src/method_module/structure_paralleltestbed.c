@@ -232,27 +232,34 @@ const char* getname(experiment_total *exp) {
 
 }
 
-int getnumversion(experiment_total *exptotal){
-
-    if (strcmp(exptotal->methodScatterSearch->eSSversion, "ScatterSearch") == 0) {
+int getnumversion(experiment_total *exptotal)
+{
+    if (strcmp(exptotal->methodScatterSearch->eSSversion, "ScatterSearch") == 0)
+    {
         return 0;
     }
-    else if (strcmp(exptotal->methodScatterSearch->eSSversion, "CeSS") == 0) {
+    if (strcmp(exptotal->methodScatterSearch->eSSversion, "CeSS") == 0)
+    {
         return 1;
     }
-    else if (strcmp(exptotal->methodScatterSearch->eSSversion, "aCeSS_dist") == 0) {
+    if (strcmp(exptotal->methodScatterSearch->eSSversion, "aCeSS_dist") == 0)
+    {
         return 2;
     }
-    else if (strcmp(exptotal->methodScatterSearch->eSSversion, "saCeSS") == 0) {
+    if (strcmp(exptotal->methodScatterSearch->eSSversion, "saCeSS") == 0)
+    {
         return 3;
     }
-    else if (strcmp(exptotal->methodScatterSearch->eSSversion, "eSSm") == 0) {
+    if (strcmp(exptotal->methodScatterSearch->eSSversion, "eSSm") == 0)
+    {
         return 4;
     }
+
+    return -1;
 }
 
 const char* getversioness(int i){
-    const char *retchar;
+    const char *retchar = "Unknown";
 
     if (i==0) {
         retchar="sequential eSS";
@@ -279,7 +286,7 @@ const char * getlsess(experiment_total *exp){
 }
 
 const char* gettopologyess(int i){
-    const char *retchar;
+    const char *retchar = "Unknown";
 
 
 
