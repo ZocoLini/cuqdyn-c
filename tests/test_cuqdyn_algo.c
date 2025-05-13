@@ -8,6 +8,11 @@ void test_lotka_volterra();
 
 int main(void)
 {
+#ifdef MPI2
+    printf("No tests to execute with MPI2\n");
+    return 0;
+#endif
+
     test_lotka_volterra();
     printf("Test 1 completed");
     return 0;

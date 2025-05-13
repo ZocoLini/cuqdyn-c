@@ -23,9 +23,10 @@
     <excludeRoots>
       <file path="$PROJECT_DIR$/.venv" />
       <file path="$PROJECT_DIR$/build" />
+      <file path="$PROJECT_DIR$/build-mpi" />
+      <file path="$PROJECT_DIR$/build-serial" />
       <file path="$PROJECT_DIR$/cmake-build-debug" />
       <file path="$PROJECT_DIR$/dev-container" />
     </excludeRoots>
   </component>
-  <component name="WestSettings"><![CDATA[{}]]></component>
 </project>

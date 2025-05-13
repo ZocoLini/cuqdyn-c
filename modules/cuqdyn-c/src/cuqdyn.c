@@ -209,6 +209,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
                 execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
 
         // Saving the predicted params obtained
+        // TODO: This is not being passed to the master
         set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
 
         // Saving the ode solution data obtained with the predicted params

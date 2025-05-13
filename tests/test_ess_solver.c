@@ -19,6 +19,11 @@ void lotka_volterra_ess();
 
 int main(int argc, char **argv)
 {
+#ifdef MPI2
+    printf("No tests to execute with MPI2\n");
+    return 0;
+#endif
+
     lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB);
     printf("\tTest 1 passed NL2SOL_DN2GB\n");
 
