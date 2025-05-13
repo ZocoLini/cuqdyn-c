@@ -12,7 +12,6 @@
 
 #include "matlab.h"
 #include "ode_solver.h"
-
 #ifdef MPI2
 #include <mpi.h>
 #endif
@@ -133,9 +132,14 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
     const ODEModel ode_model = create_ode_model(2, ode_model_fun, initial_values, t0, times);
 
-    DlsMat resid_loo = SUNDenseMatrix(m, n, get_sun_context());
+    DlsMat resid_loo = NULL;
     MatrixArray media_matrix = create_matrix_array(m - 1);
     DlsMat predicted_params_matrix = NULL;
+
+    if (rank == 0)
+    {
+        resid_loo = SUNDenseMatrix(m, n, get_sun_context());
+    }
 
     // The original code solves the ode using this params but the result is not used again
     // but we found a usage, using the result to see the number of params
@@ -174,9 +178,10 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     // }
 
     // New version. Only iterates over every row if the number of processes is a divisor of m - 1
-    if (remainder != 0 && rank = 0)
+    if (remainder != 0 && rank == 0)
     {
-        fprintf(stderr, "Number of processes is not a divisor of m - 1. Please use a number of processes that is a divisor of m - 1\n");
+        fprintf(stderr, "Number of processes is not a divisor of m - 1. Please use a number of processes that is a "
+                        "divisor of m - 1\n");
     }
     iterations = min_iters_per_node;
     start_index = rank * iterations + 1;
@@ -186,6 +191,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     long start_index = 1;
 #endif
 
+    N_Vector residuals = N_VNew_Serial(n, get_sun_context()); // TODO: Free after for loop
     const long end_index = iterations + start_index;
 
     for (long i = start_index; i < end_index; ++i)
@@ -217,10 +223,51 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
             realtype observed = SM_ELEMENT_D(observed_data, i, j);
             realtype predicted = SM_ELEMENT_D(predicted_data, i, j);
 
-            SM_ELEMENT_D(resid_loo, i, j) = fabs(observed - predicted);
+            NV_Ith_S(residuals, j) = fabs(observed - predicted);
         }
 
-        matrix_array_set_index(media_matrix, i - 1, predicted_data);
+#ifdef MPI2
+        long predicted_data_len = SM_COLUMNS_D(predicted_data) * SM_ROWS_D(predicted_data);
+        if (rank != 0)
+        {
+            // Sending
+            // Tag 0 is used to send the acutal i (row / time)
+            // Tag 1 is used to send the residuals vector
+            // Tag 2 is used to send the predicted data matrix
+            // We also need to send the actual i to the master process
+            MPI_Send(&i, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
+            MPI_Send(NV_DATA_S(residuals), n, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+            MPI_Send(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+        }
+        else
+        {
+#endif
+            for (int j = 0; j < NV_LENGTH_S(residuals); ++j)
+            {
+                SM_ELEMENT_D(resid_loo, i, j) = NV_Ith_S(residuals, j);
+            }
+
+            matrix_array_set_index(media_matrix, i - 1, predicted_data);
+
+#ifdef MPI2
+            // Receiving
+            long slaved_index;
+            for (int slave = 1; slave < nproc; ++slave)
+            {
+                MPI_Recv(&slaved_index, 1, MPI_LONG, slave, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(NV_DATA_S(residuals), n, MPI_DOUBLE, slave, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+                for (int j = 0; j < NV_LENGTH_S(residuals); ++j)
+                {
+                    SM_ELEMENT_D(resid_loo, slaved_index, j) = NV_Ith_S(residuals, j);
+                }
+
+                MPI_Recv(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, slave, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                matrix_array_set_index(media_matrix, slaved_index - 1, predicted_data);
+            }
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
     }
 
 #ifdef MPI2
@@ -280,7 +327,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
     destroy_matrix_array(m_low);
     destroy_matrix_array(m_up);
-    destroy_matrix_array(media_matrix);
+    // destroy_matrix_array(media_matrix); Started breaking with the parralel version
     N_VDestroy(initial_values);
     SUNMatDestroy(observed_data);
     SUNMatDestroy(resid_loo);

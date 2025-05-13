@@ -12,7 +12,7 @@
             <vtr>0</vtr>
         </stopping_criteria>
     </run>
-    <method name="saCeSS">
+    <method name="CeSS">
         <user_options>
             <weight>default</weight>
             <tolc>default</tolc>
@@ -43,7 +43,7 @@
         <mult_num_sendSol>10</mult_num_sendSol>
         <minimum_num_sendSol>20</minimum_num_sendSol>
         <!-- CeSS option: migration time -->
-        <migration_max_time>2</migration_max_time>
+        <migration_max_time>10</migration_max_time>
     </parallelization>
 
     <problem>
