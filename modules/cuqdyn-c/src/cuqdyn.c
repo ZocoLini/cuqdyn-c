@@ -153,7 +153,42 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
     }
 
-    for (long i = 1; i < m; ++i)
+#ifdef MPI2
+    long iterations;
+    long start_index;
+
+    long min_iters_per_node = (long) ((m - 1) / (long) nproc);
+    long remainder = (m - 1) % (long) nproc;
+
+    // Old and optimal version. It accepts any number of processes but causes deadlock when the number of processes
+    // is not a divisor of m - 1 due to the use of MPI_Barrier(MPI_COMM_WORLD);
+    // if (remainder > rank)
+    // {
+    //     iterations = min_iters_per_node;
+    //     start_index = rank * iterations + 1;
+    // }
+    // else
+    // {
+    //     iterations = min_iters_per_node;
+    //     start_index = (remainder * (min_iters_per_node + 1)) + ((rank - remainder) * min_iters_per_node) + 1;
+    // }
+
+    // New version. Only iterates over every row if the number of processes is a divisor of m - 1
+    if (remainder != 0 && rank = 0)
+    {
+        fprintf(stderr, "Number of processes is not a divisor of m - 1. Please use a number of processes that is a divisor of m - 1\n");
+    }
+    iterations = min_iters_per_node;
+    start_index = rank * iterations + 1;
+
+#else
+    long iterations = m - 1;
+    long start_index = 1;
+#endif
+
+    const long end_index = iterations + start_index;
+
+    for (long i = start_index; i < end_index; ++i)
     {
         LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
 
@@ -166,6 +201,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
         N_Vector predicted_params =
                 execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+
         // Saving the predicted params obtained
         set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
 
@@ -185,17 +221,19 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         }
 
         matrix_array_set_index(media_matrix, i - 1, predicted_data);
-#ifdef MPI2
-        MPI_Barrier(MPI_COMM_WORLD);
-#endif
     }
+
+#ifdef MPI2
+    printf("HEREEEE %d\n", rank);
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
     if (rank != 0)
     {
-        destroy_matrix_array(media_matrix);
-        N_VDestroy(initial_values);
-        SUNMatDestroy(observed_data);
-        SUNMatDestroy(resid_loo);
+        // destroy_matrix_array(media_matrix);
+        // N_VDestroy(initial_values);
+        // SUNMatDestroy(observed_data);
+        // SUNMatDestroy(resid_loo);
         return NULL;
     }
 

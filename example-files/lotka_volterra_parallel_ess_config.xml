@@ -12,7 +12,7 @@
             <vtr>0</vtr>
         </stopping_criteria>
     </run>
-    <method name="CeSS">
+    <method name="saCeSS">
         <user_options>
             <weight>default</weight>
             <tolc>default</tolc>

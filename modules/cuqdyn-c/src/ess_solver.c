@@ -69,10 +69,6 @@ N_Vector execute_ess_solver(const char *file, const char *path,
 
 #endif
 
-#ifdef MPI2
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-
     execute_Solver(exptotal, &result, obj_func);
 
     destroyexp(exptotal);
