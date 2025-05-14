@@ -18,7 +18,7 @@ configure_file(
 message(STATUS "CUQDYN_C_VERSION: ${GIT_VERSION}")
 target_compile_definitions(sacess PUBLIC SACESS_C_VERSION="${GIT_VERSION}")
 
-file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c)
+file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c src/functions/*.cpp)
 
 add_library(cuqdyn-c
         ${LIB_SRC}
@@ -29,9 +29,12 @@ target_include_directories(cuqdyn-c
         include
         generated
         ${matio_SOURCE_DIR}/src
+        ${muparser_SOURCE_DIR}/include
 )
 
 target_link_libraries(cuqdyn-c
         sacess
         matio
+        muparser
+         stdc++
 )
