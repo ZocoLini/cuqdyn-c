@@ -907,7 +907,7 @@ void gatherresultsess_(void *exp, double *matrixlocal, double *matrix, int *D, d
         exp1[0].execution.request_recept = NULL;
     }
     
-    
+    // Can't find usages of this function
     MPI_Gather(matrixlocal, exp1[0].execution.tam * (*D + 1), MPI_DOUBLE, matrix, exp1[0].execution.tam * (*D + 1), MPI_DOUBLE, 0, exp1[0].execution.topology.comunicator);
     endtime = MPI_Wtime();
     localtotaltime = endtime - *starttime;
@@ -939,8 +939,7 @@ void gatherresultsserializeess_(void *exp, void *local_s, double *smatrixlocal, 
         free(exp1[0].execution.request_recept);
         exp1[0].execution.request_recept = NULL;
     }
-    
-    
+    // Can't find usages of this function
     MPI_Gather(smatrixlocal, *sizetotal, MPI_DOUBLE, smatrix, *sizetotal, MPI_DOUBLE, 0, exp1[0].execution.topology.comunicator);
     MPI_Bcast(smatrix, *sizetotal*exp1->execution.NPROC, MPI_DOUBLE, 0,exp1[0].execution.topology.comunicator);
     MPI_Reduce(time1, time_total, 1, MPI_DOUBLE, MPI_MAX, 0, exp1[0].execution.topology.comunicator);

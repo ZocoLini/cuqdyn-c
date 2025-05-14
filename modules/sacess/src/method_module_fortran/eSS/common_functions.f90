@@ -82,7 +82,7 @@ MODULE common_functions
 #ifdef MPI2
             CALL mpibarrieress()      
             ! To order the ouput messages
-            CALL sleepmpi(1)
+            ! OLD: CALL sleepmpi(1)
 #endif              
         END SUBROUTINE slave_information
         

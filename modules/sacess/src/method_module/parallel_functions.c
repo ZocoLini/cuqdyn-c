@@ -218,6 +218,7 @@ void cooperativedistelement_(void *exp, double *matrix, int *size, double *vecto
 void cooperativegathertelement_(void *exp, double *vect, int *size, double *mat) { 
     experiment_total *exp1;
     exp1 = (experiment_total *) exp;
+    // It is called but just for printing (?)
     MPI_Gather(vect, *size, MPI_DOUBLE, mat, *size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     
 }
@@ -226,6 +227,7 @@ void cooperativegathertelement_(void *exp, double *vect, int *size, double *mat)
 void cooperativegathertelementint_(void *exp, int *vect, int *size, int *mat) { 
     experiment_total *exp1;
     exp1 = (experiment_total *) exp;
+    // It is called but just for printing (?)
     MPI_Gather(vect, *size, MPI_INT, mat, *size, MPI_INT, 0, MPI_COMM_WORLD);
     
 }
@@ -306,7 +308,8 @@ void returnminlocelement_(void *exp, double *value, double *valuemax, int *loc, 
     
     MPI_Barrier(MPI_COMM_WORLD);
     vals = (double *) malloc( exp1[0].execution.NPROC * sizeof(double));
-    
+
+    // It is called but don't know if it does something
     MPI_Gather(value, 1 , MPI_DOUBLE, vals, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(vals, exp1[0].execution.NPROC,MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     

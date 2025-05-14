@@ -141,21 +141,21 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         resid_loo = SUNDenseMatrix(m, n, get_sun_context());
     }
 
-    // The original code solves the ode using this params but the result is not used again
-    // but we found a usage, using the result to see the number of params
-    {
-        LongArray indices_to_remove = create_array((long[]) {}, 0);
-        N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
-        DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
-        N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context());
-        memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values),
-               NV_LENGTH_S(initial_values) * sizeof(realtype));
+    // Obtaining the number of parameters of the model to initialize the predicted params matrix
+    LongArray indices_to_remove = create_array((long[]) {}, 0);
+    N_Vector texp = copy_vector_remove_indices(times, indices_to_remove); // Freed after executing the ess solver
+    DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove); // Freed after executing the ess solver
+    N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context()); // Freed after executing the ess solver
+    memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
 
-        N_Vector init_pred_params =
-                execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+    N_Vector init_pred_params =
+            execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+    predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
+    N_VDestroy(init_pred_params);
 
-        predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
-    }
+#ifdef MPI2
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 #ifdef MPI2
     long iterations;
@@ -235,19 +235,13 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
             MPI_Send(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
             MPI_Send(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
             MPI_Send(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
-            set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
         }
         else
         {
 #endif
-            for (int j = 0; j < NV_LENGTH_S(residuals); ++j)
-            {
-                SM_ELEMENT_D(resid_loo, i, j) = NV_Ith_S(residuals, j);
-            }
-
+            set_matrix_row(resid_loo, residuals, i, 0, NV_LENGTH_S(residuals));
             matrix_array_set_index(media_matrix, i - 1, predicted_data);
             set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
-
 #ifdef MPI2
             // Receiving
             long slaved_index;
@@ -256,12 +250,8 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
                 MPI_Recv(&slaved_index, 1, MPI_LONG, slave, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
                 // Receriving the residuals of other processes
-                MPI_Recv(NV_DATA_S(residuals), n, MPI_DOUBLE, slave, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-                for (int j = 0; j < NV_LENGTH_S(residuals); ++j)
-                {
-                    SM_ELEMENT_D(resid_loo, slaved_index, j) = NV_Ith_S(residuals, j);
-                }
+                MPI_Recv(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, slave, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                set_matrix_row(resid_loo, residuals, slaved_index, 0, NV_LENGTH_S(residuals));
 
                 // Receiving the predicted data matrix
                 MPI_Recv(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, slave, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -278,7 +268,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     }
 
 #ifdef MPI2
-    printf("HEREEEE %d\n", rank);
+    printf("Iterations of rank %d finalized\n", rank);
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
@@ -334,7 +324,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
     destroy_matrix_array(m_low);
     destroy_matrix_array(m_up);
-    // destroy_matrix_array(media_matrix); Started breaking with the parralel version
+    // destroy_matrix_array(media_matrix);
     N_VDestroy(initial_values);
     SUNMatDestroy(observed_data);
     SUNMatDestroy(resid_loo);
