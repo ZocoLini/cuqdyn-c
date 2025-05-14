@@ -27,6 +27,9 @@ for variant in "${variants[@]}"; do
         bash build.sh "$variant"
     fi
 
+    rm -rf "$BUILD_DIR/tests/data/*"
+    cp -r tests/data/* "$BUILD_DIR/tests/data/"
+
     (
       cd "$BUILD_DIR" || exit 1
       ctest
