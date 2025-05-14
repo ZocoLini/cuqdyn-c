@@ -53,9 +53,8 @@ bash build.sh "$1"
 
 if [ ! -d ".venv" ]; then
     if ! python3 -m venv .venv; then
-        echo "Error creating python virtual environment. Installing python3-venv."
-        sudo apt install python3-venv
-        python3 -m venv .venv
+        echo "Error creating python virtual environment. Install python3-venv."
+        exit 1
     fi
     source .venv/bin/activate
     pip install --upgrade pip
