@@ -31,17 +31,14 @@ The project is structured as follows:
 - gsl-1.14 (Builded by CMake if not present)
 
 ## Building the project
-The project has a `build.sh` script that builds the project using CMake.
-A `build/` directory will be created and the project will be built inside it.
+The project has a `build.sh`.
+`build-[variant]/` directories will be created, each one representing a variant 
+off the project they build. If you call the script without arguments, it will build 
+all the variants, but you can also specify the variant you want, passing it as the 
+first argument. The available variants are:
+  - `serial`: Builds the project to only execute serial methods.
+  - `mpi`: Builds the project to execute parallel methods using MPI and OpenMP.
 After this, running `test.sh` is a good way to know if the cuqdyn library works as expected.
-
-As an alternative, you can build the project using the following commands:
-```bash
-mkdir build
-cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake ..
-make -j $(nproc)
-````
 
 ## Using the CLI
 After building using the `build.sh` script, you can execute this command to run the CLI
@@ -49,20 +46,9 @@ with example config and data files like this:
 
 ```bash
 mkdir output
-./build/cli solve \
+./build-{variant}/cli solve \
     -c example-files/lotka_volterra_cuqdyn_config.xml \
-    -s example-files/lotka_volterra_ess_config.xml \
-    -d example-files/lotka_volterra_paper_data.txt \
-    -o output/ \
-    -f 0
-```
-
-Or, if you compilued using MPI
-```bash
-mkdir output
-./build/cli solve \
-    -c example-files/lotka_volterra_cuqdyn_config.xml \
-    -s example-files/lotka_volterra_parallel_ess_config.xml \
+    -s example-files/lotka_volterra_ess_{variant}_config.xml \
     -d example-files/lotka_volterra_paper_data.txt \
     -o output/ \
     -f 0
@@ -80,12 +66,12 @@ inside the directory where the results are (output folder in this example).
 To get information about all the options the cli supports, you can run the following command:
 
 ```bash
-./build/cli help
+./build-{variant}/cli help
 ```
 
 Also, you can run 
 ```bash
-./build/cli version
+./build-{variant}/cli version
 ```
 to get the version of the cuqdyn-c lib and cli you are using.
 
