@@ -68,7 +68,7 @@ variants=(
   "mpi"
 )
 
-if [[ ${variants[*]} =~ $1 ]]; then
+if [[ " ${variants[*]} " =~ " $1 " ]]; then
   execute_variant "$1"
   exit 0
 fi

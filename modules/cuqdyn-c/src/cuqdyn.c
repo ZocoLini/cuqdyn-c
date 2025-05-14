@@ -141,17 +141,20 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         resid_loo = SUNDenseMatrix(m, n, get_sun_context());
     }
 
-    // Obtaining the number of parameters of the model to initialize the predicted params matrix
-    LongArray indices_to_remove = create_array((long[]) {}, 0);
-    N_Vector texp = copy_vector_remove_indices(times, indices_to_remove); // Freed after executing the ess solver
-    DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove); // Freed after executing the ess solver
-    N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context()); // Freed after executing the ess solver
-    memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
+    {
+        // Obtaining the number of parameters of the model to initialize the predicted params matrix
+        LongArray indices_to_remove = create_array((long[]) {}, 0);
+        N_Vector texp = copy_vector_remove_indices(times, indices_to_remove); // Freed after executing the ess solver
+        DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove); // Freed after executing the ess solver
+        N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context()); // Freed after executing the ess solver
+        memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
 
-    N_Vector init_pred_params =
-            execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
-    predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
-    N_VDestroy(init_pred_params);
+        // Needs to be executed for each process bcs it waits everybody just for printing I guess
+        N_Vector init_pred_params =
+                execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+        predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
+        N_VDestroy(init_pred_params);
+    }
 
 #ifdef MPI2
     MPI_Barrier(MPI_COMM_WORLD);
@@ -191,7 +194,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     long start_index = 1;
 #endif
 
-    N_Vector residuals = N_VNew_Serial(n, get_sun_context()); // TODO: Free after for loop
+    N_Vector residuals = N_VNew_Serial(n, get_sun_context());
     const long end_index = iterations + start_index;
 
     for (long i = start_index; i < end_index; ++i)
@@ -265,19 +268,20 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
         N_VDestroy(predicted_params);
+        SUNMatDestroy(predicted_data);
     }
 
+N_VDestroy(residuals);
+
 #ifdef MPI2
-    printf("Iterations of rank %d finalized\n", rank);
+    printf("%ld iterations of rank %d finalized\n", iterations, rank);
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     if (rank != 0)
     {
-        // destroy_matrix_array(media_matrix);
-        // N_VDestroy(initial_values);
-        // SUNMatDestroy(observed_data);
-        // SUNMatDestroy(resid_loo);
+        N_VDestroy(initial_values);
+        SUNMatDestroy(observed_data);
         return NULL;
     }
 
@@ -324,7 +328,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
     destroy_matrix_array(m_low);
     destroy_matrix_array(m_up);
-    // destroy_matrix_array(media_matrix);
+    destroy_matrix_array(media_matrix);
     N_VDestroy(initial_values);
     SUNMatDestroy(observed_data);
     SUNMatDestroy(resid_loo);
@@ -356,15 +360,24 @@ MatrixArray create_matrix_array(long len)
 {
     MatrixArray array;
     array.len = len;
-    array.data = (DlsMat *) malloc(len * sizeof(DlsMat));
+    array.data = (DlsMat *) calloc(len, sizeof(DlsMat));
     return array;
 }
 
 void destroy_matrix_array(MatrixArray array)
 {
+    if (array.data == NULL)
+    {
+        fprintf(stderr, "ERROR: Matrix array data is NULL in function destroy_matrix_array()\n");
+        return;
+    }
+
     for (int i = 0; i < array.len; ++i)
     {
-        SUNMatDestroy(array.data[i]);
+        if (array.data[i] != NULL)
+        {
+            SUNMatDestroy(array.data[i]);
+        }
     }
 
     free(array.data);
@@ -375,6 +388,12 @@ DlsMat matrix_array_get_index(MatrixArray array, long i)
     if (i < 0 || i >= array.len)
     {
         printf("ERROR: Index out of bounds in function matrix_array_get_index()\n");
+        return NULL;
+    }
+
+    if (array.data == NULL)
+    {
+        fprintf(stderr, "ERROR: Matrix array data is NULL in function matrix_array_get_index()\n");
         return NULL;
     }
 
@@ -389,7 +408,18 @@ void matrix_array_set_index(MatrixArray array, long i, DlsMat matrix)
         return;
     }
 
-    array.data[i] = matrix;
+    long rows = SM_ROWS_D(matrix);
+    long cols = SM_COLUMNS_D(matrix);
+
+    if (array.data == NULL)
+    {
+        fprintf(stderr, "ERROR: Matrix array data is NULL in function matrix_array_get_index()\n");
+        return;
+    }
+
+    array.data[i] = SUNDenseMatrix(rows, cols, get_sun_context());
+
+    memcpy(SM_DATA_D(array.data[i]), SM_DATA_D(matrix), rows * cols * sizeof(realtype));
 }
 
 int compare_realtype(const void *a, const void *b)
