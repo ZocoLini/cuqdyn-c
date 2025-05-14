@@ -28,8 +28,19 @@ else
     if ! [[ ${variants[*]} =~ $1 ]]; then
         echo "$1 is not a valid variant. Please use one of the following: ${variants[*]} or rebuild"
         exit 1
+    else
+        build-proyect "$1"
+        exit 0
     fi
 fi
+
+for variant in "${variants[@]}"; do
+  if [ ! -d "build-$variant/" ]; then
+    build-proyect "$variant" &
+  fi
+done
+
+wait
 
 for variant in "${variants[@]}"; do
   (
@@ -38,5 +49,3 @@ for variant in "${variants[@]}"; do
     cp modules/cli/cli cli
   ) &
 done
-
-wait
