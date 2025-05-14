@@ -208,16 +208,10 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
         N_Vector predicted_params =
                 execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
 
-        // Saving the predicted params obtained
-        // TODO: This is not being passed to the master
-        set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
-
         // Saving the ode solution data obtained with the predicted params
         DlsMat ode_solution = solve_ode(predicted_params, ode_model);
         DlsMat predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1L}, 1));
-
         SUNMatDestroy(ode_solution);
-        N_VDestroy(predicted_params);
 
         for (int j = 0; j < n; ++j)
         {
@@ -235,10 +229,13 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
             // Tag 0 is used to send the acutal i (row / time)
             // Tag 1 is used to send the residuals vector
             // Tag 2 is used to send the predicted data matrix
+            // Tag 3 is used to send the predicted params vector
             // We also need to send the actual i to the master process
             MPI_Send(&i, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
-            MPI_Send(NV_DATA_S(residuals), n, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+            MPI_Send(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
             MPI_Send(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+            MPI_Send(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+            set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
         }
         else
         {
@@ -249,6 +246,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
             }
 
             matrix_array_set_index(media_matrix, i - 1, predicted_data);
+            set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
 
 #ifdef MPI2
             // Receiving
@@ -256,6 +254,8 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
             for (int slave = 1; slave < nproc; ++slave)
             {
                 MPI_Recv(&slaved_index, 1, MPI_LONG, slave, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+                // Receriving the residuals of other processes
                 MPI_Recv(NV_DATA_S(residuals), n, MPI_DOUBLE, slave, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
                 for (int j = 0; j < NV_LENGTH_S(residuals); ++j)
@@ -263,12 +263,18 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
                     SM_ELEMENT_D(resid_loo, slaved_index, j) = NV_Ith_S(residuals, j);
                 }
 
+                // Receiving the predicted data matrix
                 MPI_Recv(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, slave, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 matrix_array_set_index(media_matrix, slaved_index - 1, predicted_data);
+
+                // Receiving the predicted params
+                MPI_Recv(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, slave, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                set_matrix_row(predicted_params_matrix, predicted_params, slaved_index, 0, NV_LENGTH_S(predicted_params));
             }
         }
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
+        N_VDestroy(predicted_params);
     }
 
 #ifdef MPI2
