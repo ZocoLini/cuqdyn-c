@@ -30,7 +30,7 @@ void test_lotka_volterra()
     const Tolerances tolerances = create_tolerances(1e-8, abs_vec, 0, NULL);
     init_cuqdyn_conf(tolerances);
 
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(LOTKA_VOLTERRA, data_file, sacess_config_file, output_file, 0, 1);
+    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file, 0, 1);
 
     assert(cuqdyn_result != NULL);
 

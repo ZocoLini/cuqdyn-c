@@ -1,4 +1,3 @@
-#include <functions/functions.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -7,6 +6,8 @@
 #include "output/output.h"
 
 #include "ess_solver.h"
+
+#include <functions/lotka_volterra.h>
 #ifdef MPI2
 #include <mpi.h>
 #endif
@@ -15,8 +16,7 @@
 #include <omp.h>
 #endif
 
-N_Vector execute_ess_solver(const char *file, const char *path,
-    ObjFunc obj_func, N_Vector texp, DlsMat yexp, N_Vector initial_values,
+N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, DlsMat yexp, N_Vector initial_values,
     int rank, int nproc
     )
 {
@@ -69,7 +69,7 @@ N_Vector execute_ess_solver(const char *file, const char *path,
 
 #endif
 
-    execute_Solver(exptotal, &result, obj_func);
+    execute_Solver(exptotal, &result, ode_model_obj_func);
 
     destroyexp(exptotal);
 

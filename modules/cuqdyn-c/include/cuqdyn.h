@@ -4,7 +4,6 @@
 #include <sundials_old/sundials_nvector.h>
 
 #include "ode_solver.h"
-#include "functions/functions.h"
 
 #define SM_ROWS_D(mat) mat->M
 #define SM_COLUMNS_D(mat) mat->N
@@ -19,19 +18,6 @@
 #define MIth(v, i) NV_Ith_S(v, i - 1) /* i-th vector component i=1..n */
 #define MIJth(A, i, j) SM_ELEMENT_D(A, i - 1, j - 1) /* (i,j)-th matrix component i,j=1..n */
 
-typedef enum
-{
-    NONE = -1,
-    LOTKA_VOLTERRA = 0,
-    ALPHA_PINENE = 1,
-    LOGISTIC = 2,
-    CUSTOM = 3,
-} FunctionType;
-
-FunctionType create_function_type(int function_type);
-OdeModelFun obtain_function_type_f(FunctionType function_type);
-ObjFunc obtain_function_type_obj_f(FunctionType function_type);
-
 /// Result of the cuqdyn algorithm
 typedef struct
 {
@@ -45,8 +31,7 @@ typedef struct
 CuqdynResult* create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median,
     DlsMat q_low, DlsMat q_up, N_Vector times);
 void destroy_cuqdyn_result(CuqdynResult* result);
-CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, const char *sacess_conf_file,
-                                 const char *output_file, int rank, int nproc);
+CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file, int rank, int nproc);
 
 typedef struct
 {

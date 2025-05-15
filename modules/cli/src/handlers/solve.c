@@ -34,7 +34,6 @@ int handle_solve(int argc, char *argv[])
     char *cuqdyn_config_file = NULL;
     char *sacess_config_file = NULL;
     char *output_dir = NULL;
-    FunctionType function_type = NONE;
 
     while ((opt = getopt(argc, argv, "d:c:s:o:f:")) != -1)
     {
@@ -52,12 +51,6 @@ int handle_solve(int argc, char *argv[])
             case 'o':
                 output_dir = optarg;
                 break;
-            case 'f':
-            {
-                int function_type_int = atoi(optarg);
-                function_type = create_function_type(function_type_int);
-                break;
-            }
             default:
                 fprintf(stderr, "ERROR: Wrong arguments, do %s help to see how to use it\n", argv[0]);
                 return 1;
@@ -115,7 +108,7 @@ int handle_solve(int argc, char *argv[])
     int nproc = 1;
 #endif
 
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(function_type, data_file, sacess_config_file, output_dir, rank, nproc);
+    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_dir, rank, nproc);
 
     if (rank == 0)
     {

@@ -76,7 +76,7 @@ void lotka_volterra_ess(char *conf_file)
         }
     }
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, lotka_volterra_obj_f, texp, yexp, initial_values, 0, 1);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, 0, 1);
 
     for (int i = 0; i < 4; ++i)
     {

@@ -23,6 +23,7 @@ file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c src/functions/*.cp
 add_library(cuqdyn-c
         ${LIB_SRC}
 )
+add_dependencies(cuqdyn-c rust_lib)
 
 target_include_directories(cuqdyn-c
         PUBLIC
@@ -30,11 +31,13 @@ target_include_directories(cuqdyn-c
         generated
         ${matio_SOURCE_DIR}/src
         ${muparser_SOURCE_DIR}/include
+        ${RUST_LIB_DIR}/include
 )
+
+target_link_directories(cuqdyn-c PUBLIC ${RUST_TARGET_DIR})
 
 target_link_libraries(cuqdyn-c
         sacess
         matio
-        muparser
-         stdc++
+        mexpreval
 )

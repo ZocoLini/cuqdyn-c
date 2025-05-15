@@ -1,15 +1,15 @@
 #include <config.h>
 #include <cvodes_old/cvodes.h>
+#include <functions/lotka_volterra.h>
 #include <ode_solver.h>
 #include <string.h>
 #include <sundials_old/sundials_nvector.h>
 
 #include "cuqdyn.h"
 
-ODEModel create_ode_model(int number_eq, OdeModelFun f, N_Vector initial_values, realtype t0, N_Vector times)
+ODEModel create_ode_model(int number_eq, N_Vector initial_values, realtype t0, N_Vector times)
 {
     ODEModel ode_model;
-    ode_model.f = f;
     ode_model.number_eq = number_eq;
     ode_model.initial_values = initial_values;
     ode_model.t0 = t0;
@@ -34,7 +34,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     void *cvode_mem = CVodeCreate(CV_BDF, CV_FUNCTIONAL);
     if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
 
-    retval = CVodeInit(cvode_mem, ode_model.f, ode_model.t0, ode_model.initial_values);
+    retval = CVodeInit(cvode_mem, ode_model_fun, ode_model.t0, ode_model.initial_values);
     if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
 
     N_Vector cloned_abs_tol = N_VNew_Serial(ode_model.number_eq, get_sun_context());

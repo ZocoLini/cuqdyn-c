@@ -76,17 +76,17 @@ execute_process(
 
 add_subdirectory(${matio_SOURCE_DIR} ${matio_BINARY_DIR})
 
-## muParser
+## mexpeval
 
-set(ENABLE_SAMPLES OFF CACHE BOOL "" FORCE)
-set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE) # TODO: Enable it later
-set(ENABLE_WIDE_CHAR OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(
-        muParser
-        GIT_REPOSITORY https://github.com/beltoforion/muparser.git
-        GIT_TAG v2.3.5
-        GIT_SHALLOW TRUE
+set(RUST_LIB_DIR "${PROJECT_SOURCE_DIR}/modules/mexpreval")
+set(RUST_TARGET_DIR "${RUST_LIB_DIR}/target/release")
+
+add_custom_command(
+    OUTPUT ${RUST_TARGET_DIR}/libmexpreval.so
+    COMMAND cargo build --release
+    WORKING_DIRECTORY ${RUST_LIB_DIR}
 )
 
-FetchContent_MakeAvailable(muParser)
+add_custom_target(rust_lib ALL
+    DEPENDS ${RUST_TARGET_DIR}/libmexpreval.so
+)

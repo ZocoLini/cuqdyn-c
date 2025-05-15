@@ -16,77 +16,6 @@
 #include <mpi.h>
 #endif
 
-FunctionType create_function_type(int function_type)
-{
-    FunctionType out;
-
-    switch (function_type)
-    {
-        case 0:
-            out = LOTKA_VOLTERRA;
-            break;
-        case 1:
-            out = ALPHA_PINENE;
-            break;
-        case 2:
-            out = LOGISTIC;
-            break;
-        case 3:
-            out = CUSTOM;
-            break;
-        default:
-            out = NONE;
-    }
-
-    return out;
-}
-
-OdeModelFun obtain_function_type_f(const FunctionType function_type)
-{
-    OdeModelFun out = NULL;
-
-    switch (function_type)
-    {
-        case LOTKA_VOLTERRA:
-            out = lotka_volterra_f;
-            break;
-        case ALPHA_PINENE:
-        case LOGISTIC:
-        case CUSTOM:
-            fprintf(stderr, "Not yet implemented");
-            exit(1);
-            break;
-        default:
-            fprintf(stderr, "Unsupported function type");
-            exit(1);
-    }
-
-    return out;
-}
-
-ObjFunc obtain_function_type_obj_f(const FunctionType function_type)
-{
-    ObjFunc out = NULL;
-
-    switch (function_type)
-    {
-        case LOTKA_VOLTERRA:
-            out = lotka_volterra_obj_f;
-            break;
-        case ALPHA_PINENE:
-        case LOGISTIC:
-        case CUSTOM:
-            fprintf(stderr, "Not yet implemented");
-            exit(1);
-            break;
-        default:
-            fprintf(stderr, "Unsupported function type");
-            exit(1);
-    }
-
-    return out;
-}
-
 CuqdynResult *create_cuqdyn_result(DlsMat predicted_data_median, N_Vector predicted_params_median, DlsMat q_low,
                                    DlsMat q_up, N_Vector times)
 {
@@ -109,7 +38,7 @@ void destroy_cuqdyn_result(CuqdynResult *result)
     free(result);
 }
 
-CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, const char *sacess_conf_file,
+CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
                           const char *output_file, int rank, int nproc)
 {
     N_Vector times = NULL;
@@ -127,10 +56,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
     const long m = SM_ROWS_D(observed_data);
     const long n = SM_COLUMNS_D(observed_data);
 
-    const OdeModelFun ode_model_fun = obtain_function_type_f(function_type);
-    const ObjFunc obj_func = obtain_function_type_obj_f(function_type);
-
-    const ODEModel ode_model = create_ode_model(2, ode_model_fun, initial_values, t0, times);
+    const ODEModel ode_model = create_ode_model(2, initial_values, t0, times);
 
     DlsMat resid_loo = NULL;
     MatrixArray media_matrix = create_matrix_array(m - 1);
@@ -151,7 +77,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
 
         // Needs to be executed for each process bcs it waits everybody just for printing I guess
         N_Vector init_pred_params =
-                execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, init_vals, rank, nproc);
         predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
         N_VDestroy(init_pred_params);
     }
@@ -209,7 +135,7 @@ CuqdynResult *cuqdyn_algo(FunctionType function_type, const char *data_file, con
                NV_LENGTH_S(initial_values) * sizeof(realtype));
 
         N_Vector predicted_params =
-                execute_ess_solver(sacess_conf_file, output_file, obj_func, texp, yexp, init_vals, rank, nproc);
+                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, init_vals, rank, nproc);
 
         // Saving the ode solution data obtained with the predicted params
         DlsMat ode_solution = solve_ode(predicted_params, ode_model);

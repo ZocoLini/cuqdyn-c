@@ -9,15 +9,11 @@
 #include "functions/lotka_volterra.h"
 #include "ode_solver.h"
 
-int basic_f(realtype t, N_Vector y, N_Vector ydot, void *user_data);
 void test_basic_ode();
 void test_lotka_volterra();
 
 int main(void)
 {
-    test_basic_ode();
-    printf("\tTest 1 (dy/dx = 3/x * y; y(3) = 54) passed\n");
-
     test_lotka_volterra();
     printf("\tTest 2 (Lotka-Volterra α = γ = 0.5, β = δ = 0.02 and y(0) = (10, 5)) passed\n");
 
@@ -55,7 +51,7 @@ void test_basic_ode()
 
     const realtype t0 = 3.0;
 
-    const ODEModel ode_model = create_ode_model(1, basic_f, initial_values, t0, times);
+    const ODEModel ode_model = create_ode_model(1, initial_values, t0, times);
     DlsMat result = solve_ode(parameters, ode_model);
 
     assert(result != NULL);
@@ -120,7 +116,7 @@ void test_lotka_volterra()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(2, lotka_volterra_f, initial_values, t0, times);
+    const ODEModel ode_model = create_ode_model(2, initial_values, t0, times);
     DlsMat result = solve_ode(parameters, ode_model);
 
     assert(result != NULL);
