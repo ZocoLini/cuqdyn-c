@@ -9,11 +9,9 @@
 #include <cuqdyn.h>
 #include <functions/lotka_volterra.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <tgmath.h>
 
 #include "ess_solver.h"
-#include "method_module/structure_paralleltestbed.h"
 
 void lotka_volterra_ess();
 
@@ -45,7 +43,7 @@ void lotka_volterra_ess(char *conf_file)
     N_Vector abs_tol_vec = N_VNew_Serial(2, get_sun_context());
     N_VSetArrayPointer(abs_tol, abs_tol_vec);
 
-    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), abs_tol_vec);
+    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), abs_tol_vec, 0, NULL);
     init_cuqdyn_conf(tolerances);
 
     realtype expected_values[4] = {0.5, 0.02, 0.5, 0.02};

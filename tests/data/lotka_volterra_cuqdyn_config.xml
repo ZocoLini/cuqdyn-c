@@ -5,4 +5,8 @@
         <rtol>1e-8</rtol>
         <atol>1e-9, 1e-10</atol>
     </tolerances>
+    <odes count="2">
+       y1 * (p1 - p2 * y2)
+       -y2 * (p3 - p4 * y1)
+    </odes>
 </cuqdyn-config>

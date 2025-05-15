@@ -3,15 +3,15 @@
 
 #include <sundials_old/sundials_nvector.h>
 
-#include "cuqdyn.h"
-
 typedef struct
 {
     realtype rtol;
     N_Vector atol;
+    int odes_count;
+    char** odes;
 } Tolerances;
 
-Tolerances create_tolerances(realtype rtol, N_Vector atol);
+Tolerances create_tolerances(realtype rtol, N_Vector atol, int odes_count, char **odes);
 void destroy_tolerances(Tolerances);
 
 typedef struct
