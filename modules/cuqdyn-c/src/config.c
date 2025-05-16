@@ -11,10 +11,11 @@
 
 static CuqdynConf *config = NULL;
 
-CuqdynConf *create_cuqdyn_conf(Tolerances tolerances)
+CuqdynConf *create_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr)
 {
     CuqdynConf *cuqdyn_conf = malloc(sizeof(CuqdynConf));
     cuqdyn_conf->tolerances = tolerances;
+    cuqdyn_conf->ode_expr = ode_expr;
     return cuqdyn_conf;
 }
 
@@ -25,10 +26,9 @@ void destroy_cuqdyn_conf()
         return;
     }
 
-    // TODO: This frees causes a double free error somehow
-    // destroy_tolerances(config->tolerances);
+    destroy_tolerances(config->tolerances);
     destroy_ode_expr(config->ode_expr);
-    // free(config);
+    free(config);
     config = NULL;
 }
 
@@ -190,11 +190,11 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
     return 0;
 }
 
-CuqdynConf *init_cuqdyn_conf(Tolerances tolerances)
+CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr)
 {
     destroy_cuqdyn_conf();
 
-    config = create_cuqdyn_conf(tolerances);
+    config = create_cuqdyn_conf(tolerances, ode_expr);
     return config;
 }
 

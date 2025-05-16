@@ -31,7 +31,7 @@ typedef struct
 
 CuqdynConf *init_cuqdyn_conf_from_file(const char *filename);
 int parse_cuqdyn_conf(const char* filename, CuqdynConf* config);
-CuqdynConf *init_cuqdyn_conf(Tolerances tolerances);
+CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr);
 void destroy_cuqdyn_conf();
 CuqdynConf * get_cuqdyn_conf();
 

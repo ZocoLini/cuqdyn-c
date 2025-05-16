@@ -21,14 +21,11 @@ int main(void)
 void test_lotka_volterra()
 {
     char *data_file = "data/lotka_volterra_paper_data.txt";
+    char *cuqdyn_config_file = "data/lotka_volterra_cuqdyn_config.xml";
     char *sacess_config_file = "data/lotka_volterra_ess_config.xml";
     char *output_file = "data/output";
 
-    realtype *abs_tol = (realtype[]){1e-8, 1e-8};
-    N_Vector abs_vec = N_VNew_Serial(2, get_sun_context());
-    N_VSetArrayPointer(abs_tol, abs_vec);
-    const Tolerances tolerances = create_tolerances(1e-8, abs_vec);
-    init_cuqdyn_conf(tolerances);
+    init_cuqdyn_conf_from_file(cuqdyn_config_file);
 
     CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file, 0, 1);
 

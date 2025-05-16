@@ -38,7 +38,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
 
     N_Vector cloned_abs_tol = N_VNew_Serial(ode_model.number_eq, get_sun_context());
-    memcpy(N_VGetArrayPointer(cloned_abs_tol), N_VGetArrayPointer(tolerances.atol), ode_model.number_eq * sizeof(realtype));
+    memcpy(NV_DATA_S(cloned_abs_tol), NV_DATA_S(tolerances.atol), ode_model.number_eq * sizeof(realtype));
 
     // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
     retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, cloned_abs_tol);
