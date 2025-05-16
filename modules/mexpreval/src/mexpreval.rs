@@ -43,7 +43,12 @@ pub extern "C" fn lotka_volterra_f_rs(
 
             exprs_cache
                 .entry(s.to_string())
-                .or_insert_with(|| Rc::new(Expr::from_str(s).unwrap()))
+                .or_insert_with(|| {
+                    Rc::new(
+                        Expr::from_str(s)
+                            .unwrap_or_else(|e| panic!("Error parsing expresion {s}: {e}")),
+                    )
+                })
                 .clone()
         })
         .collect();
@@ -59,7 +64,9 @@ pub extern "C" fn lotka_volterra_f_rs(
     ctx.var("p4", params[3]);
 
     for (i, expr) in parsed_exprs.iter().enumerate() {
-        ydot[i] = expr.eval_with_context(&*ctx).unwrap();
+        ydot[i] = expr
+            .eval_with_context(&*ctx)
+            .unwrap_or_else(|e| panic!("Error evaluating epresion: {e}"));
     }
 
     #[cfg(debug_assertions)]
@@ -83,9 +90,7 @@ mod tests {
         let result = eval_expr("3 + 5 * 2");
         assert_eq!(result.unwrap(), 13.0);
     }
-    
+
     #[test]
-    fn permormance_test() {
-        
-    }
+    fn permormance_test() {}
 }
