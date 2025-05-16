@@ -1,11 +1,18 @@
 [package]
 name = "mexpreval"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 meval = { version = "0.2.0" }
 
-[lib]
-name = "mexpreval"
-crate-type = ["cdylib"]
+[dev-dependencies]
+criterion = { version = "0.5.1" }
+
+[[bench]]
+name = "eval_f_exprs_bench"
+harness = false
+
+# [lib]
+# name = "mexpreval"
+# crate-type = ["cdylib"]
