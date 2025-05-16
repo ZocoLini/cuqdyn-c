@@ -10,7 +10,8 @@
 
 #include "ess_solver.h"
 
-void lotka_volterra_ess();
+void lotka_volterra_ess(char *conf_file);
+void alpha_pinene_ess(char *conf_file);
 
 int main(int argc, char **argv)
 {
