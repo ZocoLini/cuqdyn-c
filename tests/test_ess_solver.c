@@ -39,12 +39,7 @@ int main(int argc, char **argv)
 
 void lotka_volterra_ess(char *conf_file)
 {
-    realtype *abs_tol = (realtype[]) {1.0e-8, 1.0e-8};
-    N_Vector abs_tol_vec = N_VNew_Serial(2, get_sun_context());
-    N_VSetArrayPointer(abs_tol, abs_tol_vec);
-
-    const Tolerances tolerances = create_tolerances(SUN_RCONST(1.0e-6), abs_tol_vec, 0, NULL);
-    init_cuqdyn_conf(tolerances);
+    init_cuqdyn_conf_from_file("data/lotka_volterra_cuqdyn_config.xml");
 
     realtype expected_values[4] = {0.5, 0.02, 0.5, 0.02};
 

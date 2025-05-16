@@ -81,12 +81,7 @@ add_subdirectory(${matio_SOURCE_DIR} ${matio_BINARY_DIR})
 set(RUST_LIB_DIR "${PROJECT_SOURCE_DIR}/modules/mexpreval")
 set(RUST_TARGET_DIR "${RUST_LIB_DIR}/target/release")
 
-add_custom_command(
-    OUTPUT ${RUST_TARGET_DIR}/libmexpreval.so
+add_custom_target(rust_lib ALL
     COMMAND cargo build --release
     WORKING_DIRECTORY ${RUST_LIB_DIR}
-)
-
-add_custom_target(rust_lib ALL
-    DEPENDS ${RUST_TARGET_DIR}/libmexpreval.so
 )
