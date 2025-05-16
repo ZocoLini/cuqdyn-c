@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../../cuqdyn-c/include/functions.h"
 #include "cuqdyn.h"
-#include "functions/lotka_volterra.h"
 
 #ifdef MPI2
 #include <mpi.h>

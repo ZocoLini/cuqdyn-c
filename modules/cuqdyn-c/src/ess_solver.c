@@ -7,7 +7,7 @@
 
 #include "ess_solver.h"
 
-#include <functions/lotka_volterra.h>
+#include <../include/functions.h>
 #ifdef MPI2
 #include <mpi.h>
 #endif

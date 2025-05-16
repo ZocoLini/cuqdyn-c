@@ -4,12 +4,9 @@
 #define LOTKA_VOLTERRA_CONF_FILE_MISQP "data/lotka_volterra_ess_config_misqp.xml"
 #define OUPUT_PATH "ess_output"
 
-#include <assert.h>
 #include <config.h>
 #include <cuqdyn.h>
-#include <functions/lotka_volterra.h>
 #include <stdio.h>
-#include <tgmath.h>
 
 #include "ess_solver.h"
 

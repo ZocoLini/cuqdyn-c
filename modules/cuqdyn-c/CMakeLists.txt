@@ -18,7 +18,7 @@ configure_file(
 message(STATUS "CUQDYN_C_VERSION: ${GIT_VERSION}")
 target_compile_definitions(sacess PUBLIC SACESS_C_VERSION="${GIT_VERSION}")
 
-file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c src/functions/*.c src/functions/*.cpp)
+file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c)
 
 add_library(cuqdyn-c
         ${LIB_SRC}

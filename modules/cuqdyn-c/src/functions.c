@@ -1,4 +1,4 @@
-#include <functions/lotka_volterra.h>
+#include <../include/functions.h>
 #include <method_module/structure_paralleltestbed.h>
 #include <nvector_old/nvector_serial.h>
 #include <string.h>
@@ -9,17 +9,20 @@
 #include "cuqdyn.h"
 #include "sundials_old/sundials_types.h"
 
-extern void lotka_volterra_f_rs(realtype t, realtype *y, realtype *ydot, realtype *params, int n, char** exprs);
+extern void eval_f_exprs(realtype t, realtype *y, realtype *ydot, realtype *params, int n_params, char **exprs,
+                         int n_expr);
 
 int ode_model_fun(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
-    realtype *params = N_VGetArrayPointer(user_data);
-    realtype *ydot_pointer = N_VGetArrayPointer(ydot);
-    realtype *y_pointer = N_VGetArrayPointer(y);
+    N_Vector params_vec = user_data;
+    realtype *params = NV_DATA_S(params_vec);
+    realtype *ydot_pointer = NV_DATA_S(ydot);
+    realtype *y_pointer = NV_DATA_S(y);
 
     CuqdynConf *conf = get_cuqdyn_conf();
 
-    lotka_volterra_f_rs(t, y_pointer, ydot_pointer, params, conf->tolerances.odes_count, conf->tolerances.odes);
+    eval_f_exprs(t, y_pointer, ydot_pointer, params, NV_LENGTH_S(params_vec), conf->tolerances.odes,
+                 conf->tolerances.odes_count);
 
     return 0;
 }

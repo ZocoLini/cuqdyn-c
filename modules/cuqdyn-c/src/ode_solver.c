@@ -1,6 +1,6 @@
+#include <../include/functions.h>
 #include <config.h>
 #include <cvodes_old/cvodes.h>
-#include <functions/lotka_volterra.h>
 #include <ode_solver.h>
 #include <string.h>
 #include <sundials_old/sundials_nvector.h>

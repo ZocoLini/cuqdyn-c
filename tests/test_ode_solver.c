@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "functions/lotka_volterra.h"
+#include "../modules/cuqdyn-c/include/functions.h"
 #include "ode_solver.h"
 
 void test_basic_ode();

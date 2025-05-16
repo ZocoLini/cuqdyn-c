@@ -1,8 +1,8 @@
 #include "cuqdyn.h"
 
+#include <../include/functions.h>
 #include <data_reader.h>
 #include <ess_solver.h>
-#include <functions/lotka_volterra.h>
 #include <math.h>
 #include <nvector_old/nvector_serial.h>
 #include <stdio.h>

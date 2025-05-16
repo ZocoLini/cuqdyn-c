@@ -7,30 +7,28 @@ use std::str::FromStr;
 use std::time::Instant;
 use std::{ffi::CStr, os::raw::c_char, slice};
 
-type Realtype = f64;
-type NVector = *mut Realtype;
-
 thread_local! {
     static EXPRS: Rc<RefCell<HashMap<String, Rc<Expr>>>> = Rc::new(RefCell::new(HashMap::new()));
     static CONTEXT: Rc<RefCell<Context<'static>>> = Rc::new(RefCell::new(Context::new()));
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn lotka_volterra_f_rs(
-    _t: Realtype,
-    y: NVector,
-    ydot: NVector,
-    params: NVector,
-    n: usize,
+pub extern "C" fn eval_f_exprs(
+    _t: f64,
+    y: *mut f64,
+    ydot: *mut f64,
+    params: *mut f64,
+    num_params: usize,
     exprs: *const *const c_char,
+    num_exprs: usize,
 ) {
     #[cfg(debug_assertions)]
     let initial_time = Instant::now();
 
-    let y: &[Realtype] = unsafe { slice::from_raw_parts(y, n) };
-    let ydot: &mut [Realtype] = unsafe { slice::from_raw_parts_mut(ydot, n) };
-    let params: &[Realtype] = unsafe { slice::from_raw_parts_mut(params, 4) };
-    let exprs: &[*const c_char] = unsafe { slice::from_raw_parts(exprs, n) };
+    let y: &[f64] = unsafe { slice::from_raw_parts(y, num_exprs) };
+    let ydot: &mut [f64] = unsafe { slice::from_raw_parts_mut(ydot, num_exprs) };
+    let params: &[f64] = unsafe { slice::from_raw_parts_mut(params, num_params) };
+    let exprs: &[*const c_char] = unsafe { slice::from_raw_parts(exprs, num_exprs) };
 
     let exprs_cache = EXPRS.with(Rc::clone);
     let mut exprs_cache = exprs_cache.borrow_mut();
@@ -56,13 +54,14 @@ pub extern "C" fn lotka_volterra_f_rs(
     let ctx = CONTEXT.with(Rc::clone);
     let mut ctx = ctx.borrow_mut();
 
-    ctx.var("y1", y[0]);
-    ctx.var("y2", y[1]);
-    ctx.var("p1", params[0]);
-    ctx.var("p2", params[1]);
-    ctx.var("p3", params[2]);
-    ctx.var("p4", params[3]);
+    for (i, expr) in y.iter().enumerate() {
+        ctx.var(format!("y{}", i + 1), *expr);
+    }
 
+    for (i, param) in params.iter().enumerate() {
+        ctx.var(format!("p{}", i + 1), *param);
+    }
+    
     for (i, expr) in parsed_exprs.iter().enumerate() {
         ydot[i] = expr
             .eval_with_context(&*ctx)
@@ -76,20 +75,9 @@ pub extern "C" fn lotka_volterra_f_rs(
     }
 }
 
-#[allow(dead_code)]
-fn eval_expr(expr: &str) -> Result<f64, meval::Error> {
-    meval::eval_str(expr)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_simple_expression() {
-        let result = eval_expr("3 + 5 * 2");
-        assert_eq!(result.unwrap(), 13.0);
-    }
 
     #[test]
     fn permormance_test() {}
