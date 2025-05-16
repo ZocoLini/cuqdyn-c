@@ -1,12 +1,11 @@
 use meval::{Context, Expr};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::str::FromStr;
 use std::{ffi::CStr, os::raw::c_char, slice};
 
 thread_local! {
-    static EXPRS: RefCell<HashMap<*const c_char, Rc<Expr>>> = RefCell::new(HashMap::new());
+    static EXPRS: RefCell<HashMap<*const c_char, Expr>> = RefCell::new(HashMap::new());
     static CONTEXT: RefCell<Context<'static>> = RefCell::new(Context::new())
 }
 
@@ -29,23 +28,6 @@ pub unsafe extern "C" fn eval_f_exprs(
     EXPRS.with(|exprs_cache| {
         let mut exprs_cache = exprs_cache.borrow_mut();
 
-        let parsed_exprs: Vec<Rc<Expr>> = exprs
-            .iter()
-            .map(|ptr| {
-                exprs_cache
-                    .entry(*ptr)
-                    .or_insert_with(|| {
-                        let c_str = CStr::from_ptr(*ptr);
-                        let s = c_str.to_str().unwrap();
-                        Rc::new(
-                            Expr::from_str(s)
-                                .unwrap_or_else(|e| panic!("Error parsing expresion {s}: {e}")),
-                        )
-                    })
-                    .clone()
-            })
-            .collect();
-
         CONTEXT.with(|ctx| {
             let mut ctx = ctx.borrow_mut();
 
@@ -57,7 +39,13 @@ pub unsafe extern "C" fn eval_f_exprs(
                 ctx.var(format!("p{}", i + 1), *param);
             }
 
-            for (i, expr) in parsed_exprs.iter().enumerate() {
+            for (i, ptr) in exprs.iter().enumerate() {
+                let expr = exprs_cache.entry(*ptr).or_insert_with(|| {
+                    let c_str = CStr::from_ptr(*ptr);
+                    let s = c_str.to_str().unwrap();
+                    Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {s}: {e}"))
+                });
+
                 ydot[i] = expr
                     .eval_with_context(&*ctx)
                     .unwrap_or_else(|e| panic!("Error evaluating epresion: {e}"));
