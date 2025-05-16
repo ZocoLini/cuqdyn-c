@@ -21,8 +21,8 @@ int ode_model_fun(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 
     CuqdynConf *conf = get_cuqdyn_conf();
 
-    eval_f_exprs(t, y_pointer, ydot_pointer, params, NV_LENGTH_S(params_vec), conf->tolerances.odes,
-                 conf->tolerances.odes_count);
+    eval_f_exprs(t, y_pointer, ydot_pointer, params, conf->ode_expr.p_count, conf->ode_expr.exprs,
+                 conf->ode_expr.y_count);
 
     return 0;
 }

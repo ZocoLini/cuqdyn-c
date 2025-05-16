@@ -7,16 +7,26 @@ typedef struct
 {
     realtype rtol;
     N_Vector atol;
-    int odes_count;
-    char** odes;
+
 } Tolerances;
 
-Tolerances create_tolerances(realtype rtol, N_Vector atol, int odes_count, char **odes);
+Tolerances create_tolerances(realtype rtol, N_Vector atol);
 void destroy_tolerances(Tolerances);
 
 typedef struct
 {
+    int y_count;
+    int p_count;
+    char** exprs;
+} OdeExpr;
+
+OdeExpr create_ode_expr(int y_count, int p_count, char** exprs);
+void destroy_ode_expr(OdeExpr ode_expr);
+
+typedef struct
+{
     Tolerances tolerances;
+    OdeExpr ode_expr;
 } CuqdynConf;
 
 CuqdynConf *init_cuqdyn_conf_from_file(const char *filename);

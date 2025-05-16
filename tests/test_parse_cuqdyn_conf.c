@@ -20,10 +20,11 @@ int main(void)
 
     assert(1e-8 == conf->tolerances.rtol);
 
-    fprintf(stdout, "%d\n", conf->tolerances.odes_count);
-    fprintf(stdout, "%s\n", conf->tolerances.odes[0]);
-    fprintf(stdout, "%s\n", conf->tolerances.odes[1]);
-    assert(2 == conf->tolerances.odes_count);
+    fprintf(stdout, "%d\n", conf->ode_expr.y_count);
+    fprintf(stdout, "%s\n", conf->ode_expr.exprs[0]);
+    fprintf(stdout, "%s\n", conf->ode_expr.exprs[1]);
+    assert(2 == conf->ode_expr.y_count);
+    assert(4 == conf->ode_expr.p_count);
 
     return 0;
 }
