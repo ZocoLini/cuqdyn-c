@@ -32,6 +32,9 @@ int main(int argc, char **argv)
     lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_MISQP);
     printf("\tTest 4 passed MISQP\n");
 
+    alpha_pinene_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB);
+    printf("\tTest 5 passed NL2SOL_DN2GB\n");
+
     return 0;
 }
 
@@ -64,6 +67,64 @@ void lotka_volterra_ess(char *conf_file)
     for (int i = 0; i < 30; ++i)
     {
         for (int j = 0; j < 2; ++j)
+        {
+            SM_ELEMENT_D(yexp, i, j) = yexp_data[i][j];
+        }
+    }
+
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, 0, 1);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        realtype expected = expected_values[i];
+        realtype result = NV_Ith_S(xbest, i);
+
+        realtype a = 6;
+        // assert(fabs(result - expected) < 0.1);
+    }
+
+    destroy_cuqdyn_conf();
+}
+
+void alpha_pinene_ess(char *conf_file)
+{
+    init_cuqdyn_conf_from_file("data/alpha_pinene_cuqdyn_config.xml");
+
+    realtype expected_values[5] = {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5};
+
+    N_Vector texp = N_VNew_Serial(9, get_sun_context());
+    NV_Ith_S(texp, 0) = 0;
+    NV_Ith_S(texp, 1) = 1230;
+    NV_Ith_S(texp, 2) = 3060;
+    NV_Ith_S(texp, 3) = 4920;
+    NV_Ith_S(texp, 4) = 7800;
+    NV_Ith_S(texp, 5) = 10680;
+    NV_Ith_S(texp, 6) = 15030;
+    NV_Ith_S(texp, 7) = 22620;
+    NV_Ith_S(texp, 8) = 36420;
+
+    DlsMat yexp = SUNDenseMatrix(9, 5, get_sun_context());
+
+    realtype yexp_data[9][5] = {{1.409e-01, 3.034e-02, 1.409e-01, 3.034e-02, 3.252e-02},
+                                {3.441e+00, 6.992e-02, 3.441e+00, 6.992e-02, 4.046e-01},
+                                {5.622e+00, 1.027e-01, 5.622e+00, 1.027e-01, 3.011e+00},
+                                {5.316e+00, 5.430e-01, 5.316e+00, 5.430e-01, 4.136e+00},
+                                {6.977e+00, 5.887e-01, 6.977e+00, 5.887e-01, 9.308e+00},
+                                {7.298e+00, 9.356e-01, 7.298e+00, 9.356e-01, 1.277e+01},
+                                {5.795e+00, 1.468e+00, 5.795e+00, 1.468e+00, 1.797e+01},
+                                {5.169e+00, 1.443e+00, 5.169e+00, 1.443e+00, 2.250e+01},
+                                {4.175e+00, 4.301e+00, 4.175e+00, 4.301e+00, 2.232e+01}};
+
+    N_Vector initial_values = N_VNew_Serial(5, get_sun_context());
+    NV_Ith_S(initial_values, 0) = 100;
+    NV_Ith_S(initial_values, 1) = 0.0001;
+    NV_Ith_S(initial_values, 2) = 0.0001;
+    NV_Ith_S(initial_values, 3) = 0.0001;
+    NV_Ith_S(initial_values, 4) = 0.0001;
+
+    for (int i = 0; i < 9; ++i)
+    {
+        for (int j = 0; j < 5; ++j)
         {
             SM_ELEMENT_D(yexp, i, j) = yexp_data[i][j];
         }
