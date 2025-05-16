@@ -13,6 +13,6 @@ criterion = { version = "0.5.1" }
 name = "eval_f_exprs_bench"
 harness = false
 
-# [lib]
-# name = "mexpreval"
-# crate-type = ["cdylib"]
+[lib]
+name = "mexpreval"
+crate-type = ["cdylib", "lib"]
