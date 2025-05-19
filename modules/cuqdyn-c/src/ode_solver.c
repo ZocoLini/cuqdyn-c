@@ -31,7 +31,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     Tolerances tolerances = cuqdyn_conf->tolerances;
 
     int retval;
-    void *cvode_mem = CVodeCreate(CV_BDF, CV_FUNCTIONAL);
+    void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
     if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
 
     retval = CVodeInit(cvode_mem, ode_model_fun, ode_model.t0, ode_model.initial_values);

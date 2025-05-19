@@ -4,10 +4,10 @@ build-proyect() {
     VARIANT=$1
 
     if [ ! -d "build-$VARIANT/" ]; then
-        mkdir "build-$VARIANT"
+      mkdir "build-$VARIANT"
+    else
+      rm -rf "build-${VARIANT}/*"
     fi
-
-    rm -rf "build-${VARIANT}/*"
 
     (
       cd "build-$VARIANT" || exit 1
@@ -21,10 +21,11 @@ variants=(
 )
 
 if [ "$1" = "rebuild" ]; then
-    build-proyect "mpi" &
-    build-proyect "serial" &
+    for variant in "${variants[@]}"; do
+      build-proyect "$variant" &
+    done
     wait
-else 
+elif ! [ "$1" = "" ]; then
     if ! [[ ${variants[*]} =~ $1 ]]; then
         echo "$1 is not a valid variant. Please use one of the following: ${variants[*]} or rebuild"
         exit 1
@@ -33,19 +34,14 @@ else
         exit 0
     fi
 fi
-
 for variant in "${variants[@]}"; do
-  if [ ! -d "build-$variant/" ]; then
-    build-proyect "$variant" &
+  if [ -d "build-$variant/" ]; then
+    (
+      cd "build-$variant" || exit 1
+      make -j "$(nproc)"
+      cp modules/cli/cli cli
+    ) &
   fi
 done
 
 wait
-
-for variant in "${variants[@]}"; do
-  (
-    cd "build-$variant" || exit 1
-    make -j "$(nproc)"
-    cp modules/cli/cli cli
-  ) &
-done
