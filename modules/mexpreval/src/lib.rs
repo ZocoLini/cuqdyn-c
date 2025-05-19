@@ -42,7 +42,7 @@ pub unsafe extern "C" fn eval_f_exprs(
             for (i, ptr) in exprs.iter().enumerate() {
                 let expr = exprs_cache.entry(*ptr).or_insert_with(|| {
                     let c_str = CStr::from_ptr(*ptr);
-                    let s = c_str.to_str().unwrap();
+                    let s = c_str.to_str().unwrap_unchecked();
                     Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {s}: {e}"))
                 });
 
