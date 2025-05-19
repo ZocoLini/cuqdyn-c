@@ -3,7 +3,7 @@ use mexpreval::eval_f_exprs;
 use std::ffi::CString;
 use std::os::raw::c_char;
 
-fn bench_eval(c: &mut Criterion) {
+fn lotka_volterra_bench_eval(c: &mut Criterion) {
     let num_exprs = 2;
     let num_params = 4;
 
@@ -17,7 +17,7 @@ fn bench_eval(c: &mut Criterion) {
     ];
     let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
     
-    c.bench_function("eval_f_exprs", |b| {
+    c.bench_function("lotka_volterra", |b| {
         b.iter(|| unsafe {
             eval_f_exprs(
                 0.0,
@@ -32,5 +32,65 @@ fn bench_eval(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_eval);
+fn logistic_model_bench_eval(c: &mut Criterion) {
+    let num_exprs = 1;
+    let num_params = 2;
+
+    let mut y = vec![1.0];
+    let mut ydot = vec![0.0; num_exprs];
+    let mut params = vec![0.1, 0.2];
+
+    let expr_strings = [
+        CString::new("p1 * y1 * (1 - y1 / p2)").unwrap()
+    ];
+    let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
+
+    c.bench_function("logistic_model", |b| {
+        b.iter(|| unsafe {
+            eval_f_exprs(
+                0.0,
+                y.as_mut_ptr(),
+                ydot.as_mut_ptr(),
+                params.as_mut_ptr(),
+                num_params,
+                expr_ptrs.as_ptr(),
+                num_exprs,
+            )
+        });
+    });
+}
+
+fn alpha_pinene_bench_eval(c: &mut Criterion) {
+    let num_exprs = 5;
+    let num_params = 5;
+
+    let mut y = vec![1.0, 1.0, 1.0, 1.0, 1.0];
+    let mut ydot = vec![0.0; num_exprs];
+    let mut params = vec![0.1, 0.2, 0.2, 0.2, 0.2];
+
+    let expr_strings = [
+        CString::new("-(p1 + p2) * y1").unwrap(),
+        CString::new("p1 * y1").unwrap(),
+        CString::new("p2 * y1 - (p3 + p4) * y3 + p5 * y5").unwrap(),
+        CString::new("p3 * y3").unwrap(),
+        CString::new("p4 * y3 - p5 * y5").unwrap(),
+    ];
+    let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
+
+    c.bench_function("logistic_model", |b| {
+        b.iter(|| unsafe {
+            eval_f_exprs(
+                0.0,
+                y.as_mut_ptr(),
+                ydot.as_mut_ptr(),
+                params.as_mut_ptr(),
+                num_params,
+                expr_ptrs.as_ptr(),
+                num_exprs,
+            )
+        });
+    });
+}
+
+criterion_group!(benches, lotka_volterra_bench_eval, logistic_model_bench_eval, alpha_pinene_bench_eval);
 criterion_main!(benches);
