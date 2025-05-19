@@ -9,6 +9,13 @@ meval = { version = "0.2.0" }
 [dev-dependencies]
 criterion = { version = "0.5.1" }
 
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+
 [[bench]]
 name = "eval_f_exprs_bench"
 harness = false
