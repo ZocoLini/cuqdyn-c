@@ -17,9 +17,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y \
-              libhdf5-dev \
-              libgsl-dev
 
       - name: Make test.sh executable
         run: |

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-8</rtol>
+        <atol>1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="1" p_count="2">
+        p1 * y1 * (1 - y1 / p2)
+    </ode_expr>
+</cuqdyn-config>
