@@ -11,6 +11,7 @@
 
 void test_lotka_volterra();
 void test_alpha_pienene();
+void test_logistic_model();
 
 int main(void)
 {
@@ -18,7 +19,10 @@ int main(void)
     printf("\tTest 1 (Lotka-Volterra α = γ = 0.5, β = δ = 0.02 and y(0) = (10, 5)) passed\n");
 
     test_alpha_pienene();
-    printf("\tTest 2 (Alpha pinene) passed");
+    printf("\tTest 2 (Alpha pinene) passed\n");
+
+    test_logistic_model();
+    printf("\tTest 3 (Logistic model) passed\n");
 
     return 0;
 }
@@ -97,10 +101,10 @@ void test_alpha_pienene()
 
     N_Vector initial_values = N_VNew_Serial(5, get_sun_context());
     NV_Ith_S(initial_values, 0) = 100;
-    NV_Ith_S(initial_values, 1) = 0.0001;
-    NV_Ith_S(initial_values, 2) = 0.0001;
-    NV_Ith_S(initial_values, 3) = 0.0001;
-    NV_Ith_S(initial_values, 4) = 0.0001;
+    NV_Ith_S(initial_values, 1) = 0;
+    NV_Ith_S(initial_values, 2) = 0;
+    NV_Ith_S(initial_values, 3) = 0;
+    NV_Ith_S(initial_values, 4) = 0;
 
     const realtype t0 = 0.0;
 
@@ -120,6 +124,54 @@ void test_alpha_pienene()
     assert(fabs(SM_ELEMENT_D(result, 0, 3) - 0) < 0.001);
     assert(fabs(SM_ELEMENT_D(result, 6, 1) - 2.510e+01) < 2);
     assert(fabs(SM_ELEMENT_D(result, 6, 2) - 4.814e+01) < 2);
+
+    destroy_cuqdyn_conf();
+    SUNMatDestroy(result);
+    N_VDestroy(parameters);
+    destroy_ode_model(ode_model);
+}
+
+void test_logistic_model()
+{
+    init_cuqdyn_conf_from_file("data/logistic_model_cuqdyn_config.xml");
+
+    N_Vector times = N_VNew_Serial(11, get_sun_context());
+    NV_Ith_S(times, 0) = 0;
+    NV_Ith_S(times, 1) = 10;
+    NV_Ith_S(times, 2) = 20;
+    NV_Ith_S(times, 3) = 20;
+    NV_Ith_S(times, 4) = 40;
+    NV_Ith_S(times, 5) = 50;
+    NV_Ith_S(times, 6) = 60;
+    NV_Ith_S(times, 7) = 70;
+    NV_Ith_S(times, 8) = 80;
+    NV_Ith_S(times, 9) = 90;
+    NV_Ith_S(times, 10) = 100;
+
+    N_Vector parameters = N_VNew_Serial(2, get_sun_context());
+    NV_Ith_S(parameters, 0) = 0.1;
+    NV_Ith_S(parameters, 1) = 100;
+
+    N_Vector initial_values = N_VNew_Serial(1, get_sun_context());
+    NV_Ith_S(initial_values, 0) = 10;
+
+    const realtype t0 = 0.0;
+
+    const ODEModel ode_model = create_ode_model(1, initial_values, t0, times);
+    DlsMat result = solve_ode(parameters, ode_model);
+
+    assert(result != NULL);
+
+    const int rows = SM_ROWS_D(result);
+    const int cols = SM_COLUMNS_D(result);
+
+    assert(cols == 2);
+    assert(rows == 11);
+
+    assert(fabs(SM_ELEMENT_D(result, 0, 0) - 0.0) < 0.0001);
+    assert(fabs(SM_ELEMENT_D(result, 0, 1) - 10) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 5, 1) - 9.428e+01) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 6, 1) - 9.782e+01) < 0.01);
 
     destroy_cuqdyn_conf();
     SUNMatDestroy(result);

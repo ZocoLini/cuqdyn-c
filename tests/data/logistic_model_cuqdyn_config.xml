@@ -2,8 +2,8 @@
 
 <cuqdyn-config>
     <tolerances>
-        <rtol>1e-8</rtol>
-        <atol>1e-8</atol>
+        <rtol>1e-12</rtol>
+        <atol>1e-12</atol>
     </tolerances>
     <ode_expr y_count="1" p_count="2">
         p1 * y1 * (1 - y1 / p2)
