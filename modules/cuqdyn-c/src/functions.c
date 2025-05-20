@@ -55,7 +55,7 @@ void *ode_model_obj_func(double *x, void *data)
 
     const realtype t0 = NV_Ith_S(texp, 0);
 
-    const ODEModel ode_model = create_ode_model(conf->ode_expr.y_count, initial_values, t0, texp);
+    const ODEModel ode_model = create_ode_model(initial_values, t0, texp);
 
     DlsMat result = solve_ode(parameters, ode_model);
 

@@ -46,7 +46,7 @@ with example config and data files like this:
 
 ```bash
 mkdir output
-./build-{variant}/cli solve \
+./build-{variant}/modules/cli/cli solve \
     -c example-files/lotka_volterra_cuqdyn_config.xml \
     -s example-files/lotka_volterra_ess_{variant}_config.xml \
     -d example-files/lotka_volterra_paper_data.txt \
@@ -54,7 +54,7 @@ mkdir output
 ```
 ```bash
 mkdir output
-./build-{variant}/cli solve \
+./build-{variant}/modules/cli/cli solve \
     -c example-files/alpha_pinene_cuqdyn_config.xml \
     -s example-files/alpha_pinene_ess_{variant}_config.xml \
     -d example-files/alpha_pinene_paper_data.txt \
@@ -62,7 +62,7 @@ mkdir output
 ```
 ```bash
 mkdir output
-./build-{variant}/cli solve \
+./build-{variant}/modules/cli/cli solve \
     -c example-files/logistic_model_cuqdyn_config.xml \
     -s example-files/logistic_model_ess_{variant}_config.xml \
     -d example-files/logistic_model_paper_data.txt \

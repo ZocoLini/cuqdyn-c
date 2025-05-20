@@ -56,7 +56,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     const long m = SM_ROWS_D(observed_data);
     const long n = SM_COLUMNS_D(observed_data);
 
-    const ODEModel ode_model = create_ode_model(2, initial_values, t0, times);
+    const ODEModel ode_model = create_ode_model(initial_values, t0, times);
 
     DlsMat resid_loo = NULL;
     MatrixArray media_matrix = create_matrix_array(m - 1);

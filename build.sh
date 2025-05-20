@@ -39,7 +39,6 @@ for variant in "${variants[@]}"; do
     (
       cd "build-$variant" || exit 1
       make -j "$(nproc)"
-      cp modules/cli/cli cli
     ) &
   fi
 done

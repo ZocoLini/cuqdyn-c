@@ -54,7 +54,7 @@ void test_lotka_volterra()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(2, initial_values, t0, times);
+    const ODEModel ode_model = create_ode_model(initial_values, t0, times);
     DlsMat result = solve_ode(parameters, ode_model);
 
     assert(result != NULL);
@@ -108,7 +108,7 @@ void test_alpha_pienene()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(5, initial_values, t0, times);
+    const ODEModel ode_model = create_ode_model(initial_values, t0, times);
     DlsMat result = solve_ode(parameters, ode_model);
 
     assert(result != NULL);
@@ -157,7 +157,7 @@ void test_logistic_model()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(1, initial_values, t0, times);
+    const ODEModel ode_model = create_ode_model(initial_values, t0, times);
     DlsMat result = solve_ode(parameters, ode_model);
 
     assert(result != NULL);

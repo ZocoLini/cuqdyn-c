@@ -6,13 +6,12 @@
 
 typedef struct
 {
-    int number_eq;
     N_Vector initial_values;
     realtype t0;
     N_Vector times;
 } ODEModel;
 
-ODEModel create_ode_model(int number_eq, N_Vector initial_values, realtype t0, N_Vector times);
+ODEModel create_ode_model(N_Vector initial_values, realtype t0, N_Vector times);
 void destroy_ode_model(ODEModel);
 
 /*
