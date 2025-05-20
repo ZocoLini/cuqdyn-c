@@ -27,7 +27,7 @@ void test_even_vec()
 
     realtype medians[5] = {4, 3.5, 4, 5.5, 5};
 
-    DlsMat matrix = SUNDenseMatrix(4, 5, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(4, 5);
 
     for (int j = 0; j < 5; ++j)
     {
@@ -60,7 +60,7 @@ void test_odd_vec()
 
     realtype medians[5] = {5, 4, 2, 6, 2};
 
-    DlsMat matrix = SUNDenseMatrix(3, 5, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(3, 5);
 
     for (int j = 0; j < 5; ++j)
     {

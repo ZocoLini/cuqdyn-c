@@ -43,14 +43,14 @@ void *ode_model_obj_func(double *x, void *data)
     experiment_total *exptotal = data;
     output_function *res = calloc(1, sizeof(output_function));
 
-    N_Vector parameters = N_VNew_Serial(conf->ode_expr.p_count, get_sun_context());
+    N_Vector parameters = N_VNew_Serial(conf->ode_expr.p_count);
     memcpy(NV_DATA_S(parameters), x, NV_LENGTH_S(parameters) * sizeof(realtype));
 
-    N_Vector initial_values = N_VNew_Serial(NV_LENGTH_S(exptotal->initial_values), get_sun_context());
+    N_Vector initial_values = N_VNew_Serial(NV_LENGTH_S(exptotal->initial_values));
     memcpy(NV_DATA_S(initial_values), NV_DATA_S(exptotal->initial_values),
            NV_LENGTH_S(exptotal->initial_values) * sizeof(realtype));
 
-    N_Vector texp = N_VNew_Serial(NV_LENGTH_S(exptotal->texp), get_sun_context());
+    N_Vector texp = N_VNew_Serial(NV_LENGTH_S(exptotal->texp));
     memcpy(NV_DATA_S(texp), NV_DATA_S(exptotal->texp), NV_LENGTH_S(exptotal->texp) * sizeof(realtype));
 
     const realtype t0 = NV_Ith_S(texp, 0);

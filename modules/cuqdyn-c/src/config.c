@@ -107,7 +107,7 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
                     }
                     free(tmp1);
 
-                    atol = N_VNew_Serial(count, get_sun_context());
+                    atol = N_VNew_Serial(count);
                     if (!atol)
                     {
                         fprintf(stderr, "Error: failed to allocate atol N_Vector\n");

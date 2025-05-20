@@ -31,7 +31,7 @@ void test_lotka_volterra()
 {
     init_cuqdyn_conf_from_file("data/lotka_volterra_cuqdyn_config.xml");
 
-    N_Vector times = N_VNew_Serial(9, get_sun_context());
+    N_Vector times = N_VNew_Serial(9);
     NV_Ith_S(times, 0) = 1.0;
     NV_Ith_S(times, 1) = 1.5;
     NV_Ith_S(times, 2) = 2.0;
@@ -42,13 +42,13 @@ void test_lotka_volterra()
     NV_Ith_S(times, 7) = 4.5;
     NV_Ith_S(times, 8) = 5.0;
 
-    N_Vector parameters = N_VNew_Serial(4, get_sun_context());
+    N_Vector parameters = N_VNew_Serial(4);
     NV_Ith_S(parameters, 0) = 0.5;
     NV_Ith_S(parameters, 1) = 0.02;
     NV_Ith_S(parameters, 2) = 0.5;
     NV_Ith_S(parameters, 3) = 0.02;
 
-    N_Vector initial_values = N_VNew_Serial(2, get_sun_context());
+    N_Vector initial_values = N_VNew_Serial(2);
     NV_Ith_S(initial_values, 0) = 10;
     NV_Ith_S(initial_values, 1) = 5;
 
@@ -81,7 +81,7 @@ void test_alpha_pienene()
 {
     init_cuqdyn_conf_from_file("data/alpha_pinene_cuqdyn_config.xml");
 
-    N_Vector times = N_VNew_Serial(9, get_sun_context());
+    N_Vector times = N_VNew_Serial(9);
     NV_Ith_S(times, 0) = 0;
     NV_Ith_S(times, 1) = 1230;
     NV_Ith_S(times, 2) = 3060;
@@ -92,14 +92,14 @@ void test_alpha_pienene()
     NV_Ith_S(times, 7) = 22620;
     NV_Ith_S(times, 8) = 36420;
 
-    N_Vector parameters = N_VNew_Serial(5, get_sun_context());
+    N_Vector parameters = N_VNew_Serial(5);
     NV_Ith_S(parameters, 0) = 5.93e-5;
     NV_Ith_S(parameters, 1) = 2.96e-5;
     NV_Ith_S(parameters, 2) = 2.05e-5;
     NV_Ith_S(parameters, 3) = 2.75e-5;
     NV_Ith_S(parameters, 4) = 4.00e-5;
 
-    N_Vector initial_values = N_VNew_Serial(5, get_sun_context());
+    N_Vector initial_values = N_VNew_Serial(5);
     NV_Ith_S(initial_values, 0) = 100;
     NV_Ith_S(initial_values, 1) = 0;
     NV_Ith_S(initial_values, 2) = 0;
@@ -135,7 +135,7 @@ void test_logistic_model()
 {
     init_cuqdyn_conf_from_file("data/logistic_model_cuqdyn_config.xml");
 
-    N_Vector times = N_VNew_Serial(11, get_sun_context());
+    N_Vector times = N_VNew_Serial(11);
     NV_Ith_S(times, 0) = 0;
     NV_Ith_S(times, 1) = 10;
     NV_Ith_S(times, 2) = 20;
@@ -148,11 +148,11 @@ void test_logistic_model()
     NV_Ith_S(times, 9) = 90;
     NV_Ith_S(times, 10) = 100;
 
-    N_Vector parameters = N_VNew_Serial(2, get_sun_context());
+    N_Vector parameters = N_VNew_Serial(2);
     NV_Ith_S(parameters, 0) = 0.1;
     NV_Ith_S(parameters, 1) = 100;
 
-    N_Vector initial_values = N_VNew_Serial(1, get_sun_context());
+    N_Vector initial_values = N_VNew_Serial(1);
     NV_Ith_S(initial_values, 0) = 10;
 
     const realtype t0 = 0.0;

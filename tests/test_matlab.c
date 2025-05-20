@@ -55,7 +55,7 @@ int main(void)
 
 void test_copy_vector_remove_indices()
 {
-    N_Vector vector = N_VNew_Serial(5, get_sun_context());
+    N_Vector vector = N_VNew_Serial(5);
 
     realtype *data = N_VGetArrayPointer(vector);
     for (int i = 0; i < 5; ++i)
@@ -79,7 +79,7 @@ void test_copy_vector_remove_indices()
 
 void test_copy_matrix_remove_rows()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(3, 3);
 
     realtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 9; ++i)
@@ -102,7 +102,7 @@ void test_copy_matrix_remove_rows()
 
 void test_copy_matrix_remove_cols()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 5, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(3, 5);
 
     realtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 15; ++i)
@@ -133,7 +133,7 @@ void test_copy_matrix_remove_cols()
 
 void test_copy_matrix_remove_rows_and_cols()
 {
-    DlsMat matrix = SUNDenseMatrix(4, 3, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(4, 3);
 
     realtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 12; ++i)
@@ -155,13 +155,13 @@ void test_copy_matrix_remove_rows_and_cols()
 
 void test_set_matrix_row()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
     }
 
-    N_Vector vector = N_VNew_Serial(3, get_sun_context());
+    N_Vector vector = N_VNew_Serial(3);
     for (int i = 0; i < 3; ++i)
     {
         NV_Ith_S(vector, i) = 0;
@@ -184,13 +184,13 @@ void test_set_matrix_row()
 
 void test_set_matrix_column()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
     }
 
-    N_Vector vector = N_VNew_Serial(3, get_sun_context());
+    N_Vector vector = N_VNew_Serial(3);
     for (int i = 0; i < 3; ++i)
     {
         NV_Ith_S(vector, i) = i + 1;
@@ -216,7 +216,7 @@ void test_set_matrix_column()
 
 void test_copy_matrix_row()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
@@ -238,7 +238,7 @@ void test_copy_matrix_row()
 
 void test_copy_matrix_column()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3, get_sun_context());
+    DlsMat matrix = SUNDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
@@ -258,7 +258,7 @@ void test_copy_matrix_column()
 
 void test_quantile()
 {
-    N_Vector values = N_VNew_Serial(7, get_sun_context());
+    N_Vector values = N_VNew_Serial(7);
     NV_Ith_S(values, 0) = 0.5377;
     NV_Ith_S(values, 1) = 1.8339;
     NV_Ith_S(values, 2) = -2.2588;

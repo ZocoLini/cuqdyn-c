@@ -37,7 +37,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     retval = CVodeInit(cvode_mem, ode_model_fun, ode_model.t0, ode_model.initial_values);
     if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
 
-    N_Vector cloned_abs_tol = N_VNew_Serial(ode_model.number_eq, get_sun_context());
+    N_Vector cloned_abs_tol = N_VNew_Serial(ode_model.number_eq);
     memcpy(NV_DATA_S(cloned_abs_tol), NV_DATA_S(tolerances.atol), ode_model.number_eq * sizeof(realtype));
 
     // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
@@ -56,9 +56,9 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
 
     int retvalr;
 
-    N_Vector yout = N_VNew_Serial(NV_LENGTH_S(ode_model.initial_values), get_sun_context());
+    N_Vector yout = N_VNew_Serial(NV_LENGTH_S(ode_model.initial_values));
     int result_cols = ode_model.number_eq + 1; // We add the time col
-    DlsMat result = SUNDenseMatrix(NV_LENGTH_S(times), result_cols, get_sun_context());
+    DlsMat result = SUNDenseMatrix(NV_LENGTH_S(times), result_cols);
 
     for (int i = 0; i < NV_LENGTH_S(times); ++i)
     {

@@ -27,10 +27,10 @@ void test_even_matrices()
 
     realtype medians[12] = {1.5, 5, 5.5, 6, 6, 7, 5, 2, 9, 7, 7, 8};
 
-    DlsMat matrix1 = SUNDenseMatrix(3, 4, get_sun_context());
-    DlsMat matrix2 = SUNDenseMatrix(3, 4, get_sun_context());
-    DlsMat matrix3 = SUNDenseMatrix(3, 4, get_sun_context());
-    DlsMat matrix4 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix1 = SUNDenseMatrix(3, 4);
+    DlsMat matrix2 = SUNDenseMatrix(3, 4);
+    DlsMat matrix3 = SUNDenseMatrix(3, 4);
+    DlsMat matrix4 = SUNDenseMatrix(3, 4);
 
     for (int i = 0; i < 12; ++i)
     {
@@ -70,9 +70,9 @@ void test_odd_matrices()
 
     realtype medians[12] = {2, 6, 6, 6, 4, 7, 7, 2, 9, 5, 5, 7};
 
-    DlsMat matrix1 = SUNDenseMatrix(3, 4, get_sun_context());
-    DlsMat matrix2 = SUNDenseMatrix(3, 4, get_sun_context());
-    DlsMat matrix3 = SUNDenseMatrix(3, 4, get_sun_context());
+    DlsMat matrix1 = SUNDenseMatrix(3, 4);
+    DlsMat matrix2 = SUNDenseMatrix(3, 4);
+    DlsMat matrix3 = SUNDenseMatrix(3, 4);
 
     for (int i = 0; i < 12; ++i)
     {

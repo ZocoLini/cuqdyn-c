@@ -77,10 +77,7 @@ void test_lotka_volterra_mat()
         assert(i == NV_Ith_S(t, i));
     }
 
-    // TODO: The data contained in the file doesn't match the paper values.
-    //  Ask about hardcode the real values contained as they are contained in the LPB and UPB
-    //  described in the paper.
-    for (int i = 0; i < N_VGetLength_Serial(t); i++)
+    for (int i = 0; i < NV_LENGTH_S(t); i++)
     {
         for (int j = 0; j < SM_COLUMNS_D(y); j++)
         {

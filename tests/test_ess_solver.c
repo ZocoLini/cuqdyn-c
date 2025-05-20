@@ -50,13 +50,13 @@ void lotka_volterra_ess(char *conf_file)
 
     realtype expected_values[4] = {0.5, 0.02, 0.5, 0.02};
 
-    N_Vector texp = N_VNew_Serial(32, get_sun_context());
+    N_Vector texp = N_VNew_Serial(32);
     for (int i = 0; i < NV_LENGTH_S(texp); ++i)
     {
         NV_Ith_S(texp, i) = i;
     }
 
-    DlsMat yexp = SUNDenseMatrix(30, 2, get_sun_context());
+    DlsMat yexp = SUNDenseMatrix(30, 2);
 
     realtype yexp_data[30][2] = {
             {16.4161, 2.14078}, {26.9327, 6.95752}, {36.199, 3.05692},  {53.5232, 8.01177}, {75.279, 12.5015},
@@ -66,7 +66,7 @@ void lotka_volterra_ess(char *conf_file)
             {83.3479, 37.7167}, {45.6403, 78.4525}, {10.0775, 80.2856}, {6.10055, 57.703},  {6.33843, 39.9109},
             {5.36425, 22.9151}, {2.84835, 15.7364}, {9.82992, 12.7098}, {8.26545, 2.91747}, {7.38187, 6.32052}};
 
-    N_Vector initial_values = N_VNew_Serial(2, get_sun_context());
+    N_Vector initial_values = N_VNew_Serial(2);
     NV_Ith_S(initial_values, 0) = 10;
     NV_Ith_S(initial_values, 1) = 5;
 
@@ -98,7 +98,7 @@ void alpha_pinene_ess(char *conf_file)
 
     realtype expected_values[5] = {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5};
 
-    N_Vector texp = N_VNew_Serial(9, get_sun_context());
+    N_Vector texp = N_VNew_Serial(9);
     NV_Ith_S(texp, 0) = 0;
     NV_Ith_S(texp, 1) = 1230;
     NV_Ith_S(texp, 2) = 3060;
@@ -109,7 +109,7 @@ void alpha_pinene_ess(char *conf_file)
     NV_Ith_S(texp, 7) = 22620;
     NV_Ith_S(texp, 8) = 36420;
 
-    DlsMat yexp = SUNDenseMatrix(9, 5, get_sun_context());
+    DlsMat yexp = SUNDenseMatrix(9, 5);
 
     realtype yexp_data[9][5] = {{1.409e-01, 3.034e-02, 1.409e-01, 3.034e-02, 3.252e-02},
                                 {3.441e+00, 6.992e-02, 3.441e+00, 6.992e-02, 4.046e-01},
@@ -121,7 +121,7 @@ void alpha_pinene_ess(char *conf_file)
                                 {5.169e+00, 1.443e+00, 5.169e+00, 1.443e+00, 2.250e+01},
                                 {4.175e+00, 4.301e+00, 4.175e+00, 4.301e+00, 2.232e+01}};
 
-    N_Vector initial_values = N_VNew_Serial(5, get_sun_context());
+    N_Vector initial_values = N_VNew_Serial(5);
     NV_Ith_S(initial_values, 0) = 100;
     NV_Ith_S(initial_values, 1) = 0.0001;
     NV_Ith_S(initial_values, 2) = 0.0001;
@@ -156,7 +156,7 @@ void logistic_model_ess(char *conf_file)
 
     realtype expected_values[2] = {0.1, 100};
 
-    N_Vector texp = N_VNew_Serial(11, get_sun_context());
+    N_Vector texp = N_VNew_Serial(11);
     NV_Ith_S(texp, 0) = 0;
     NV_Ith_S(texp, 1) = 10;
     NV_Ith_S(texp, 2) = 20;
@@ -169,12 +169,12 @@ void logistic_model_ess(char *conf_file)
     NV_Ith_S(texp, 9) = 90;
     NV_Ith_S(texp, 10) = 100;
 
-    DlsMat yexp = SUNDenseMatrix(11, 1, get_sun_context());
+    DlsMat yexp = SUNDenseMatrix(11, 1);
 
     realtype yexp_data[11][1] = {{1.000e+01}, {2.226e+01}, {6.066e+01}, {7.327e+01}, {9.123e+01}, {8.895e+01},
                                  {9.703e+01}, {1.004e+02}, {1.174e+02}, {1.135e+02}, {9.390e+01}};
 
-    N_Vector initial_values = N_VNew_Serial(1, get_sun_context());
+    N_Vector initial_values = N_VNew_Serial(1);
     NV_Ith_S(initial_values, 0) = 10;
 
     for (int i = 0; i < 11; ++i)

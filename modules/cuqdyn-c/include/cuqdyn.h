@@ -7,13 +7,10 @@
 
 #define SM_ROWS_D(mat) mat->M
 #define SM_COLUMNS_D(mat) mat->N
-#define SUNDenseMatrix(m, n, ctx) NewDenseMat(m, n)
+#define SUNDenseMatrix(m, n) NewDenseMat(m, n)
 #define SM_ELEMENT_D(mat, i, j) DENSE_ELEM(mat, i, j)
-#define N_VNew_Serial(n, ctx) N_VNew_Serial(n)
 #define SM_DATA_D(mat) mat->data
 #define SUNMatDestroy(mat) DestroyMat(mat)
-#define SUN_RCONST(n) n
-#define N_VGetLength_Serial(v) NV_LENGTH_S(v)
 
 #define MIth(v, i) NV_Ith_S(v, i - 1) /* i-th vector component i=1..n */
 #define MIJth(A, i, j) SM_ELEMENT_D(A, i - 1, j - 1) /* (i,j)-th matrix component i,j=1..n */

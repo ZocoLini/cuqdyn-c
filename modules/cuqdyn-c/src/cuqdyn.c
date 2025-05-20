@@ -64,7 +64,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
 
     if (rank == 0)
     {
-        resid_loo = SUNDenseMatrix(m, n, get_sun_context());
+        resid_loo = SUNDenseMatrix(m, n);
     }
 
     {
@@ -72,13 +72,13 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
         LongArray indices_to_remove = create_array((long[]) {}, 0);
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove); // Freed after executing the ess solver
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove); // Freed after executing the ess solver
-        N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context()); // Freed after executing the ess solver
+        N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values)); // Freed after executing the ess solver
         memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
 
         // Needs to be executed for each process bcs it waits everybody just for printing I guess
         N_Vector init_pred_params =
                 execute_ess_solver(sacess_conf_file, output_file, texp, yexp, init_vals, rank, nproc);
-        predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params), get_sun_context());
+        predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params));
         N_VDestroy(init_pred_params);
     }
 
@@ -120,7 +120,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     long start_index = 1;
 #endif
 
-    N_Vector residuals = N_VNew_Serial(n, get_sun_context());
+    N_Vector residuals = N_VNew_Serial(n);
     const long end_index = iterations + start_index;
 
     for (long i = start_index; i < end_index; ++i)
@@ -130,8 +130,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
-        N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values), get_sun_context());
-        memcpy(N_VGetArrayPointer(init_vals), N_VGetArrayPointer(initial_values),
+        N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values));
+        memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values),
                NV_LENGTH_S(initial_values) * sizeof(realtype));
 
         N_Vector predicted_params =
@@ -216,8 +216,8 @@ N_VDestroy(residuals);
 
     double alp = 0.05;
 
-    DlsMat q_low = SUNDenseMatrix(m, n, get_sun_context());
-    DlsMat q_up = SUNDenseMatrix(m, n, get_sun_context());
+    DlsMat q_low = SUNDenseMatrix(m, n);
+    DlsMat q_up = SUNDenseMatrix(m, n);
 
     for (int i = 0; i < n; ++i)
     {
@@ -230,8 +230,8 @@ N_VDestroy(residuals);
 
     for (int i = 0; i < m - 1; ++i)
     {
-        matrix_array_set_index(m_low, i, SUNDenseMatrix(m, n, get_sun_context()));
-        matrix_array_set_index(m_up, i, SUNDenseMatrix(m, n, get_sun_context()));
+        matrix_array_set_index(m_low, i, SUNDenseMatrix(m, n));
+        matrix_array_set_index(m_up, i, SUNDenseMatrix(m, n));
     }
 
     for (int j = 0; j < n; ++j)
@@ -343,7 +343,7 @@ void matrix_array_set_index(MatrixArray array, long i, DlsMat matrix)
         return;
     }
 
-    array.data[i] = SUNDenseMatrix(rows, cols, get_sun_context());
+    array.data[i] = SUNDenseMatrix(rows, cols);
 
     memcpy(SM_DATA_D(array.data[i]), SM_DATA_D(matrix), rows * cols * sizeof(realtype));
 }
@@ -368,7 +368,7 @@ DlsMat matrix_array_get_median(MatrixArray matrix_array)
 
     long max_z = matrix_array.len;
 
-    DlsMat medians_matrix = SUNDenseMatrix(rows, cols, get_sun_context());
+    DlsMat medians_matrix = SUNDenseMatrix(rows, cols);
     realtype *medians = medians_matrix->data;
 
     realtype values[max_z];
@@ -396,7 +396,7 @@ DlsMat matrix_array_get_median(MatrixArray matrix_array)
 
 N_Vector matrix_array_depth_vector_at(MatrixArray array, long i, long j)
 {
-    N_Vector vec = N_VNew_Serial(array.len, get_sun_context());
+    N_Vector vec = N_VNew_Serial(array.len);
 
     for (int k = 0; k < array.len; ++k)
     {
@@ -411,7 +411,7 @@ N_Vector get_matrix_cols_median(DlsMat matrix)
     long rows = SM_ROWS_D(matrix);
     long cols = SM_COLUMNS_D(matrix);
 
-    N_Vector medians_vector = N_VNew_Serial(cols, get_sun_context());
+    N_Vector medians_vector = N_VNew_Serial(cols);
     realtype *medians = NV_DATA_S(medians_vector);
 
     realtype copied_col[rows];

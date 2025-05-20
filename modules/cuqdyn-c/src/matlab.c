@@ -8,9 +8,9 @@
 N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 {
     realtype *original_data = N_VGetArrayPointer(original);
-    long N = N_VGetLength_Serial(original);
+    long N = NV_LENGTH_S(original);
 
-    N_Vector new_vector = N_VNew_Serial(N - indices.len, get_sun_context());
+    N_Vector new_vector = N_VNew_Serial(N - indices.len);
 
     realtype *new_data = N_VGetArrayPointer(new_vector);
 
@@ -37,7 +37,7 @@ DlsMat copy_matrix_remove_rows_and_columns(DlsMat matrix, LongArray row_indices,
     const long rows = SM_ROWS_D(matrix);
     const long cols = SM_COLUMNS_D(matrix);
 
-    DlsMat copy = SUNDenseMatrix(rows - row_indices.len, cols - col_indices.len, get_sun_context());
+    DlsMat copy = SUNDenseMatrix(rows - row_indices.len, cols - col_indices.len);
 
     realtype *original_data = SM_DATA_D(matrix);
     realtype *copy_data = SM_DATA_D(copy);
@@ -116,7 +116,7 @@ void set_matrix_column(DlsMat matrix, N_Vector vec, const long col_index, const 
 
 N_Vector copy_matrix_row(DlsMat matrix, long row_index, long start, long end)
 {
-    N_Vector vec = N_VNew_Serial(end - start, get_sun_context());
+    N_Vector vec = N_VNew_Serial(end - start);
 
     for (long i = start; i < end; ++i)
     {
@@ -128,7 +128,7 @@ N_Vector copy_matrix_row(DlsMat matrix, long row_index, long start, long end)
 
 N_Vector copy_matrix_column(DlsMat matrix, long col_index, long start, long end)
 {
-    N_Vector vec = N_VNew_Serial(end - start, get_sun_context());
+    N_Vector vec = N_VNew_Serial(end - start);
 
     for (long i = start; i < end; ++i)
     {
@@ -148,7 +148,7 @@ DlsMat sum_two_matrices(DlsMat a, DlsMat b)
         return NULL;
     }
 
-    DlsMat result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a), get_sun_context());
+    DlsMat result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a));
 
     for (long i = 0; i < rows * cols; i++)
     {
@@ -168,7 +168,7 @@ DlsMat subtract_two_matrices(DlsMat a, DlsMat b)
         return NULL;
     }
 
-    DlsMat result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a), get_sun_context());
+    DlsMat result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a));
 
     for (long i = 0; i < rows * cols; i++)
     {

@@ -44,10 +44,10 @@ int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
     fscanf(f, "%ld", &rows);
     fscanf(f, "%ld", &cols);
 
-    *t = N_VNew_Serial(rows, get_sun_context());
+    *t = N_VNew_Serial(rows);
     realtype *data_t = N_VGetArrayPointer(*t);
 
-    *y = SUNDenseMatrix(rows, cols - 1, get_sun_context());
+    *y = SUNDenseMatrix(rows, cols - 1);
     realtype *data_y = (*y)->data;
 
     double tmp;
@@ -106,13 +106,10 @@ int read_mat_data_file(const char *data_file, N_Vector *t, DlsMat *y)
     // The first column of the matrix is the time vector
     // The first row of the matrix are the initial values [t0 y10 y20 ...]
 
-    *t = N_VNew_Serial((long) rows, get_sun_context());
+    *t = N_VNew_Serial((long) rows);
     realtype *data_t = N_VGetArrayPointer(*t);
 
-    *y = SUNDenseMatrix(
-        (long) rows,
-        (long) cols - 1,
-        get_sun_context());
+    *y = SUNDenseMatrix((long) rows, (long) cols - 1);
     realtype *data_y = (*y)->data;
 
     const double *file_data = matvar->data;
