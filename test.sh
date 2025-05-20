@@ -65,6 +65,7 @@ fi
 variants=(
   "serial"
   "mpi"
+  "mpi2"
 )
 
 if [[ " ${variants[*]} " =~ " $1 " ]]; then

@@ -12,7 +12,7 @@
 
 #include "matlab.h"
 #include "ode_solver.h"
-#ifdef MPI2
+#ifdef MPI
 #include <mpi.h>
 #endif
 
@@ -82,11 +82,11 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
         N_VDestroy(init_pred_params);
     }
 
-#ifdef MPI2
+#ifdef MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-#ifdef MPI2
+#ifdef MPI
     long iterations;
     long start_index;
 
@@ -150,7 +150,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
             NV_Ith_S(residuals, j) = fabs(observed - predicted);
         }
 
-#ifdef MPI2
+#ifdef MPI
         long predicted_data_len = SM_COLUMNS_D(predicted_data) * SM_ROWS_D(predicted_data);
         if (rank != 0)
         {
@@ -171,7 +171,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
             set_matrix_row(resid_loo, residuals, i, 0, NV_LENGTH_S(residuals));
             matrix_array_set_index(media_matrix, i - 1, predicted_data);
             set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
-#ifdef MPI2
+#ifdef MPI
             // Receiving
             long slaved_index;
             for (int slave = 1; slave < nproc; ++slave)
@@ -199,7 +199,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
 
 N_VDestroy(residuals);
 
-#ifdef MPI2
+#ifdef MPI
     printf("%ld iterations of rank %d finalized\n", iterations, rank);
     MPI_Barrier(MPI_COMM_WORLD);
 #endif

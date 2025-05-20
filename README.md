@@ -81,12 +81,12 @@ inside the directory where the results are (output folder in this example).
 To get information about all the options the cli supports, you can run the following command:
 
 ```bash
-./build-{variant}/cli help
+./build-{variant}/modules/cli/cli help
 ```
 
 Also, you can run 
 ```bash
-./build-{variant}/cli version
+./build-{variant}/modules/cli/cli version
 ```
 to get the version of the cuqdyn-c lib and cli you are using.
 

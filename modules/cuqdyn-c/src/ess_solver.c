@@ -8,7 +8,7 @@
 #include "ess_solver.h"
 
 #include <../include/functions.h>
-#ifdef MPI2
+#ifdef MPI
 #include <mpi.h>
 #endif
 

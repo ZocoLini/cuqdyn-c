@@ -37,23 +37,32 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
     }
 #endif
     maxfunevals = (long) exp1->test.max_eval;
-    if (is_parallel(*exp1))
-    {
-        isparallel = 1;
-    }
-    else
-    {
-        isparallel = 0;
-    }
+    // OLD:
+    // if (is_parallel(*exp1))
+    // {
+    //     isparallel = 1;
+    // }
+    // else
+    // {
+    //     isparallel = 0;
+    // }
 
-    if (isparallel == 1)
-    {
-        error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
-    }
-    else
-    {
-        error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
-    }
+    // if (isparallel == 1)
+    // {
+    //     error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    // }
+    // else
+    // {
+    //     error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    // }
+
+    // NEW:
+#ifdef MPI2
+    error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    #else
+    error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+#endif
+
     return error;
 }
 

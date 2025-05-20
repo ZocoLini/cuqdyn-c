@@ -12,12 +12,14 @@ build-proyect() {
     (
       cd "build-$VARIANT" || exit 1
       cmake -DCMAKE_TOOLCHAIN_FILE=../"$VARIANT"_toolchain.cmake ..
+      make -j "$(nproc)"
     )
 }
 
 variants=(
   "serial"
   "mpi"
+  "mpi2"
 )
 
 if [ "$1" = "rebuild" ]; then
@@ -31,16 +33,5 @@ elif ! [ "$1" = "" ]; then
         exit 1
     else
         build-proyect "$1"
-        exit 0
     fi
 fi
-for variant in "${variants[@]}"; do
-  if [ -d "build-$variant/" ]; then
-    (
-      cd "build-$variant" || exit 1
-      make -j "$(nproc)"
-    ) &
-  fi
-done
-
-wait

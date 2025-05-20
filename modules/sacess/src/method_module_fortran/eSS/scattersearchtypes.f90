@@ -1,7 +1,7 @@
 MODULE scattersearchtypes
     USE iso_c_binding
 #ifdef MPI
-        USE MPI
+        ! OLD: USE MPI
 #endif
 
     INTEGER, PARAMETER :: PRECISION_D = 15

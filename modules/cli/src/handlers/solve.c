@@ -12,7 +12,7 @@
 #include "../../../cuqdyn-c/include/functions.h"
 #include "cuqdyn.h"
 
-#ifdef MPI2
+#ifdef MPI
 #include <mpi.h>
 #endif
 
@@ -84,7 +84,7 @@ int handle_solve(int argc, char *argv[])
         return 1;
     }
 
-#ifdef MPI2
+#ifdef MPI
     int err = MPI_Init(&argc, &argv);
 
     if (err != MPI_SUCCESS)
@@ -136,7 +136,7 @@ int handle_solve(int argc, char *argv[])
         destroy_cuqdyn_result(cuqdyn_result);
     }
 
-#ifdef MPI2
+#ifdef MPI
     MPI_Finalize();
 #endif
 

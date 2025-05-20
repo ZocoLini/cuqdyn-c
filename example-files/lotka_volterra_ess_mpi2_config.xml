@@ -2,7 +2,7 @@
     <run>
         <typebench>customized</typebench>
         <id>0</id>
-        <log_scale>5</log_scale>
+        <log_scale>4</log_scale>
         <output>0</output>
         <verbose>1</verbose>
         <local_search>1</local_search>
@@ -12,7 +12,7 @@
             <vtr>0</vtr>
         </stopping_criteria>
     </run>
-    <method name="ScatterSearch">
+    <method name="CeSS">
         <user_options>
             <weight>default</weight>
             <tolc>default</tolc>
@@ -26,7 +26,7 @@
             <n_stuck>default</n_stuck>
         </global_options>
         <local_options>
-            <solver>nl2sol.dn2fb</solver>
+            <solver>nl2sol.dn2gb</solver>
             <tol>0</tol>
             <evalmax>9e3</evalmax>
             <iterprint>0</iterprint>
@@ -47,19 +47,19 @@
     </parallelization>
 
     <problem>
-        <dim> 5 </dim>
+        <dim> 4 </dim>
         <neq> 0 </neq>
         <ineq> 0 </ineq>
         <int_var> 0 </int_var>
         <bin_var> 0 </bin_var>
         <lb>
-            0, 0, 0, 0, 0
+            0.001, 0.001, 0.001, 0.001
         </lb>
         <ub>
-            1, 1, 1, 1, 1
+            1.000, 1.000, 1.000, 1.000
         </ub>
         <initial_point>
-            1, 1, 1, 1, 1
+            0.3, 0.3, 0.3, 0.3
         </initial_point>
     </problem>
 
