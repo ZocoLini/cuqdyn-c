@@ -96,5 +96,6 @@ dev-container/
 output/
 .venv/
 fort.1
+perf_out.tmp
 ESTADO.md
 .cache/
