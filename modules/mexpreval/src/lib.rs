@@ -10,7 +10,7 @@ thread_local! {
 }
 
 #[allow(clippy::missing_safety_doc)]
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn eval_f_exprs(
     _t: f64,
     y: *mut f64,
