@@ -8,7 +8,7 @@ PROCS_LIST=(2 3 5 6 10 15 30)
 REPEATS=3
 
 # === OUTPUT ===
-mkdir -d "output/scalability"
+mkdir -p "output/scalability"
 OUT_FILE="output/scalability_results.csv"
 echo "Variant,Procs,Iteration,Metric,Value,Unit" > "$OUT_FILE"
 
@@ -20,7 +20,7 @@ for VARIANT in "${VARIANTS[@]}"; do
   if [[ "$VARIANT" == "serial" ]]; then
     echo "  Serial run (1 proc only)..."
     for (( R=1; R<="$REPEATS"; R++ )); do
-      mkdir -d "output/scalability/$VARIANT/$R"
+      mkdir -p "output/scalability/$VARIANT/$R"
       START_TIME=$(date +%s.%N)
 
       ./build-"$VARIANT"/modules/cli/cli solve \
@@ -38,7 +38,7 @@ for VARIANT in "${VARIANTS[@]}"; do
     for PROCS in "${PROCS_LIST[@]}"; do
       echo "  Running with $PROCS processes..."
       for (( R=1; R<="$REPEATS"; R++ )); do
-        mkdir -d "output/scalability/$VARIANT/$R"
+        mkdir -p "output/scalability/$VARIANT/$R"
         START_TIME=$(date +%s.%N)
 
         mpirun -np "$PROCS" ./build-"$VARIANT"/modules/cli/cli solve \
