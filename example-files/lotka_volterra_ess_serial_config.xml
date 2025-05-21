@@ -4,7 +4,7 @@
         <id>0</id>
         <log_scale>4</log_scale>
         <output>0</output>
-        <verbose>1</verbose>
+        <verbose>0</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
             <maxevaluation>9e3</maxevaluation>

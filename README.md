@@ -103,9 +103,13 @@ There are three types of input files needed to run the cli:
 
     <cuqdyn-config>
         <tolerances>
-            <rtol>1e-8</rtol> <!-- Just one number -->
-            <atol>1e-9, 1e-10</atol> <!-- as many as y(x) present in the EDO -->
-        </tolerances>
+            <rtol>1e-8</rtol>
+        <atol>1e-9, 1e-10</atol>
+            </tolerances>
+        <ode_expr y_count="2" p_count="4">
+            y1 * (p1 - p2 * y2)
+            -y2 * (p3 - p4 * y1)
+        </ode_expr>
     </cuqdyn-config>
     ```
   - **Data file:**

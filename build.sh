@@ -5,7 +5,7 @@ build-proyect() {
 
     if [ ! -d "build-$VARIANT/" ]; then
       mkdir "build-$VARIANT"
-    else
+    elif [ "$2" = "rebuild" ]; then
       rm -rf "build-${VARIANT}/*"
     fi
 
@@ -24,7 +24,7 @@ variants=(
 
 if [ "$1" = "rebuild" ]; then
     for variant in "${variants[@]}"; do
-      build-proyect "$variant" &
+      build-proyect "$variant" "rebuild" &
     done
     wait
 elif ! [ "$1" = "" ]; then
@@ -34,4 +34,9 @@ elif ! [ "$1" = "" ]; then
     else
         build-proyect "$1"
     fi
+else
+  for variant in "${variants[@]}"; do
+    build-proyect "$variant" &
+  done
+  wait
 fi

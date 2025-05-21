@@ -193,6 +193,11 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
         }
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
+        if (rank == 0)
+        {
+            fprintf(stdout, "Iteration %ld of %ld done\n", i - start_index + 1, end_index - start_index);
+        }
+
         N_VDestroy(predicted_params);
         SUNMatDestroy(predicted_data);
     }
