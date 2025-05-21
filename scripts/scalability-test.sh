@@ -20,6 +20,7 @@ for VARIANT in "${VARIANTS[@]}"; do
   if [[ "$VARIANT" == "serial" ]]; then
     echo "  Serial run (1 proc only)..."
     for (( R=1; R<="$REPEATS"; R++ )); do
+      mkdir -d "output/scalability/$VARIANT/$R"
       START_TIME=$(date +%s.%N)
 
       ./build-"$VARIANT"/modules/cli/cli solve \
@@ -37,7 +38,9 @@ for VARIANT in "${VARIANTS[@]}"; do
     for PROCS in "${PROCS_LIST[@]}"; do
       echo "  Running with $PROCS processes..."
       for (( R=1; R<="$REPEATS"; R++ )); do
+        mkdir -d "output/scalability/$VARIANT/$R"
         START_TIME=$(date +%s.%N)
+
         mpirun -np "$PROCS" ./build-"$VARIANT"/modules/cli/cli solve \
           -c example-files/lotka_volterra_cuqdyn_config.xml \
           -s example-files/lotka_volterra_ess_"$VARIANT"_config.xml \
