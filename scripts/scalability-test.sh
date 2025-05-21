@@ -6,7 +6,7 @@
 #SBATCH --exclusive -m cyclic:cyclic:fcyclic
 
 if [ -d "/home/cesga" ]; then
-    module load cesga/2020
+    module load gcc openmpi/4.1.1_ft3
 fi
 
 bash build.sh
