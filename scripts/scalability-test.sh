@@ -38,14 +38,14 @@ for VARIANT in "${VARIANTS[@]}"; do
     for PROCS in "${PROCS_LIST[@]}"; do
       echo "  Running with $PROCS processes..."
       for (( R=1; R<="$REPEATS"; R++ )); do
-        mkdir -p "output/scalability/$VARIANT/$R"
+        mkdir -p "output/scalability/$VARIANT/$PROCS/$R"
         START_TIME=$(date +%s.%N)
 
         mpirun -np "$PROCS" ./build-"$VARIANT"/modules/cli/cli solve \
           -c example-files/lotka_volterra_cuqdyn_config.xml \
           -s example-files/lotka_volterra_ess_"$VARIANT"_config.xml \
           -d example-files/lotka_volterra_paper_data.txt \
-          -o "output/scalability/$VARIANT/$R"
+          -o "output/scalability/$VARIANT/$PROCS/$R"
 
         END_TIME=$(date +%s.%N)
         ELAPSED_TIME=$(echo "$END_TIME - $START_TIME" | bc)
