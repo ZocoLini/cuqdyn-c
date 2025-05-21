@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#SBATCH --mem=12G
+#SBATCH -n 30
+#SBATCH --time=1:00:00
+#SBATCH --exclusive -m cyclic:cyclic:fcyclic
+
+if [ -d "/home/cesga" ]; then
+    module load cesga/2020
+fi
+
 bash build.sh
 
 # === CONFIGURATION ===
@@ -41,7 +50,7 @@ for VARIANT in "${VARIANTS[@]}"; do
         mkdir -p "output/scalability/$VARIANT/$PROCS/$R"
         START_TIME=$(date +%s.%N)
 
-        mpirun -np "$PROCS" ./build-"$VARIANT"/modules/cli/cli solve \
+        srun ./build-"$VARIANT"/modules/cli/cli solve \
           -c example-files/lotka_volterra_cuqdyn_config.xml \
           -s example-files/lotka_volterra_ess_"$VARIANT"_config.xml \
           -d example-files/lotka_volterra_paper_data.txt \
