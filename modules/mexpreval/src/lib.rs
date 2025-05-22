@@ -49,9 +49,7 @@ pub unsafe extern "C" fn eval_f_exprs(
             }
 
             for (i, ptr) in exprs.iter().enumerate() {
-                let index = exprs[0].offset_from(*ptr) as usize;
-
-                if exprs_cache.len() <= index {
+                if exprs_cache.len() <= i {
                     let c_str = CStr::from_ptr(*ptr);
                     let s = c_str.to_str().unwrap();
                     let expr = Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
@@ -59,7 +57,7 @@ pub unsafe extern "C" fn eval_f_exprs(
                     exprs_cache.push(expr);
                 }
 
-                let expr = &exprs_cache[index];
+                let expr = &exprs_cache[i];
 
                 ydot[i] = expr
                     .eval_with_context(&*ctx)
