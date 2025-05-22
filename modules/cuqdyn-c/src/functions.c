@@ -55,9 +55,7 @@ void *ode_model_obj_func(double *x, void *data)
 
     const realtype t0 = NV_Ith_S(texp, 0);
 
-    const ODEModel ode_model = create_ode_model(initial_values, t0, texp);
-
-    DlsMat result = solve_ode(parameters, ode_model);
+    DlsMat result = solve_ode(parameters, initial_values, t0, texp);
 
     // Objective function code:
     const int rows = SM_ROWS_D(result);
@@ -86,7 +84,6 @@ void *ode_model_obj_func(double *x, void *data)
     // res->size_r = (cols - 1) * rows;
 
     N_VDestroy(parameters);
-    destroy_ode_model(ode_model);
     SUNMatDestroy(result);
 
     return res;

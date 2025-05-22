@@ -54,8 +54,7 @@ void test_lotka_volterra()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(initial_values, t0, times);
-    DlsMat result = solve_ode(parameters, ode_model);
+    DlsMat result = solve_ode(parameters, initial_values, t0, times);
 
     assert(result != NULL);
 
@@ -74,7 +73,6 @@ void test_lotka_volterra()
     destroy_cuqdyn_conf();
     SUNMatDestroy(result);
     N_VDestroy(parameters);
-    destroy_ode_model(ode_model);
 }
 
 void test_alpha_pienene()
@@ -108,8 +106,7 @@ void test_alpha_pienene()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(initial_values, t0, times);
-    DlsMat result = solve_ode(parameters, ode_model);
+    DlsMat result = solve_ode(parameters, initial_values, t0, times);
 
     assert(result != NULL);
 
@@ -128,7 +125,6 @@ void test_alpha_pienene()
     destroy_cuqdyn_conf();
     SUNMatDestroy(result);
     N_VDestroy(parameters);
-    destroy_ode_model(ode_model);
 }
 
 void test_logistic_model()
@@ -157,8 +153,7 @@ void test_logistic_model()
 
     const realtype t0 = 0.0;
 
-    const ODEModel ode_model = create_ode_model(initial_values, t0, times);
-    DlsMat result = solve_ode(parameters, ode_model);
+    DlsMat result = solve_ode(parameters, initial_values, t0, times);
 
     assert(result != NULL);
 
@@ -176,5 +171,4 @@ void test_logistic_model()
     destroy_cuqdyn_conf();
     SUNMatDestroy(result);
     N_VDestroy(parameters);
-    destroy_ode_model(ode_model);
 }

@@ -7,24 +7,9 @@
 
 #include "cuqdyn.h"
 
-ODEModel create_ode_model(N_Vector initial_values, realtype t0, N_Vector times)
-{
-    ODEModel ode_model;
-    ode_model.initial_values = initial_values;
-    ode_model.t0 = t0;
-    ode_model.times = times;
-    return ode_model;
-}
-
-void destroy_ode_model(ODEModel model)
-{
-    N_VDestroy(model.initial_values);
-    N_VDestroy(model.times);
-}
-
 static int check_retval(void *, const char *, int);
 
-DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
+DlsMat solve_ode(N_Vector parameters, N_Vector initial_values, realtype t0, N_Vector times)
 {
     CuqdynConf *cuqdyn_conf = get_cuqdyn_conf();
     Tolerances tolerances = cuqdyn_conf->tolerances;
@@ -33,7 +18,7 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
     if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
 
-    retval = CVodeInit(cvode_mem, ode_model_fun, ode_model.t0, ode_model.initial_values);
+    retval = CVodeInit(cvode_mem, ode_model_fun, t0, initial_values);
     if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
 
     N_Vector cloned_abs_tol = N_VNew_Serial(NV_LENGTH_S(tolerances.atol));
@@ -51,11 +36,8 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
 
     /* Time points */
     realtype t;
-    N_Vector times = ode_model.times;
 
-    int retvalr;
-
-    N_Vector yout = N_VNew_Serial(NV_LENGTH_S(ode_model.initial_values));
+    N_Vector yout = N_VNew_Serial(NV_LENGTH_S(initial_values));
     int result_cols = cuqdyn_conf->ode_expr.y_count + 1; // We add the time col
     DlsMat result = SUNDenseMatrix(NV_LENGTH_S(times), result_cols);
 
@@ -63,12 +45,12 @@ DlsMat solve_ode(N_Vector parameters, ODEModel ode_model)
     {
         const realtype actual_time = NV_Ith_S(times, i);
 
-        if (actual_time == ode_model.t0)
+        if (actual_time == t0)
         {
-            SM_ELEMENT_D(result, i, 0) = ode_model.t0;
+            SM_ELEMENT_D(result, i, 0) = t0;
             for (int j = 0; j < cuqdyn_conf->ode_expr.y_count; j++)
             {
-                SM_ELEMENT_D(result, i, j + 1) = NV_Ith_S(ode_model.initial_values, j);
+                SM_ELEMENT_D(result, i, j + 1) = NV_Ith_S(initial_values, j);
             }
             continue;
         }
