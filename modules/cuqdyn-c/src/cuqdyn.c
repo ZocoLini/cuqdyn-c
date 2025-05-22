@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sundials_old/sundials_nvector.h>
 
+#include "config.h"
 #include "matlab.h"
 #include "ode_solver.h"
 #ifdef MPI
@@ -41,6 +42,8 @@ void destroy_cuqdyn_result(CuqdynResult *result)
 CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
                           const char *output_file, int rank, int nproc)
 {
+    CuqdynConf *config = get_cuqdyn_conf();
+
     N_Vector times = NULL;
     DlsMat observed_data = NULL;
 
@@ -65,21 +68,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     if (rank == 0)
     {
         resid_loo = SUNDenseMatrix(m, n);
-    }
-
-    {
-        // Obtaining the number of parameters of the model to initialize the predicted params matrix
-        LongArray indices_to_remove = create_array((long[]) {}, 0);
-        N_Vector texp = copy_vector_remove_indices(times, indices_to_remove); // Freed after executing the ess solver
-        DlsMat yexp = copy_matrix_remove_rows(observed_data, indices_to_remove); // Freed after executing the ess solver
-        N_Vector init_vals = N_VNew_Serial(NV_LENGTH_S(initial_values)); // Freed after executing the ess solver
-        memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(realtype));
-
-        // Needs to be executed for each process bcs it waits everybody just for printing I guess
-        N_Vector init_pred_params =
-                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, init_vals, rank, nproc);
-        predicted_params_matrix = SUNDenseMatrix(m, NV_LENGTH_S(init_pred_params));
-        N_VDestroy(init_pred_params);
+        predicted_params_matrix = SUNDenseMatrix(m, config->ode_expr.p_count);
     }
 
 #ifdef MPI
@@ -264,6 +253,7 @@ N_VDestroy(residuals);
     N_VDestroy(initial_values);
     SUNMatDestroy(observed_data);
     SUNMatDestroy(resid_loo);
+    SUNMatDestroy(predicted_params_matrix);
 
     CuqdynResult *result = create_cuqdyn_result(predicted_data_median, predicted_params_median, q_low, q_up, times);
 
