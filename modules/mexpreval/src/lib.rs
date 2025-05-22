@@ -1,8 +1,11 @@
+mod models;
+
 use meval::{Context, Expr};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::{ffi::CStr, os::raw::c_char, slice};
+use crate::models::compute_model;
 
 thread_local! {
     static EXPRS: RefCell<HashMap<*const c_char, Expr>> = RefCell::new(HashMap::new());
@@ -20,10 +23,14 @@ pub unsafe extern "C" fn eval_f_exprs(
     exprs: *const *const c_char,
     num_exprs: usize,
 ) {
+    let exprs: &[*const c_char] = slice::from_raw_parts(exprs, num_exprs);
     let y: &[f64] = slice::from_raw_parts(y, num_exprs);
     let ydot: &mut [f64] = slice::from_raw_parts_mut(ydot, num_exprs);
     let params: &[f64] = slice::from_raw_parts_mut(params, num_params);
-    let exprs: &[*const c_char] = slice::from_raw_parts(exprs, num_exprs);
+
+    if exprs.len() > 0 && compute_model(CStr::from_ptr(exprs[0]).to_str().unwrap(), y, ydot, params)  {
+        return;
+    }
 
     EXPRS.with(|exprs_cache| {
         let mut exprs_cache = exprs_cache.borrow_mut();
