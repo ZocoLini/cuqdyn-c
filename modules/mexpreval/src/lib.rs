@@ -7,7 +7,7 @@ use std::str::FromStr;
 use std::{ffi::CStr, os::raw::c_char, slice};
 
 thread_local! {
-    static EXPRS: RefCell<Vec<(*const c_char, Expr)>> = RefCell::new(Vec::new());
+    static EXPRS: RefCell<Vec<Expr>> = RefCell::new(Vec::new());
     static CONTEXT: RefCell<Context<'static>> = RefCell::new(Context::new());
 }
 
@@ -45,21 +45,25 @@ pub unsafe extern "C" fn eval_f_exprs(
                 ctx.var(format!("p{}", i + 1), *param);
             }
 
+            if exprs_cache.is_empty() {
+                let c_str = CStr::from_ptr(exprs[0]);
+                let s = c_str.to_str().unwrap();
+                let expr = Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
+                exprs_cache.push(expr);
+            }
+
             for (i, ptr) in exprs.iter().enumerate() {
-                let expr = exprs_cache.iter().find(|e| e.0 == *ptr);
+                let index = ptr.offset_from(exprs[0]) as usize;
+                
+                if exprs.len() < index {
+                    let c_str = CStr::from_ptr(*ptr);
+                    let s = c_str.to_str().unwrap();
+                    let expr = Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
 
-                let expr = match expr {
-                    Some(a) => &a.1,
-                    None => {
-                        let c_str = CStr::from_ptr(*ptr);
-                        let s = c_str.to_str().unwrap();
-                        let expr = Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
-
-                        exprs_cache.push((*ptr, expr));
-                        &exprs_cache.get(exprs_cache.len() - 1).unwrap().1
-                    }
-                };
-
+                    exprs_cache.push(expr);
+                }
+                
+                let expr = &exprs_cache[index];
 
                 ydot[i] = expr
                     .eval_with_context(&*ctx)
