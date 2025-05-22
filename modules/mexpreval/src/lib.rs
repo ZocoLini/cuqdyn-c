@@ -1,15 +1,14 @@
 mod models;
 
+use crate::models::compute_model;
 use meval::{Context, Expr};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::{ffi::CStr, os::raw::c_char, slice};
-use crate::models::compute_model;
 
 thread_local! {
-    static EXPRS: RefCell<HashMap<*const c_char, Expr>> = RefCell::new(HashMap::new());
-    static CONTEXT: RefCell<Context<'static>> = RefCell::new(Context::new())
+    static EXPRS: RefCell<Vec<(*const c_char, Expr)>> = RefCell::new(Vec::new());
+    static CONTEXT: RefCell<Context<'static>> = RefCell::new(Context::new());
 }
 
 #[allow(clippy::missing_safety_doc)]
@@ -47,11 +46,20 @@ pub unsafe extern "C" fn eval_f_exprs(
             }
 
             for (i, ptr) in exprs.iter().enumerate() {
-                let expr = exprs_cache.entry(*ptr).or_insert_with(|| {
-                    let c_str = CStr::from_ptr(*ptr);
-                    let s = c_str.to_str().unwrap();
-                    Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e))
-                });
+                let expr = exprs_cache.iter().find(|e| e.0 == *ptr);
+
+                let expr = match expr {
+                    Some(a) => &a.1,
+                    None => {
+                        let c_str = CStr::from_ptr(*ptr);
+                        let s = c_str.to_str().unwrap();
+                        let expr = Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
+
+                        exprs_cache.push((*ptr, expr));
+                        &exprs_cache.get(exprs_cache.len() - 1).unwrap().1
+                    }
+                };
+
 
                 ydot[i] = expr
                     .eval_with_context(&*ctx)
