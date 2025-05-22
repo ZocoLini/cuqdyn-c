@@ -111,6 +111,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     {
         fprintf(stderr, "Number of processes is not a divisor of m - 1. Please use a number of processes that is a "
                         "divisor of m - 1\n");
+        return NULL;
     }
     iterations = min_iters_per_node;
     start_index = rank * iterations + 1;

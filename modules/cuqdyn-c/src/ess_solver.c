@@ -8,7 +8,7 @@
 #include "ess_solver.h"
 
 #include <../include/functions.h>
-#ifdef MPI
+#if defined(MPI2) && !defined(MPI)
 #include <mpi.h>
 #endif
 
@@ -24,6 +24,11 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, D
     experiment_total *exptotal;
     result_solver result;
     int first, init;
+
+#if defined(MPI2) && !defined(MPI)
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
 
 #ifdef OPENMP
 #pragma omp parallel

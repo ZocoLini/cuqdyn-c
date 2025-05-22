@@ -12,7 +12,7 @@
 #include "../../../cuqdyn-c/include/functions.h"
 #include "cuqdyn.h"
 
-#ifdef MPI
+#if defined(MPI) || defined(MPI2)
 #include <mpi.h>
 #endif
 
@@ -84,7 +84,7 @@ int handle_solve(int argc, char *argv[])
         return 1;
     }
 
-#ifdef MPI
+#if defined(MPI) || defined(MPI2)
     int err = MPI_Init(&argc, &argv);
 
     if (err != MPI_SUCCESS)
@@ -92,7 +92,9 @@ int handle_solve(int argc, char *argv[])
         fprintf(stderr, "MPI_Init failed\n");
         exit(1);
     }
+#endif
 
+#ifdef MPI
     int rank, nproc;
     err = MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 

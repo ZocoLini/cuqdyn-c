@@ -14,7 +14,7 @@ opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"
-strip = "symbols"
+# strip = "symbols"
 
 [[bench]]
 name = "eval_f_exprs_bench"
