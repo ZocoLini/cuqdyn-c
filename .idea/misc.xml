@@ -28,6 +28,7 @@
       <file path="$PROJECT_DIR$/build-serial" />
       <file path="$PROJECT_DIR$/cmake-build-debug" />
       <file path="$PROJECT_DIR$/cmake-build-mpi" />
+      <file path="$PROJECT_DIR$/cmake-build-serial" />
       <file path="$PROJECT_DIR$/dev-container" />
     </excludeRoots>
   </component>

@@ -123,10 +123,10 @@ void alpha_pinene_ess(char *conf_file)
 
     N_Vector initial_values = N_VNew_Serial(5);
     NV_Ith_S(initial_values, 0) = 100;
-    NV_Ith_S(initial_values, 1) = 0.0001;
-    NV_Ith_S(initial_values, 2) = 0.0001;
-    NV_Ith_S(initial_values, 3) = 0.0001;
-    NV_Ith_S(initial_values, 4) = 0.0001;
+    NV_Ith_S(initial_values, 1) = 0;
+    NV_Ith_S(initial_values, 2) = 0;
+    NV_Ith_S(initial_values, 3) = 0;
+    NV_Ith_S(initial_values, 4) = 0;
 
     for (int i = 0; i < 9; ++i)
     {
