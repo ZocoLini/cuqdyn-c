@@ -12,8 +12,8 @@ fn lotka_volterra_bench_eval(c: &mut Criterion) {
     let mut params = vec![0.1, 0.2, 0.3, 0.4];
 
     let expr_strings = [
-        CString::new("p1 * y1 - p2 * y2").unwrap(),
-        CString::new("p3 * y2 - p4 * y1").unwrap(),
+        CString::new("y1 * (p1 - p2 * y2)").unwrap(),
+        CString::new("-y2 * (p3 - p4 * y1)").unwrap(),
     ];
     let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
     
@@ -31,6 +31,7 @@ fn lotka_volterra_bench_eval(c: &mut Criterion) {
     });
 }
 
+#[allow(dead_code)]
 fn lotka_volterra_predefined_bench_eval(c: &mut Criterion) {
     let num_exprs = 2;
     let num_params = 4;
@@ -62,9 +63,9 @@ fn logistic_model_bench_eval(c: &mut Criterion) {
     let num_exprs = 1;
     let num_params = 2;
 
-    let mut y = vec![1.0];
+    let mut y = vec![0.0];
     let mut ydot = vec![0.0; num_exprs];
-    let mut params = vec![0.1, 0.2];
+    let mut params = vec![0.1, 100.0];
 
     let expr_strings = [
         CString::new("p1 * y1 * (1 - y1 / p2)").unwrap()
@@ -116,5 +117,5 @@ fn alpha_pinene_bench_eval(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, lotka_volterra_bench_eval, logistic_model_bench_eval, alpha_pinene_bench_eval, lotka_volterra_predefined_bench_eval);
+criterion_group!(benches, lotka_volterra_bench_eval, logistic_model_bench_eval, alpha_pinene_bench_eval);
 criterion_main!(benches);

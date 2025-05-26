@@ -82,6 +82,7 @@ set(RUST_LIB_DIR "${PROJECT_SOURCE_DIR}/modules/mexpreval")
 set(RUST_TARGET_DIR "${RUST_LIB_DIR}/target/release")
 
 add_custom_target(rust_lib ALL
+    env RUSTFLAGS=-C target-cpu=native
     COMMAND cargo build --release
     WORKING_DIRECTORY ${RUST_LIB_DIR}
 )

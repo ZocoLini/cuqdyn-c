@@ -23,14 +23,8 @@ int main(int argc, char **argv)
     return 0;
 #endif
 
-    logistic_model_ess(LOGISTIC_MODEL_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 5 passed Logistic Model NL2SOL_DN2FB\n");
-
     lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB);
     printf("\tTest 1 passed NL2SOL_DN2GB\n");
-
-    alpha_pinene_ess(ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 6 passed Alpha-Pinene NL2SOL_DN2GB\n");
 
     lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2FB);
     printf("\tTest 2 passed NL2SOL_DN2FB\n");
@@ -41,6 +35,12 @@ int main(int argc, char **argv)
     lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_MISQP);
     printf("\tTest 4 passed MISQP\n");
 
+    logistic_model_ess(LOGISTIC_MODEL_CONF_FILE_NL2SOL_DN2FB);
+    printf("\tTest 5 passed Logistic Model NL2SOL_DN2FB\n");
+
+    alpha_pinene_ess(ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB);
+    printf("\tTest 6 passed Alpha-Pinene NL2SOL_DN2GB\n");
+    
     return 0;
 }
 

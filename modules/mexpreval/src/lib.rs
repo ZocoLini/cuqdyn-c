@@ -1,8 +1,8 @@
 #![allow(static_mut_refs)]
+#![allow(invalid_reference_casting)]
 mod models;
 
-use meval::{Context, Expr};
-use std::cell::OnceCell;
+use meval::{Context, ContextProvider, Expr};
 use std::str::FromStr;
 use std::sync::LazyLock;
 use std::{env, ffi::CStr, os::raw::c_char, slice};
@@ -36,10 +36,10 @@ impl OdeExpr {
 }
 
 static mut EXPRS: Vec<Expr> = Vec::new();
-static mut CONTEXT: OnceCell<Context<'static>> = OnceCell::new();
+static mut CONTEXT: Option<Context<'static>> = None;
 static mut Y: Vec<String> = Vec::new();
 static mut P: Vec<String> = Vec::new();
-static mut ODE_EXPR: OnceCell<OdeExpr> = OnceCell::new();
+static mut ODE_EXPR: Option<OdeExpr> = None;
 static DEF_YDOT: LazyLock<f64> = LazyLock::new(|| {
     env::var("CUQDYN_DEF_YDOT")
         .unwrap_or_else(|_| "0.0".to_string())
@@ -50,11 +50,13 @@ static DEF_YDOT: LazyLock<f64> = LazyLock::new(|| {
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn mexpreval_init(ode_expr: OdeExpr) {
+    Y.clear();
     Y.extend(
         (0..ode_expr.y_count)
             .map(|i| format!("y{}", i + 1))
             .collect::<Vec<String>>(),
     );
+    P.clear();
     P.extend(
         (0..ode_expr.p_count)
             .map(|i| format!("p{}", i + 1))
@@ -63,6 +65,7 @@ pub unsafe extern "C" fn mexpreval_init(ode_expr: OdeExpr) {
 
     let exprs: &[*const c_char] = slice::from_raw_parts(ode_expr.exprs, ode_expr.y_count as usize);
 
+    EXPRS.clear();
     for ptr in exprs.iter() {
         let c_str = CStr::from_ptr(*ptr);
         let s = c_str.to_str().unwrap();
@@ -71,15 +74,15 @@ pub unsafe extern "C" fn mexpreval_init(ode_expr: OdeExpr) {
 
         EXPRS.push(expr);
     }
-
-    let _ = CONTEXT.set(Context::new());
-    let _ = ODE_EXPR.set(ode_expr);
+    
+    CONTEXT = Some(Context::new());
+    ODE_EXPR = Some(ode_expr);
 }
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn eval_f_exprs(_t: f64, y: *mut f64, ydot: *mut f64, params: *mut f64) {
-    let ctx = CONTEXT.get_mut().unwrap_unchecked();
+    let ctx = CONTEXT.as_mut().unwrap();
 
     let y: &[f64] = slice::from_raw_parts(y, Y.len());
     let ydot: &mut [f64] = slice::from_raw_parts_mut(ydot, Y.len());
@@ -94,9 +97,8 @@ pub unsafe extern "C" fn eval_f_exprs(_t: f64, y: *mut f64, ydot: *mut f64, para
     }
 
     for (i, expr) in EXPRS.iter().enumerate() {
-        ydot[i] = expr
-            .eval_with_context(CONTEXT.get().unwrap_unchecked())
-            .unwrap_unchecked();
+        let ctx = CONTEXT.as_ref().unwrap();
+        ydot[i] = expr.eval_with_context(ctx).unwrap();
 
         if !ydot[i].is_finite() {
             eprintln!(
@@ -116,6 +118,59 @@ mod test {
     use crate::{eval_f_exprs, mexpreval_init, OdeExpr};
     use std::ffi::CString;
     use std::os::raw::c_char;
+
+    #[test]
+    fn lotka_volterra_test() {
+        let num_exprs = 2;
+        let num_params = 4;
+
+        let mut y = vec![1.0, 1.0];
+        let mut ydot = vec![0.0; num_exprs];
+        let mut params = vec![1.0, 2.0, 3.0, 4.0];
+
+        let expr_strings = [
+            CString::new("y1 * (p1 - p2 * y2)").unwrap(),
+            CString::new("-y2 * (p3 - p4 * y1)").unwrap(),
+        ];
+        let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
+
+        unsafe {
+            mexpreval_init(OdeExpr::new(
+                num_exprs as i32,
+                num_params,
+                expr_ptrs.as_ptr(),
+            ));
+        }
+
+        unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
+
+        assert_eq!(ydot[0], -1.0);
+        assert_eq!(ydot[1], 1.0);
+    }
+
+    #[test]
+    fn logistic_model_test() {
+        let num_exprs = 1;
+        let num_params = 2;
+
+        let mut y = vec![1.0];
+        let mut ydot = vec![0.0; num_exprs];
+        let mut params = vec![0.1, 100.0];
+
+        let expr_strings = [CString::new("p1 * y1 * (1 - y1 / p2)").unwrap()];
+        let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
+
+        unsafe {
+            mexpreval_init(OdeExpr::new(
+                num_exprs as i32,
+                num_params,
+                expr_ptrs.as_ptr(),
+            ));
+        }
+
+        unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
+        assert_eq!(ydot[0], 0.99)
+    }
 
     #[test]
     fn bench() {
