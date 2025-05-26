@@ -1,9 +1,11 @@
+#![allow(static_mut_refs)]
 mod models;
 
 use meval::{Context, Expr};
 use std::cell::OnceCell;
 use std::str::FromStr;
-use std::{ffi::CStr, os::raw::c_char, slice};
+use std::sync::LazyLock;
+use std::{env, ffi::CStr, os::raw::c_char, slice};
 
 #[repr(C)]
 #[derive(Debug)]
@@ -38,6 +40,12 @@ static mut CONTEXT: OnceCell<Context<'static>> = OnceCell::new();
 static mut Y: Vec<String> = Vec::new();
 static mut P: Vec<String> = Vec::new();
 static mut ODE_EXPR: OnceCell<OdeExpr> = OnceCell::new();
+static DEF_YDOT: LazyLock<f64> = LazyLock::new(|| {
+    env::var("CUQDYN_DEF_YDOT")
+        .unwrap_or_else(|_| "0.0".to_string())
+        .parse()
+        .unwrap_or(0.0)
+});
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
@@ -71,14 +79,12 @@ pub unsafe extern "C" fn mexpreval_init(ode_expr: OdeExpr) {
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn eval_f_exprs(_t: f64, y: *mut f64, ydot: *mut f64, params: *mut f64) {
-    let ctx = CONTEXT
-        .get_mut()
-        .unwrap_unchecked();
+    let ctx = CONTEXT.get_mut().unwrap_unchecked();
 
     let y: &[f64] = slice::from_raw_parts(y, Y.len());
     let ydot: &mut [f64] = slice::from_raw_parts_mut(ydot, Y.len());
     let params: &[f64] = slice::from_raw_parts_mut(params, P.len());
-    
+
     for (i, y) in y.iter().enumerate() {
         ctx.var(&Y[i], *y);
     }
@@ -88,16 +94,28 @@ pub unsafe extern "C" fn eval_f_exprs(_t: f64, y: *mut f64, ydot: *mut f64, para
     }
 
     for (i, expr) in EXPRS.iter().enumerate() {
-        ydot[i] = expr.eval_with_context(&*CONTEXT.get().unwrap_unchecked())
-                .unwrap_unchecked();
+        ydot[i] = expr
+            .eval_with_context(CONTEXT.get().unwrap_unchecked())
+            .unwrap_unchecked();
+
+        if !ydot[i].is_finite() {
+            eprintln!(
+                "Expression {} evaluated to {} with params {:?}, setting to default value {}",
+                i + 1,
+                ydot[i],
+                params,
+                *DEF_YDOT
+            );
+            ydot[i] = *DEF_YDOT;
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::{eval_f_exprs, mexpreval_init, OdeExpr};
     use std::ffi::CString;
     use std::os::raw::c_char;
-    use crate::{eval_f_exprs, mexpreval_init, OdeExpr};
 
     #[test]
     fn bench() {
@@ -108,22 +126,46 @@ mod test {
         let mut ydot = vec![0.0; num_exprs];
         let mut params = vec![0.1, 0.2];
 
-        let expr_strings = [
-            CString::new("p1 * y1 * (1 - y1 / p2)").unwrap()
-        ];
+        let expr_strings = [CString::new("p1 * y1 * (1 - y1 / p2)").unwrap()];
         let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
 
-        unsafe { mexpreval_init(OdeExpr::new(num_exprs as i32, num_params, expr_ptrs.as_ptr())); }
+        unsafe {
+            mexpreval_init(OdeExpr::new(
+                num_exprs as i32,
+                num_params,
+                expr_ptrs.as_ptr(),
+            ));
+        }
 
         for _ in 0..10_000_000 {
-            unsafe {
-                eval_f_exprs(
-                    0.0,
-                    y.as_mut_ptr(),
-                    ydot.as_mut_ptr(),
-                    params.as_mut_ptr(),
-                )
-            }
+            unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
         }
+    }
+
+    #[test]
+    fn div_by_cero() {
+        let num_exprs = 1;
+        let num_params = 2;
+
+        let mut y = vec![1.0];
+        let mut ydot = vec![0.0; num_exprs];
+        let mut params = vec![0.484077, 0.000000]; // p2 is zero to cause division by zero
+
+        let expr_strings = [CString::new("p1 * y1 * (1 - y1 / p2)").unwrap()];
+        let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
+
+        unsafe {
+            mexpreval_init(OdeExpr::new(
+                num_exprs as i32,
+                num_params,
+                expr_ptrs.as_ptr(),
+            ));
+        }
+
+        for _ in 0..10_000_000 {
+            unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
+        }
+
+        println!("ydot: {:?}", ydot);
     }
 }
