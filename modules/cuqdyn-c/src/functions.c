@@ -9,8 +9,14 @@
 #include "cuqdyn.h"
 #include "sundials_old/sundials_types.h"
 
-extern void eval_f_exprs(realtype t, realtype *y, realtype *ydot, realtype *params, int n_params, char **exprs,
-                         int n_expr);
+extern void mexpreval_init(OdeExpr ode_expr);
+
+void mexpreval_init_wrapper(OdeExpr ode_expr)
+{
+    mexpreval_init(ode_expr);
+}
+
+extern void eval_f_exprs(realtype t, realtype *y, realtype *ydot, realtype *params);
 
 int ode_model_fun(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -19,10 +25,7 @@ int ode_model_fun(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     realtype *ydot_pointer = NV_DATA_S(ydot);
     realtype *y_pointer = NV_DATA_S(y);
 
-    CuqdynConf *conf = get_cuqdyn_conf();
-
-    eval_f_exprs(t, y_pointer, ydot_pointer, params, conf->ode_expr.p_count, conf->ode_expr.exprs,
-                 conf->ode_expr.y_count);
+    eval_f_exprs(t, y_pointer, ydot_pointer, params);
 
     return 0;
 }

@@ -26,11 +26,13 @@ The project is structured as follows:
 
 ## Dependencies
 - xml2-2.9.1
-- matio-2.9.1 (Builded by CMake)
-- hdf5-1.8.12 (Builded by CMake)
-- gsl-1.14 (Builded by CMake if not present)
+- matio-2.9.1 (Built by CMake)
+- hdf5-1.8.12 (Built by CMake)
+- gsl-1.14 (Built by CMake if not present)
 
 ## Building the project
+**GCC and GFortran v14 aren't supported by the project, so you need to use GCC v13 or lower.**
+
 The project has a `build.sh`.
 `build-[variant]/` directories will be created, each one representing a variant 
 off the project they build. If you call the script without arguments, it will build 

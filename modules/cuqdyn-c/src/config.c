@@ -9,6 +9,8 @@
 
 #include <cuqdyn.h>
 
+#include "functions.h"
+
 static CuqdynConf *config = NULL;
 
 CuqdynConf *create_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr)
@@ -51,6 +53,7 @@ CuqdynConf *init_cuqdyn_conf_from_file(const char *filename)
     }
 
     config = tmp_config;
+    mexpreval_init_wrapper(config->ode_expr);
     return config;
 }
 

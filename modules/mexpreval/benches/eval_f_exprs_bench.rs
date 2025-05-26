@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use mexpreval::eval_f_exprs;
+use mexpreval::{eval_f_exprs, mexpreval_init, OdeExpr};
 use std::ffi::CString;
 use std::os::raw::c_char;
 
@@ -17,6 +17,8 @@ fn lotka_volterra_bench_eval(c: &mut Criterion) {
     ];
     let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
     
+    unsafe { mexpreval_init(OdeExpr::new(num_exprs as i32, num_params, expr_ptrs.as_ptr())); }
+    
     c.bench_function("lotka_volterra", |b| {
         b.iter(|| unsafe {
             eval_f_exprs(
@@ -24,9 +26,6 @@ fn lotka_volterra_bench_eval(c: &mut Criterion) {
                 y.as_mut_ptr(),
                 ydot.as_mut_ptr(),
                 params.as_mut_ptr(),
-                num_params,
-                expr_ptrs.as_ptr(),
-                num_exprs,
             )
         });
     });
@@ -45,6 +44,8 @@ fn lotka_volterra_predefined_bench_eval(c: &mut Criterion) {
     ];
     let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
 
+    unsafe { mexpreval_init(OdeExpr::new(num_exprs as i32, num_params, expr_ptrs.as_ptr())); }
+
     c.bench_function("lotka_volterra_predefined", |b| {
         b.iter(|| unsafe {
             eval_f_exprs(
@@ -52,9 +53,6 @@ fn lotka_volterra_predefined_bench_eval(c: &mut Criterion) {
                 y.as_mut_ptr(),
                 ydot.as_mut_ptr(),
                 params.as_mut_ptr(),
-                num_params,
-                expr_ptrs.as_ptr(),
-                num_exprs,
             )
         });
     });
@@ -73,6 +71,8 @@ fn logistic_model_bench_eval(c: &mut Criterion) {
     ];
     let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
 
+    unsafe { mexpreval_init(OdeExpr::new(num_exprs as i32, num_params, expr_ptrs.as_ptr())); }
+    
     c.bench_function("logistic_model", |b| {
         b.iter(|| unsafe {
             eval_f_exprs(
@@ -80,9 +80,6 @@ fn logistic_model_bench_eval(c: &mut Criterion) {
                 y.as_mut_ptr(),
                 ydot.as_mut_ptr(),
                 params.as_mut_ptr(),
-                num_params,
-                expr_ptrs.as_ptr(),
-                num_exprs,
             )
         });
     });
@@ -105,6 +102,8 @@ fn alpha_pinene_bench_eval(c: &mut Criterion) {
     ];
     let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
 
+    unsafe { mexpreval_init(OdeExpr::new(num_exprs as i32, num_params, expr_ptrs.as_ptr())); }
+
     c.bench_function("alpha_pinene", |b| {
         b.iter(|| unsafe {
             eval_f_exprs(
@@ -112,9 +111,6 @@ fn alpha_pinene_bench_eval(c: &mut Criterion) {
                 y.as_mut_ptr(),
                 ydot.as_mut_ptr(),
                 params.as_mut_ptr(),
-                num_params,
-                expr_ptrs.as_ptr(),
-                num_exprs,
             )
         });
     });

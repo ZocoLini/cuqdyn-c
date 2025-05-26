@@ -1,68 +1,129 @@
 mod models;
 
-use crate::models::compute_model;
 use meval::{Context, Expr};
-use std::cell::RefCell;
+use std::cell::OnceCell;
 use std::str::FromStr;
 use std::{ffi::CStr, os::raw::c_char, slice};
 
-thread_local! {
-    static EXPRS: RefCell<Vec<Expr>> = RefCell::new(Vec::new());
-    static CONTEXT: RefCell<Context<'static>> = RefCell::new(Context::new());
+#[repr(C)]
+#[derive(Debug)]
+pub struct OdeExpr {
+    y_count: i32,
+    p_count: i32,
+    exprs: *const *const c_char,
 }
 
-static Y: [&str; 8] = ["y1", "y2", "y3", "y4", "y5", "y6", "y7", "y8"];
-static P: [&str; 8] = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"];
+impl OdeExpr {
+    pub fn new_rs(y_count: i32, p_count: i32, exprs: &[String]) -> Self {
+        let mut exprs_ptr: Vec<*const c_char> = Vec::new();
+        for expr in exprs {
+            let c_str = CStr::from_bytes_with_nul(expr.as_bytes()).unwrap();
+            exprs_ptr.push(c_str.as_ptr());
+        }
+
+        Self::new(y_count, p_count, exprs_ptr.as_ptr())
+    }
+
+    pub fn new(y_count: i32, p_count: i32, exprs: *const *const c_char) -> Self {
+        OdeExpr {
+            y_count,
+            p_count,
+            exprs,
+        }
+    }
+}
+
+static mut EXPRS: Vec<Expr> = Vec::new();
+static mut CONTEXT: OnceCell<Context<'static>> = OnceCell::new();
+static mut Y: Vec<String> = Vec::new();
+static mut P: Vec<String> = Vec::new();
+static mut ODE_EXPR: OnceCell<OdeExpr> = OnceCell::new();
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub unsafe extern "C" fn eval_f_exprs(
-    _t: f64,
-    y: *mut f64,
-    ydot: *mut f64,
-    params: *mut f64,
-    num_params: usize,
-    exprs: *const *const c_char,
-    num_exprs: usize,
-) {
-    let exprs: &[*const c_char] = slice::from_raw_parts(exprs, num_exprs);
-    let y: &[f64] = slice::from_raw_parts(y, num_exprs);
-    let ydot: &mut [f64] = slice::from_raw_parts_mut(ydot, num_exprs);
-    let params: &[f64] = slice::from_raw_parts_mut(params, num_params);
+pub unsafe extern "C" fn mexpreval_init(ode_expr: OdeExpr) {
+    Y.extend(
+        (0..ode_expr.y_count)
+            .map(|i| format!("y{}", i + 1))
+            .collect::<Vec<String>>(),
+    );
+    P.extend(
+        (0..ode_expr.p_count)
+            .map(|i| format!("p{}", i + 1))
+            .collect::<Vec<String>>(),
+    );
 
-    if exprs.len() > 0 && compute_model(CStr::from_ptr(exprs[0]).to_str().unwrap(), y, ydot, params)  {
-        return;
+    let exprs: &[*const c_char] = slice::from_raw_parts(ode_expr.exprs, ode_expr.y_count as usize);
+
+    for ptr in exprs.iter() {
+        let c_str = CStr::from_ptr(*ptr);
+        let s = c_str.to_str().unwrap();
+        let expr =
+            Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
+
+        EXPRS.push(expr);
     }
 
-    EXPRS.with(|exprs_cache| {
-        let mut exprs_cache = exprs_cache.borrow_mut();
+    let _ = CONTEXT.set(Context::new());
+    let _ = ODE_EXPR.set(ode_expr);
+}
 
-        CONTEXT.with(|ctx| {
-            let mut ctx = ctx.borrow_mut();
+#[allow(clippy::missing_safety_doc)]
+#[no_mangle]
+pub unsafe extern "C" fn eval_f_exprs(_t: f64, y: *mut f64, ydot: *mut f64, params: *mut f64) {
+    let ctx = CONTEXT
+        .get_mut()
+        .unwrap_unchecked();
 
-            for (i, expr) in y.iter().enumerate() {
-                ctx.var(Y[i], *expr);
+    let y: &[f64] = slice::from_raw_parts(y, Y.len());
+    let ydot: &mut [f64] = slice::from_raw_parts_mut(ydot, Y.len());
+    let params: &[f64] = slice::from_raw_parts_mut(params, P.len());
+    
+    for (i, y) in y.iter().enumerate() {
+        ctx.var(&Y[i], *y);
+    }
+
+    for (i, p) in params.iter().enumerate() {
+        ctx.var(&P[i], *p);
+    }
+
+    for (i, expr) in EXPRS.iter().enumerate() {
+        ydot[i] = expr.eval_with_context(&*CONTEXT.get().unwrap_unchecked())
+                .unwrap_unchecked();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::ffi::CString;
+    use std::os::raw::c_char;
+    use crate::{eval_f_exprs, mexpreval_init, OdeExpr};
+
+    #[test]
+    fn bench() {
+        let num_exprs = 1;
+        let num_params = 2;
+
+        let mut y = vec![1.0];
+        let mut ydot = vec![0.0; num_exprs];
+        let mut params = vec![0.1, 0.2];
+
+        let expr_strings = [
+            CString::new("p1 * y1 * (1 - y1 / p2)").unwrap()
+        ];
+        let expr_ptrs: Vec<*const c_char> = expr_strings.iter().map(|s| s.as_ptr()).collect();
+
+        unsafe { mexpreval_init(OdeExpr::new(num_exprs as i32, num_params, expr_ptrs.as_ptr())); }
+
+        for _ in 0..10_000_000 {
+            unsafe {
+                eval_f_exprs(
+                    0.0,
+                    y.as_mut_ptr(),
+                    ydot.as_mut_ptr(),
+                    params.as_mut_ptr(),
+                )
             }
-
-            for (i, param) in params.iter().enumerate() {
-                ctx.var(P[i], *param);
-            }
-
-            for (i, ptr) in exprs.iter().enumerate() {
-                if exprs_cache.len() <= i {
-                    let c_str = CStr::from_ptr(*ptr);
-                    let s = c_str.to_str().unwrap();
-                    let expr = Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
-
-                    exprs_cache.push(expr);
-                }
-
-                let expr = &exprs_cache[i];
-
-                ydot[i] = expr
-                    .eval_with_context(&*ctx)
-                    .unwrap_or_else(|e| panic!("Error evaluating epresion: {}", e));
-            }
-        });
-    });
+        }
+    }
 }
