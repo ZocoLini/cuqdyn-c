@@ -34,10 +34,14 @@ def read_data(filepath):
                 matrix.append(values if cols > 1 else values[0])
                 i += 1
 
+            if not isinstance(matrix[0], (list, tuple)):
+                matrix = [[x] for x in matrix]
+
             sections[section] = {
                 "shape": (rows, cols),
                 "data": matrix
             }
+
         else:
             i += 1
 
@@ -72,9 +76,9 @@ plt.ylabel("Values")
 plt.legend()
 plt.grid(True)
 
-num_colums = len(data_matrix[0])
+num_columns = len(data_matrix[0])
 
-for j in range(num_colums):
+for j in range(num_columns):
     plt.figure(figsize=(8, 6))
 
     plt.title(f"Data Plot for y{j}")
