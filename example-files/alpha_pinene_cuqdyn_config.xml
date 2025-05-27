@@ -6,10 +6,6 @@
         <atol>1e-8, 1e-8, 1e-8, 1e-8, 1e-8</atol>
     </tolerances>
     <ode_expr y_count="5" p_count="5">
-        -(p1 + p2) * y1
-        p1 * y1
-        p2 * y1 - (p3 + p4) * y3 + p5 * y5
-        p3 * y3
-        p4 * y3 - p5 * y5
+        alpha-pinene
     </ode_expr>
 </cuqdyn-config>
