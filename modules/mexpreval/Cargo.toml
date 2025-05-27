@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-meval = { version = "0.2.0" }
+meval = { git = "https://github.com/ZocoLini/mexpreval-rs.git", tag = "v0.2.2" }
 
 [dev-dependencies]
 criterion = { version = "0.5.1" }
