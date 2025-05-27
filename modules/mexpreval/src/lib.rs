@@ -1,10 +1,8 @@
 #![allow(static_mut_refs)]
 mod models;
 
-use meval::{Context, Expr};
-use std::str::FromStr;
-use std::sync::LazyLock;
-use std::{env, ffi::CStr, os::raw::c_char, slice};
+use crate::models::Model;
+use std::{ffi::CStr, os::raw::c_char, slice};
 
 #[repr(C)]
 #[derive(Debug)]
@@ -34,92 +32,32 @@ impl OdeExpr {
     }
 }
 
-static mut EXPRS: Vec<Expr> = Vec::new();
-static mut CONTEXT: Option<Context<'static>> = None;
-static mut Y: Vec<*mut f64> = Vec::new();
-static mut P: Vec<*mut f64> = Vec::new();
+static mut EVAL_F: Option<Box<dyn Model>> = None;
 static mut ODE_EXPR: Option<OdeExpr> = None;
-static DEF_YDOT: LazyLock<f64> = LazyLock::new(|| {
-    env::var("CUQDYN_DEF_YDOT")
-        .unwrap_or_else(|_| "0.0".to_string())
-        .parse()
-        .unwrap_or(0.0)
-});
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn mexpreval_init(ode_expr: OdeExpr) {
     let exprs: &[*const c_char] = slice::from_raw_parts(ode_expr.exprs, ode_expr.y_count as usize);
 
-    EXPRS.clear();
-    for ptr in exprs.iter() {
+    let model_name = {
+        let ptr = &exprs[0];
         let c_str = CStr::from_ptr(*ptr);
-        let s = c_str.to_str().unwrap();
-        let expr =
-            Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
+        c_str.to_str().unwrap()
+    };
 
-        EXPRS.push(expr);
-    }
-
-    let mut ctx = Context::new();
-
-    for i in 0..ode_expr.p_count {
-        let var_key = format!("p{}", i + 1);
-        ctx.var(&var_key, 0.0);
-    }
-
-    for i in 0..ode_expr.y_count {
-        let var_key = format!("y{}", i + 1);
-        ctx.var(&var_key, 0.0);
-
-    }
-
-    P.clear();
-    for i in 0..ode_expr.p_count {
-        let var_key = format!("p{}", i + 1);
-        P.push(ctx.get_var_ptr(&var_key).unwrap())
-    }
-
-    Y.clear();
-    for i in 0..ode_expr.y_count {
-        let var_key = format!("y{}", i + 1);
-        Y.push(ctx.get_var_ptr(&var_key).unwrap())
-    }
-
-    CONTEXT = Some(ctx);
+    EVAL_F = Some(models::eval_model_fun(model_name, &ode_expr));
     ODE_EXPR = Some(ode_expr);
 }
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub unsafe extern "C" fn eval_f_exprs(_t: f64, y: *mut f64, ydot: *mut f64, params: *mut f64) {
-    let y: &[f64] = slice::from_raw_parts(y, Y.len());
-    let ydot: &mut [f64] = slice::from_raw_parts_mut(ydot, Y.len());
-    let params: &[f64] = slice::from_raw_parts_mut(params, P.len());
+pub unsafe extern "C" fn eval_f_exprs(t: f64, y: *mut f64, ydot: *mut f64, params: *mut f64) {
+    let y: &[f64] = slice::from_raw_parts(y, ODE_EXPR.as_ref().unwrap().y_count as usize);
+    let ydot: &mut [f64] = slice::from_raw_parts_mut(ydot, ODE_EXPR.as_ref().unwrap().y_count as usize);
+    let p: &[f64] = slice::from_raw_parts_mut(params, ODE_EXPR.as_ref().unwrap().p_count as usize);
 
-    for i in 0..Y.len() {
-        *(Y[i]) = y[i]
-    }
-
-    for i in 0..P.len() {
-        *(P[i]) = params[i]
-    }
-
-    for (i, expr) in EXPRS.iter().enumerate() {
-        let ctx = CONTEXT.as_ref().unwrap();
-        ydot[i] = expr.eval_with_context(ctx).unwrap();
-
-        if !ydot[i].is_finite() {
-            eprintln!(
-                "Expression {} evaluated to {} with params {:?}, setting to default value {}",
-                i + 1,
-                ydot[i],
-                params,
-                *DEF_YDOT
-            );
-            ydot[i] = *DEF_YDOT;
-        }
-    }
+    EVAL_F.as_ref().unwrap().eval(t, y, ydot, p)
 }
 
 #[cfg(test)]
@@ -151,7 +89,7 @@ mod test {
             ));
         }
 
-        for i in 0..10_000 {
+        for _ in 0..10_000 {
             unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
 
             assert_eq!(ydot[0], -1.0);
@@ -230,6 +168,6 @@ mod test {
 
         unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
 
-        println!("ydot: {:?}", ydot);
+        assert_eq!(ydot[0], 0.0)
     }
 }

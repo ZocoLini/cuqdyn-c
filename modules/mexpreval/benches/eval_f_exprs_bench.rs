@@ -117,5 +117,5 @@ fn alpha_pinene_bench_eval(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, lotka_volterra_bench_eval, logistic_model_bench_eval, alpha_pinene_bench_eval);
+criterion_group!(benches, lotka_volterra_bench_eval, logistic_model_bench_eval, alpha_pinene_bench_eval, lotka_volterra_predefined_bench_eval);
 criterion_main!(benches);
