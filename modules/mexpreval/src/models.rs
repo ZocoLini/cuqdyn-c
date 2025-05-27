@@ -2,16 +2,8 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::{env, slice};
 use std::str::FromStr;
-use std::sync::LazyLock;
 use meval::{Context, Expr};
 use crate::{OdeExpr};
-
-static DEF_YDOT: LazyLock<f64> = LazyLock::new(|| {
-    env::var("CUQDYN_DEF_YDOT")
-        .unwrap_or_else(|_| "0.0".to_string())
-        .parse()
-        .unwrap_or(0.0)
-});
 
 pub trait Model {
     fn eval(&self, t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]);
@@ -90,14 +82,20 @@ impl Model for GenericModel<'_> {
                 ydot[i] = expr.eval_with_context(&self.ctx).unwrap();
 
                 if !ydot[i].is_finite() {
+                    let def = env::var("CUQDYN_DEF_YDOT")
+                        .unwrap_or_else(|_| "0.0".to_string())
+                        .parse()
+                        .unwrap_or(0.0);
+                    
                     eprintln!(
                         "Expression {} evaluated to {} with params {:?}, setting to default value {}",
                         i + 1,
                         ydot[i],
                         p,
-                        *DEF_YDOT
+                        def
                     );
-                    ydot[i] = *DEF_YDOT;
+                    
+                    ydot[i] = def;
                 }
             }
         }
