@@ -116,12 +116,13 @@ void returnseed_(void *exp1_, double *seed) {
 
 void initrngrandomserial_(void *exp1_) {
     experiment_total *exp1;
-    long init_seed;
     exp1 = (experiment_total *) exp1_;
+
+    char *seed = getenv("SACESS_SEED");
 
     exp1[0].seed = (double *) calloc(1,sizeof(double));
     exp1[0].contadorseed = 1;
-    init_seed = time(NULL) * getpid();
+    long init_seed = seed == NULL ? time(NULL) * getpid() : atoi(seed);
     exp1[0].seed[0]  = (double) init_seed;
     printf("SERIAL SEED %lf\n", exp1[0].seed[0]  );
     exp1[0].random = gsl_rng_alloc (gsl_rng_mt19937);
@@ -132,12 +133,15 @@ void initrngrandomserial_(void *exp1_) {
 void initrngrandomparallel_(void *exp1_, int *idp) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp1_;
+
+    char *seed = getenv("SACESS_SEED");
+
     struct timespec spec;
     long init_seed;
     exp1[0].contadorseed = 1;
     exp1[0].seed = (double *) malloc(1*sizeof(double));
     //clock_gettime(CLOCK_REALTIME, &spec);
-    init_seed = time(NULL) * (getpid()*(*idp+1)) ;
+    init_seed = seed == NULL ? time(NULL) * getpid() : atoi(seed);
     exp1[0].seed[0]  = (double) init_seed;
     exp1[0].random = gsl_rng_alloc (gsl_rng_mt19937);
     gsl_rng_set (exp1[0].random ,  (unsigned long int)  init_seed  );
@@ -149,10 +153,12 @@ void reinitrngrandomparallel_(void *exp1_, int *idp) {
     long init_seed;
     exp1 = (experiment_total *) exp1_;
 
+    char *seed = getenv("SACESS_SEED");
+
     exp1[0].contadorseed = exp1[0].contadorseed  + 1;
     
     exp1[0].seed = (double *) realloc(exp1[0].seed, exp1[0].contadorseed*sizeof(double));
-    init_seed = time(NULL) * ((*idp+1)) ;
+    init_seed = seed == NULL ? time(NULL) * getpid() : atoi(seed);
 
     exp1[0].seed[exp1[0].contadorseed-1]  = init_seed;
     gsl_rng_free(exp1[0].random);
