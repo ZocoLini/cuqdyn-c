@@ -154,7 +154,7 @@ void print_matrix(DlsMat mat, FILE *output_file, char *name)
     {
         for (int j = 0; j < SM_COLUMNS_D(mat); j++)
         {
-            fprintf(output_file, "%lf ", SM_ELEMENT_D(mat, i, j));
+            fprintf(output_file, "%.8lf ", SM_ELEMENT_D(mat, i, j));
         }
         fprintf(output_file, "\n");
     }
@@ -166,7 +166,7 @@ void print_vector(N_Vector vec, FILE *output_file, char *name)
     fprintf(output_file, "%ld\n", NV_LENGTH_S(vec));
     for (int i = 0; i < NV_LENGTH_S(vec); i++)
     {
-        fprintf(output_file, "%lf ", NV_Ith_S(vec, i));
+        fprintf(output_file, "%.8lf ", NV_Ith_S(vec, i));
     }
     fprintf(output_file, "\n");
 }
