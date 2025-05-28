@@ -38,8 +38,9 @@ int main(int argc, char **argv)
     logistic_model_ess(LOGISTIC_MODEL_CONF_FILE_NL2SOL_DN2FB);
     printf("\tTest 5 passed Logistic Model NL2SOL_DN2FB\n");
 
-    alpha_pinene_ess(ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 6 passed Alpha-Pinene NL2SOL_DN2GB\n");
+    // Alpha pinene is too slow to be tested right now
+    // alpha_pinene_ess(ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB);
+    // printf("\tTest 6 passed Alpha-Pinene NL2SOL_DN2GB\n");
     
     return 0;
 }

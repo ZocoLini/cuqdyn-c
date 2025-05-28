@@ -189,7 +189,6 @@ N_VDestroy(residuals);
 
 #ifdef MPI
     printf("%ld iterations of rank %d finalized\n", iterations, rank);
-    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     if (rank != 0)
