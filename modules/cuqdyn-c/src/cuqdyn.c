@@ -70,10 +70,6 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     }
 
 #ifdef MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-
-#ifdef MPI
     long iterations;
     long start_index;
 
@@ -179,7 +175,6 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
                 set_matrix_row(predicted_params_matrix, predicted_params, slaved_index, 0, NV_LENGTH_S(predicted_params));
             }
         }
-        MPI_Barrier(MPI_COMM_WORLD);
 #endif
         if (rank == 0)
         {
