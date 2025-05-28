@@ -31,7 +31,7 @@ DlsMat solve_ode(N_Vector parameters, N_Vector initial_values, realtype t0, N_Ve
     retval = CVodeSetUserData(cvode_mem, parameters);
     if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
 
-    retval = CVodeSetMaxNumSteps(cvode_mem, 500000);
+    retval = CVodeSetMaxNumSteps(cvode_mem, 10000000);
     if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) { return NULL; }
 
     /* Time points */
