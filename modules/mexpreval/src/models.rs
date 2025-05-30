@@ -102,7 +102,6 @@ impl Model for GenericModel<'_> {
     }
 }
 
-#[derive(Default)]
 struct LotkaVolterra;
 
 impl Model for LotkaVolterra {
@@ -112,7 +111,6 @@ impl Model for LotkaVolterra {
     }
 }
 
-#[derive(Default)]
 struct AlphaPinene;
 
 impl Model for AlphaPinene {
@@ -139,8 +137,8 @@ impl Model for AlphaPinene {
 
 pub fn eval_model_fun(model: &str, ode_expr: &OdeExpr) -> Box<dyn Model> {
     match model {
-        "lotka-volterra" => Box::new(LotkaVolterra::default()),
-        "alpha-pinene" | "α-pinene" => Box::new(AlphaPinene::default()),
+        "lotka-volterra" => Box::new(LotkaVolterra),
+        "alpha-pinene" | "α-pinene" => Box::new(AlphaPinene),
         _ => Box::new(GenericModel::new(ode_expr))
     }
 }
