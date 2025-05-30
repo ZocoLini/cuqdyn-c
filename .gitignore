@@ -100,3 +100,4 @@ perf_out.tmp
 ESTADO.md
 .cache/
 perf.data
+.~lock*
