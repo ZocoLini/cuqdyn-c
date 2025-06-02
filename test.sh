@@ -6,7 +6,7 @@ execute_variant() {
   BUILD_DIR="build-$variant"
 
       if [ ! -d "$BUILD_DIR/" ]; then
-          bash build.sh "$variant"
+          exit 0
       fi
 
       rm -rf "$BUILD_DIR/tests/data/*"
@@ -49,8 +49,6 @@ execute_variant() {
       .venv/bin/python plot.py "$CLI_TEST_DIR/data/output/cuqdyn-results.txt"
 }
 
-bash build.sh "$1"
-
 if [ ! -d ".venv" ]; then
     if ! python3 -m venv .venv; then
         echo "Error creating python virtual environment. Install python3-venv."
@@ -67,11 +65,6 @@ variants=(
   "mpi"
   "mpi2"
 )
-
-if [[ " ${variants[*]} " =~ " $1 " ]]; then
-  execute_variant "$1"
-  exit 0
-fi
 
 for variant in "${variants[@]}"; do
   execute_variant "$variant" &

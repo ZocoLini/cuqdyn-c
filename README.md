@@ -64,14 +64,15 @@ generating a random one.
 
 The project has a `build.sh` script.
 `build-[variant]/` directories will be created, each one representing a variant
-off the project they build. If you call the script without arguments, it will build
+off the project builded. If you call the script without arguments, it will build
 all the variants, but you can also specify the variant you want, passing it as the
 first argument. The available variants are:
 
 - `serial`: Builds the project to only execute serial methods.
 - `mpi`: Builds the project to execute the sequential solver in parallel using MPI.
 - `mpi2`: Builds the project to only include the MPI and OpenMP defined in sacess-library.
-  After this, running `test.sh` is a good way to know if the cuqdyn library works as expected.
+  
+After this, running `test.sh` is a good way to know if the cuqdyn library works as expected.
 
 ## Using the CLI
 
@@ -162,7 +163,7 @@ There are three types of input files needed to run the cli:
   The data file containing a mtrix of observed data and the initial value
   needed to solve the ODE. The data file can be a .mat file where the first matrix
   found will be used (`test/data/lotka_volterra_data_homoc_noise_0.10_size_30_data_1.mat`)
-  or a txt file written in the following format:
+  or a txt file written with the following format:
   ```
   # The first row is gonna be used as the initial condition
   31 3 # Matrix dimensions so the parsing is easier
@@ -175,13 +176,13 @@ There are three types of input files needed to run the cli:
 
 ## Defining a new model
 
-Using strings en evaluate them is slow compared to compiled instructions, so, to make this
-possible we designed a way to define the models in Rust and compile them to machine code.
+Using strings and evaluate them is slow compared to compiled instructions, so, to make this
+ possible, we designed a way to define the models in Rust and compile them to machine code.
 
-Lets going to dig into it with an example of the Lotka Volterra model:
+Let's dig into it with an example of the Lotka Volterra model:
 
-First of all, we need to write some Rust code. We will me using the following file
-`modules/mexpreval/src/models.rs`. Inside, we will create a new unit struct and implement 
+First of all, we need to write some Rust code. We will be using the following file
+`modules/mexpreval/src/models.rs`. Inside, we create a new unit struct and implement 
 the Model trait like this:
 ```Rust
 #[derive(Default)]
@@ -206,7 +207,7 @@ pub fn eval_model_fun(model: &str, ode_expr: &OdeExpr) -> Box<dyn Model> {
 }
 ```
 
-After you establish an identifier in the match, at the bottom of the file, them model can be 
+After you establish an identifier in the match at the bottom of the file, the model can be 
 used indicating the identifier in the XML config file like this:
 
   ```xml
