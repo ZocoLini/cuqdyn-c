@@ -5,15 +5,21 @@ From: ubuntu:22.04
     Author Borja Castellano
     Version 0.1.0
 
+%environment
+    export PATH=/root/.cargo/bin:$PATH
+
 %post
     apt update
     apt install -y \
         curl \
         git \
+        libopenmpi-dev \
+        openmpi-bin \
         build-essential \
         cmake \
         gfortran
 
     curl https://sh.rustup.rs -sSf | sh -s -- -y
 
-    apt install -y libopenmpi-dev openmpi-bin
+    echo 'export PATH=/root/.cargo/bin:$PATH' >> /environment
+    echo 'export PATH=/root/.cargo/bin:$PATH' >> /root/.bashrc
