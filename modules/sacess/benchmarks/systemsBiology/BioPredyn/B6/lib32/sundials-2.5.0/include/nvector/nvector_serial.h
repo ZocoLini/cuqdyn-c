@@ -30,7 +30,7 @@
  *   - The definition of the generic N_Vector structure can be found
  *     in the header file sundials_nvector.h.
  *
- *   - The definition of the type 'realtype' can be found in the
+ *   - The definition of the type 'sunrealtype' can be found in the
  *     header file sundials_types.h, and it may be changed (at the 
  *     configuration stage) according to the user's needs. 
  *     The sundials_types.h file also contains the definition
@@ -63,13 +63,13 @@ extern "C" {
 
 /* serial implementation of the N_Vector 'content' structure
    contains the length of the vector, a pointer to an array
-   of 'realtype' components, and a flag indicating ownership of
+   of 'sunrealtype' components, and a flag indicating ownership of
    the data */
 
 struct _N_VectorContent_Serial {
   long int length;
   booleantype own_data;
-  realtype *data;
+  sunrealtype *data;
 };
 
 typedef struct _N_VectorContent_Serial *N_VectorContent_Serial;
@@ -181,7 +181,7 @@ SUNDIALS_EXPORT N_Vector N_VNewEmpty_Serial(long int vec_length);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT N_Vector N_VMake_Serial(long int vec_length, realtype *v_data);
+SUNDIALS_EXPORT N_Vector N_VMake_Serial(long int vec_length, sunrealtype *v_data);
 
 /*
  * -----------------------------------------------------------------
@@ -236,27 +236,27 @@ SUNDIALS_EXPORT N_Vector N_VCloneEmpty_Serial(N_Vector w);
 SUNDIALS_EXPORT N_Vector N_VClone_Serial(N_Vector w);
 SUNDIALS_EXPORT void N_VDestroy_Serial(N_Vector v);
 SUNDIALS_EXPORT void N_VSpace_Serial(N_Vector v, long int *lrw, long int *liw);
-SUNDIALS_EXPORT realtype *N_VGetArrayPointer_Serial(N_Vector v);
-SUNDIALS_EXPORT void N_VSetArrayPointer_Serial(realtype *v_data, N_Vector v);
-SUNDIALS_EXPORT void N_VLinearSum_Serial(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z);
-SUNDIALS_EXPORT void N_VConst_Serial(realtype c, N_Vector z);
+SUNDIALS_EXPORT sunrealtype *N_VGetArrayPointer_Serial(N_Vector v);
+SUNDIALS_EXPORT void N_VSetArrayPointer_Serial(sunrealtype *v_data, N_Vector v);
+SUNDIALS_EXPORT void N_VLinearSum_Serial(sunrealtype a, N_Vector x, sunrealtype b, N_Vector y, N_Vector z);
+SUNDIALS_EXPORT void N_VConst_Serial(sunrealtype c, N_Vector z);
 SUNDIALS_EXPORT void N_VProd_Serial(N_Vector x, N_Vector y, N_Vector z);
 SUNDIALS_EXPORT void N_VDiv_Serial(N_Vector x, N_Vector y, N_Vector z);
-SUNDIALS_EXPORT void N_VScale_Serial(realtype c, N_Vector x, N_Vector z);
+SUNDIALS_EXPORT void N_VScale_Serial(sunrealtype c, N_Vector x, N_Vector z);
 SUNDIALS_EXPORT void N_VAbs_Serial(N_Vector x, N_Vector z);
 SUNDIALS_EXPORT void N_VInv_Serial(N_Vector x, N_Vector z);
-SUNDIALS_EXPORT void N_VAddConst_Serial(N_Vector x, realtype b, N_Vector z);
-SUNDIALS_EXPORT realtype N_VDotProd_Serial(N_Vector x, N_Vector y);
-SUNDIALS_EXPORT realtype N_VMaxNorm_Serial(N_Vector x);
-SUNDIALS_EXPORT realtype N_VWrmsNorm_Serial(N_Vector x, N_Vector w);
-SUNDIALS_EXPORT realtype N_VWrmsNormMask_Serial(N_Vector x, N_Vector w, N_Vector id);
-SUNDIALS_EXPORT realtype N_VMin_Serial(N_Vector x);
-SUNDIALS_EXPORT realtype N_VWL2Norm_Serial(N_Vector x, N_Vector w);
-SUNDIALS_EXPORT realtype N_VL1Norm_Serial(N_Vector x);
-SUNDIALS_EXPORT void N_VCompare_Serial(realtype c, N_Vector x, N_Vector z);
+SUNDIALS_EXPORT void N_VAddConst_Serial(N_Vector x, sunrealtype b, N_Vector z);
+SUNDIALS_EXPORT sunrealtype N_VDotProd_Serial(N_Vector x, N_Vector y);
+SUNDIALS_EXPORT sunrealtype N_VMaxNorm_Serial(N_Vector x);
+SUNDIALS_EXPORT sunrealtype N_VWrmsNorm_Serial(N_Vector x, N_Vector w);
+SUNDIALS_EXPORT sunrealtype N_VWrmsNormMask_Serial(N_Vector x, N_Vector w, N_Vector id);
+SUNDIALS_EXPORT sunrealtype N_VMin_Serial(N_Vector x);
+SUNDIALS_EXPORT sunrealtype N_VWL2Norm_Serial(N_Vector x, N_Vector w);
+SUNDIALS_EXPORT sunrealtype N_VL1Norm_Serial(N_Vector x);
+SUNDIALS_EXPORT void N_VCompare_Serial(sunrealtype c, N_Vector x, N_Vector z);
 SUNDIALS_EXPORT booleantype N_VInvTest_Serial(N_Vector x, N_Vector z);
 SUNDIALS_EXPORT booleantype N_VConstrMask_Serial(N_Vector c, N_Vector x, N_Vector m);
-SUNDIALS_EXPORT realtype N_VMinQuotient_Serial(N_Vector num, N_Vector denom);
+SUNDIALS_EXPORT sunrealtype N_VMinQuotient_Serial(N_Vector num, N_Vector denom);
 
 #ifdef __cplusplus
 }

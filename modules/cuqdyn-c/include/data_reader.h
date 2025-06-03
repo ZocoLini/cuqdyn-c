@@ -1,13 +1,13 @@
 #ifndef FILE_READER_H
 #define FILE_READER_H
 
-#include <sundials_old/sundials_direct.h>
-#include <sundials_old/sundials_nvector.h>
+#include <sundials/sundials_nvector.h>
+#include <sunmatrix/sunmatrix_dense.h>
 
 /* This function wich type of data file is being read (.txt or .mat) and
  * calls the appropriate function to read it.
  */
-int read_data_file(const char *data_file, N_Vector *t, DlsMat *y);
+int read_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
 
 /*
  * The file should be two ints, m and n, and a matrix mxn
@@ -30,7 +30,7 @@ int read_data_file(const char *data_file, N_Vector *t, DlsMat *y);
  *      .                .
  *      ym0 ym1 ym2 ... ymn
  */
-int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y);
+int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
 /*
  * The file should be a single matrix mxn
  * All the data contained in the matrix is the observed data and has this form:
@@ -50,6 +50,6 @@ int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y);
  *      .                .
  *      ym0 ym1 ym2 ... ymn
  */
-int read_mat_data_file(const char *data_file, N_Vector *t, DlsMat *y);
+int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
 
 #endif //FILE_READER_H

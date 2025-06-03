@@ -210,7 +210,7 @@ typedef int (*KINLocalFn)(long int Nlocal, N_Vector uu,
 SUNDIALS_EXPORT int KINBBDPrecInit(void *kinmem, long int Nlocal, 
                                    long int mudq, long int mldq,
                                    long int mukeep, long int mlkeep,
-                                   realtype dq_rel_uu, 
+                                   sunrealtype dq_rel_uu,
                                    KINLocalFn gloc, KINCommFn gcomm);
 
 /*

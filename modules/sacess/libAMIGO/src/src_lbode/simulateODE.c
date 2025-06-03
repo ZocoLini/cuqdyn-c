@@ -7,9 +7,9 @@
 /* Sundials Header Files */
 
 #include <cvodes_old/cvodes.h>
-#include <nvector_old/nvector_serial.h>
-#include <sundials_old/sundials_types.h>
-#include <sundials_old/sundials_math.h>
+#include <nvector/nvector_serial.h>
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_math.h>
 #include "mex.h"
 
 #include "CNOStructure.h"
@@ -18,9 +18,9 @@
 
 #define ZERO  RCONST(0.0)
 
-typedef int rhs_func(realtype t, N_Vector y, N_Vector ydot, void *f_data);
+typedef int rhs_func(sunrealtype t, N_Vector y, N_Vector ydot, void *f_data);
 
-int rhsODE(realtype t, N_Vector y, N_Vector ydot, void *data);
+int rhsODE(sunrealtype t, N_Vector y, N_Vector ydot, void *data);
 
 static int check_flag(void *flagvalue, char *funcname, int opt,int verbose);
 
@@ -34,7 +34,7 @@ int simulateODE
 	int i,j,k,neq,counter,flag;
     int is;
     booleantype err_con;
-	realtype tout, ti, tf;
+	sunrealtype tout, ti, tf;
     
     //int plist[(*data).nPars];
 	int* plist=(int*)malloc(sizeof(int)*data->nPars);
@@ -160,7 +160,7 @@ int simulateODE
 		 return(0);
 	 }
 
-	 flag = CVodeSStolerances(cvode_mem,(realtype)reltol,(realtype)atol);
+	 flag = CVodeSStolerances(cvode_mem,(sunrealtype)reltol,(sunrealtype)atol);
 	  if(check_flag(&flag, "CVodeSStolerances", 1,verbose)) return(1);
 
       
@@ -187,7 +187,7 @@ int simulateODE
 	 }
 	 if(verbose)printf("Max number of steps: %i\n", maxNumSteps);
 
-    CVodeSetMaxStep(cvode_mem,(realtype)maxStepSize);
+    CVodeSetMaxStep(cvode_mem,(sunrealtype)maxStepSize);
     CVodeSetMaxErrTestFails(cvode_mem, maxErrTestFails);
 
     /*Experimental sensibility Analysis*/

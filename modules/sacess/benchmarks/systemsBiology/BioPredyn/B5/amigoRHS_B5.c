@@ -5,15 +5,15 @@ Check README.txt
 
 #include <AMIGO_problem.h>
 
-int amigoRHS_B5(realtype t, N_Vector y, N_Vector ydot, void *data);
+int amigoRHS_B5(sunrealtype t, N_Vector y, N_Vector ydot, void *data);
 
-void amigo_Y_at_tcon_B5(void* amigo_model, realtype t, N_Vector y);
+void amigo_Y_at_tcon_B5(void* amigo_model, sunrealtype t, N_Vector y);
 
 void amigoRHS_get_OBS_B5(void* data);
 
 void amigoRHS_get_sens_OBS_B5(void* data);
  
-int amigoRHS_B5(realtype t, N_Vector y, N_Vector ydot, void *data);
+int amigoRHS_B5(sunrealtype t, N_Vector y, N_Vector ydot, void *data);
 
 
 #define nik	Ith(y,0)
@@ -240,7 +240,7 @@ double OR(double x1,double x2,double x3){
 
         
         
-    int amigoRHS_B5(realtype t, N_Vector y, N_Vector ydot, void *data){
+    int amigoRHS_B5(sunrealtype t, N_Vector y, N_Vector ydot, void *data){
     
     double DNAfree,Dp,D,E,k_trans_f,k_deg_f,psi,R1,R2,fabc_mini,fabc_mini_neg,mrna_mini, r3_mini;
     
@@ -571,11 +571,11 @@ double cjun_fhill_ap1;
     return(0);
 }
     
-    int amigoJAC_B5(int N, realtype t, N_Vector y, N_Vector fy, DlsMat J, void *data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
+    int amigoJAC_B5(int N, sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
         return(0);
     }
     
-    int amigoSensRHS_B5(int Ns, realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yS, N_Vector ySdot, void *data, N_Vector tmp1, N_Vector tmp2){
+    int amigoSensRHS_B5(int Ns, sunrealtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yS, N_Vector ySdot, void *data, N_Vector tmp1, N_Vector tmp2){
         return(0);
     };
         
@@ -587,7 +587,7 @@ void amigoRHS_get_sens_OBS_B5(void* data){
 
 }
 
-void amigo_Y_at_tcon_B5(void* data, realtype t, N_Vector y){
+void amigo_Y_at_tcon_B5(void* data, sunrealtype t, N_Vector y){
     AMIGO_model* amigo_model=(AMIGO_model*)data;
     
 }

@@ -179,13 +179,13 @@ void Krylov( double *vin, double *vout, double tin, double tout, double stephint
 
 int InitKrylovVariables( double *vin, int n );
 
-int InitBandSolver( realtype tzero, double stephint, double rel_tol, double abs_tol );
+int InitBandSolver( sunrealtype tzero, double stephint, double rel_tol, double abs_tol );
 void FreeBandSolver( void );
 
 int CheckFlag( void *flagvalue, char *funcname, int opt );
 
 /** wrapper function - to call the derivative */
-int my_f_band( realtype t, N_Vector y, N_Vector ydot, void *extra_data );
+int my_f_band( sunrealtype t, N_Vector y, N_Vector ydot, void *extra_data );
 
 /** WriteSolvLog: write to solver log file */
 void WriteSolvLog( char *solver, double tin, double tout, double h, int n, int nderivs, FILE * slog );

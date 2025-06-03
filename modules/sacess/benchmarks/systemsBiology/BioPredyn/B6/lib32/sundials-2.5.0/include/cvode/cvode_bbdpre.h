@@ -134,7 +134,7 @@ extern "C" {
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVLocalFn)(long int Nlocal, realtype t, N_Vector y,
+typedef int (*CVLocalFn)(long int Nlocal, sunrealtype t, N_Vector y,
                          N_Vector g, void *user_data);
 
 /*
@@ -165,7 +165,7 @@ typedef int (*CVLocalFn)(long int Nlocal, realtype t, N_Vector y,
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVCommFn)(long int Nlocal, realtype t, N_Vector y,
+typedef int (*CVCommFn)(long int Nlocal, sunrealtype t, N_Vector y,
                         void *user_data);
 
 /*
@@ -214,7 +214,7 @@ typedef int (*CVCommFn)(long int Nlocal, realtype t, N_Vector y,
 SUNDIALS_EXPORT int CVBBDPrecInit(void *cvode_mem, long int Nlocal, 
                                   long int mudq, long int mldq, 
                                   long int mukeep, long int mlkeep, 
-                                  realtype dqrely,
+                                  sunrealtype dqrely,
                                   CVLocalFn gloc, CVCommFn cfn);
 
 /*
@@ -240,7 +240,7 @@ SUNDIALS_EXPORT int CVBBDPrecInit(void *cvode_mem, long int Nlocal,
  */
 
 SUNDIALS_EXPORT int CVBBDPrecReInit(void *cvode_mem, long int mudq, long int mldq,
-				    realtype dqrely);
+				    sunrealtype dqrely);
 
 /*
  * -----------------------------------------------------------------

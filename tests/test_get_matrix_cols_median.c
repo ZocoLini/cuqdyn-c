@@ -20,14 +20,14 @@ int main(void)
 
 void test_even_vec()
 {
-    realtype values1[5] = {5, 4, 2, 1, 8};
-    realtype values2[5] = {6, 3, 8, 6, 2};
-    realtype values3[5] = {1, 4, 2, 9, 0};
-    realtype values4[5] = {3, 2, 6, 5, 8};
+    sunrealtype values1[5] = {5, 4, 2, 1, 8};
+    sunrealtype values2[5] = {6, 3, 8, 6, 2};
+    sunrealtype values3[5] = {1, 4, 2, 9, 0};
+    sunrealtype values4[5] = {3, 2, 6, 5, 8};
 
-    realtype medians[5] = {4, 3.5, 4, 5.5, 5};
+    sunrealtype medians[5] = {4, 3.5, 4, 5.5, 5};
 
-    DlsMat matrix = SUNDenseMatrix(4, 5);
+    SUNMatrix matrix = NewDenseMatrix(4, 5);
 
     for (int j = 0; j < 5; ++j)
     {
@@ -41,12 +41,12 @@ void test_even_vec()
 
     assert(medians_vector != NULL);
 
-    realtype *medians_vector_data = NV_DATA_S(medians_vector);
+    sunrealtype *medians_vector_data = NV_DATA_S(medians_vector);
 
     for (int i = 0; i < 5; ++i)
     {
-        realtype expected = medians[i];
-        realtype obtained = medians_vector_data[i];
+        sunrealtype expected = medians[i];
+        sunrealtype obtained = medians_vector_data[i];
 
         assert(expected == obtained);
     }
@@ -54,13 +54,13 @@ void test_even_vec()
 
 void test_odd_vec()
 {
-    realtype values1[5] = {5, 4, 2, 1, 8};
-    realtype values2[5] = {6, 3, 8, 6, 2};
-    realtype values3[5] = {1, 4, 2, 9, 0};
+    sunrealtype values1[5] = {5, 4, 2, 1, 8};
+    sunrealtype values2[5] = {6, 3, 8, 6, 2};
+    sunrealtype values3[5] = {1, 4, 2, 9, 0};
 
-    realtype medians[5] = {5, 4, 2, 6, 2};
+    sunrealtype medians[5] = {5, 4, 2, 6, 2};
 
-    DlsMat matrix = SUNDenseMatrix(3, 5);
+    SUNMatrix matrix = NewDenseMatrix(3, 5);
 
     for (int j = 0; j < 5; ++j)
     {
@@ -73,12 +73,12 @@ void test_odd_vec()
 
     assert(medians_vector != NULL);
 
-    realtype *medians_vector_data = NV_DATA_S(medians_vector);
+    sunrealtype *medians_vector_data = NV_DATA_S(medians_vector);
 
     for (int i = 0; i < 5; ++i)
     {
-        realtype expected = medians[i];
-        realtype obtained = medians_vector_data[i];
+        sunrealtype expected = medians[i];
+        sunrealtype obtained = medians_vector_data[i];
 
         assert(expected == obtained);
     }

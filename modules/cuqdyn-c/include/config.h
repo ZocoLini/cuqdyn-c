@@ -1,16 +1,16 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <sundials_old/sundials_nvector.h>
+#include <sundials/sundials_nvector.h>
 
 typedef struct
 {
-    realtype rtol;
+    sunsunrealtype rtol;
     N_Vector atol;
 
 } Tolerances;
 
-Tolerances create_tolerances(realtype rtol, N_Vector atol);
+Tolerances create_tolerances(sunsunrealtype rtol, N_Vector atol);
 void destroy_tolerances(Tolerances);
 
 typedef struct

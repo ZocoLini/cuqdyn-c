@@ -6,16 +6,16 @@
 
 
 
-int amigoRHS_B2(realtype , N_Vector , N_Vector , void *);
+int amigoRHS_B2(sunrealtype , N_Vector , N_Vector , void *);
 
 void amigoRHS_get_OBS_B2(void* );
 
 void amigoRHS_get_sens_OBS_B2(void* );
  
-int amigoRHS_B2(realtype , N_Vector , N_Vector , void *);
+int amigoRHS_B2(sunrealtype , N_Vector , N_Vector , void *);
 
-void amigo_Y_at_tcon_B2(void* , realtype , N_Vector );
+void amigo_Y_at_tcon_B2(void* , sunrealtype , N_Vector );
 
-int amigoJAC_B2(int , realtype , N_Vector , N_Vector , DlsMat , void *, N_Vector , N_Vector , N_Vector );
+int amigoJAC_B2(int , sunrealtype , N_Vector , N_Vector , SUNMatrix , void *, N_Vector , N_Vector , N_Vector );
 
-int amigoSensRHS_B2(int , realtype , N_Vector , N_Vector , int , N_Vector , N_Vector , void *, N_Vector , N_Vector );
+int amigoSensRHS_B2(int , sunrealtype , N_Vector , N_Vector , int , N_Vector , N_Vector , void *, N_Vector , N_Vector );

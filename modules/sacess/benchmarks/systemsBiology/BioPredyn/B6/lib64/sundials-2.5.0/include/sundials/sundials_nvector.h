@@ -70,27 +70,27 @@ struct _generic_N_Vector_Ops {
   N_Vector    (*nvcloneempty)(N_Vector);
   void        (*nvdestroy)(N_Vector);
   void        (*nvspace)(N_Vector, long int *, long int *);
-  realtype*   (*nvgetarraypointer)(N_Vector);
-  void        (*nvsetarraypointer)(realtype *, N_Vector);
-  void        (*nvlinearsum)(realtype, N_Vector, realtype, N_Vector, N_Vector); 
-  void        (*nvconst)(realtype, N_Vector);
+  sunrealtype*   (*nvgetarraypointer)(N_Vector);
+  void        (*nvsetarraypointer)(sunrealtype *, N_Vector);
+  void        (*nvlinearsum)(sunrealtype, N_Vector, sunrealtype, N_Vector, N_Vector);
+  void        (*nvconst)(sunrealtype, N_Vector);
   void        (*nvprod)(N_Vector, N_Vector, N_Vector);
   void        (*nvdiv)(N_Vector, N_Vector, N_Vector);
-  void        (*nvscale)(realtype, N_Vector, N_Vector);
+  void        (*nvscale)(sunrealtype, N_Vector, N_Vector);
   void        (*nvabs)(N_Vector, N_Vector);
   void        (*nvinv)(N_Vector, N_Vector);
-  void        (*nvaddconst)(N_Vector, realtype, N_Vector);
-  realtype    (*nvdotprod)(N_Vector, N_Vector);
-  realtype    (*nvmaxnorm)(N_Vector);
-  realtype    (*nvwrmsnorm)(N_Vector, N_Vector);
-  realtype    (*nvwrmsnormmask)(N_Vector, N_Vector, N_Vector);
-  realtype    (*nvmin)(N_Vector);
-  realtype    (*nvwl2norm)(N_Vector, N_Vector);
-  realtype    (*nvl1norm)(N_Vector);
-  void        (*nvcompare)(realtype, N_Vector, N_Vector);
+  void        (*nvaddconst)(N_Vector, sunrealtype, N_Vector);
+  sunrealtype    (*nvdotprod)(N_Vector, N_Vector);
+  sunrealtype    (*nvmaxnorm)(N_Vector);
+  sunrealtype    (*nvwrmsnorm)(N_Vector, N_Vector);
+  sunrealtype    (*nvwrmsnormmask)(N_Vector, N_Vector, N_Vector);
+  sunrealtype    (*nvmin)(N_Vector);
+  sunrealtype    (*nvwl2norm)(N_Vector, N_Vector);
+  sunrealtype    (*nvl1norm)(N_Vector);
+  void        (*nvcompare)(sunrealtype, N_Vector, N_Vector);
   booleantype (*nvinvtest)(N_Vector, N_Vector);
   booleantype (*nvconstrmask)(N_Vector, N_Vector, N_Vector);
-  realtype    (*nvminquotient)(N_Vector, N_Vector);
+  sunrealtype    (*nvminquotient)(N_Vector, N_Vector);
 };
 
 /*
@@ -127,22 +127,22 @@ struct _generic_N_Vector {
  *   Destroys a vector created with N_VClone.
  *
  * N_VSpace
- *   Returns space requirements for one N_Vector (type 'realtype' in
+ *   Returns space requirements for one N_Vector (type 'sunrealtype' in
  *   lrw and type 'long int' in liw).
  *
  * N_VGetArrayPointer
  *   Returns a pointer to the data component of the given N_Vector.
  *   NOTE: This function assumes that the internal data is stored
- *   as a contiguous 'realtype' array. This routine is only used in
+ *   as a contiguous 'sunrealtype' array. This routine is only used in
  *   the solver-specific interfaces to the dense and banded linear
  *   solvers, as well as the interfaces to  the banded preconditioners
  *   distributed with SUNDIALS.
  *   
  * N_VSetArrayPointer
  *   Overwrites the data field in the given N_Vector with a user-supplied
- *   array of type 'realtype'.
+ *   array of type 'sunrealtype'.
  *   NOTE: This function assumes that the internal data is stored
- *   as a contiguous 'realtype' array. This routine is only used in
+ *   as a contiguous 'sunrealtype' array. This routine is only used in
  *   the interfaces to the dense linear solver.
  *
  * N_VLinearSum
@@ -317,27 +317,27 @@ SUNDIALS_EXPORT N_Vector N_VClone(N_Vector w);
 SUNDIALS_EXPORT N_Vector N_VCloneEmpty(N_Vector w);
 SUNDIALS_EXPORT void N_VDestroy(N_Vector v);
 SUNDIALS_EXPORT void N_VSpace(N_Vector v, long int *lrw, long int *liw);
-SUNDIALS_EXPORT realtype *N_VGetArrayPointer(N_Vector v);
-SUNDIALS_EXPORT void N_VSetArrayPointer(realtype *v_data, N_Vector v);
-SUNDIALS_EXPORT void N_VLinearSum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z);
-SUNDIALS_EXPORT void N_VConst(realtype c, N_Vector z);
+SUNDIALS_EXPORT sunrealtype *N_VGetArrayPointer(N_Vector v);
+SUNDIALS_EXPORT void N_VSetArrayPointer(sunrealtype *v_data, N_Vector v);
+SUNDIALS_EXPORT void N_VLinearSum(sunrealtype a, N_Vector x, sunrealtype b, N_Vector y, N_Vector z);
+SUNDIALS_EXPORT void N_VConst(sunrealtype c, N_Vector z);
 SUNDIALS_EXPORT void N_VProd(N_Vector x, N_Vector y, N_Vector z);
 SUNDIALS_EXPORT void N_VDiv(N_Vector x, N_Vector y, N_Vector z);
-SUNDIALS_EXPORT void N_VScale(realtype c, N_Vector x, N_Vector z);
+SUNDIALS_EXPORT void N_VScale(sunrealtype c, N_Vector x, N_Vector z);
 SUNDIALS_EXPORT void N_VAbs(N_Vector x, N_Vector z);
 SUNDIALS_EXPORT void N_VInv(N_Vector x, N_Vector z);
-SUNDIALS_EXPORT void N_VAddConst(N_Vector x, realtype b, N_Vector z);
-SUNDIALS_EXPORT realtype N_VDotProd(N_Vector x, N_Vector y);
-SUNDIALS_EXPORT realtype N_VMaxNorm(N_Vector x);
-SUNDIALS_EXPORT realtype N_VWrmsNorm(N_Vector x, N_Vector w);
-SUNDIALS_EXPORT realtype N_VWrmsNormMask(N_Vector x, N_Vector w, N_Vector id);
-SUNDIALS_EXPORT realtype N_VMin(N_Vector x);
-SUNDIALS_EXPORT realtype N_VWL2Norm(N_Vector x, N_Vector w);
-SUNDIALS_EXPORT realtype N_VL1Norm(N_Vector x);
-SUNDIALS_EXPORT void N_VCompare(realtype c, N_Vector x, N_Vector z);
+SUNDIALS_EXPORT void N_VAddConst(N_Vector x, sunrealtype b, N_Vector z);
+SUNDIALS_EXPORT sunrealtype N_VDotProd(N_Vector x, N_Vector y);
+SUNDIALS_EXPORT sunrealtype N_VMaxNorm(N_Vector x);
+SUNDIALS_EXPORT sunrealtype N_VWrmsNorm(N_Vector x, N_Vector w);
+SUNDIALS_EXPORT sunrealtype N_VWrmsNormMask(N_Vector x, N_Vector w, N_Vector id);
+SUNDIALS_EXPORT sunrealtype N_VMin(N_Vector x);
+SUNDIALS_EXPORT sunrealtype N_VWL2Norm(N_Vector x, N_Vector w);
+SUNDIALS_EXPORT sunrealtype N_VL1Norm(N_Vector x);
+SUNDIALS_EXPORT void N_VCompare(sunrealtype c, N_Vector x, N_Vector z);
 SUNDIALS_EXPORT booleantype N_VInvTest(N_Vector x, N_Vector z);
 SUNDIALS_EXPORT booleantype N_VConstrMask(N_Vector c, N_Vector x, N_Vector m);
-SUNDIALS_EXPORT realtype N_VMinQuotient(N_Vector num, N_Vector denom);
+SUNDIALS_EXPORT sunrealtype N_VMinQuotient(N_Vector num, N_Vector denom);
 
 /*
  * -----------------------------------------------------------------

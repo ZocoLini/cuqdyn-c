@@ -16,7 +16,7 @@
 #include <omp.h>
 #endif
 
-N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, DlsMat yexp, N_Vector initial_values,
+N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, SUNMatrix yexp, N_Vector initial_values,
     int rank, int nproc
     )
 {

@@ -17,7 +17,7 @@
 #endif
 
 int handle_solve(int argc, char *argv[]);
-void print_matrix(DlsMat mat, FILE *output_file, char *name);
+void print_matrix(SUNMatrix mat, FILE *output_file, char *name);
 void print_vector(N_Vector vec, FILE *output_file, char *name);
 
 Handler create_solve_handler()
@@ -116,10 +116,10 @@ int handle_solve(int argc, char *argv[])
     {
 
         N_Vector params_median = cuqdyn_result->predicted_params_median;
-        DlsMat data_median = cuqdyn_result->predicted_data_median;
+        SUNMatrix data_median = cuqdyn_result->predicted_data_median;
 
-        DlsMat q_low = cuqdyn_result->q_low;
-        DlsMat q_up = cuqdyn_result->q_up;
+        SUNMatrix q_low = cuqdyn_result->q_low;
+        SUNMatrix q_up = cuqdyn_result->q_up;
         N_Vector times = cuqdyn_result->times;
 
         char *output_file_path = malloc(strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1);
@@ -145,7 +145,7 @@ int handle_solve(int argc, char *argv[])
     return 0;
 }
 
-void print_matrix(DlsMat mat, FILE *output_file, char *name)
+void print_matrix(SUNMatrix mat, FILE *output_file, char *name)
 {
     fprintf(output_file, "[%s]\n", name);
     fprintf(output_file, "%ld %ld\n", SM_ROWS_D(mat), SM_COLUMNS_D(mat));

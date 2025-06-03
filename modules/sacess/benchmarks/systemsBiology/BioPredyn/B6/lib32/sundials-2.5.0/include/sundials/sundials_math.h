@@ -12,7 +12,7 @@
  * For details, see the LICENSE file.
  * -----------------------------------------------------------------
  * This is the header file for a simple C-language math library. The
- * routines listed here work with the type realtype as defined in
+ * routines listed here work with the type sunrealtype as defined in
  * the header file sundials_types.h.
  * -----------------------------------------------------------------
  */
@@ -67,36 +67,36 @@ extern "C" {
  * Function : RPowerI
  * -----------------------------------------------------------------
  * Usage : int exponent;
- *         realtype base, ans;
+ *         sunrealtype base, ans;
  *         ans = RPowerI(base,exponent);
  * -----------------------------------------------------------------
  * RPowerI returns the value of base^exponent, where base is of type
- * realtype and exponent is of type int.
+ * sunrealtype and exponent is of type int.
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT realtype RPowerI(realtype base, int exponent);
+SUNDIALS_EXPORT sunrealtype RPowerI(sunrealtype base, int exponent);
 
 /*
  * -----------------------------------------------------------------
  * Function : RPowerR
  * -----------------------------------------------------------------
- * Usage : realtype base, exponent, ans;
+ * Usage : sunrealtype base, exponent, ans;
  *         ans = RPowerR(base,exponent);
  * -----------------------------------------------------------------
  * RPowerR returns the value of base^exponent, where both base and
- * exponent are of type realtype. If base < ZERO, then RPowerR
+ * exponent are of type sunrealtype. If base < ZERO, then RPowerR
  * returns ZERO.
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT realtype RPowerR(realtype base, realtype exponent);
+SUNDIALS_EXPORT sunrealtype RPowerR(sunrealtype base, sunrealtype exponent);
 
 /*
  * -----------------------------------------------------------------
  * Function : RSqrt
  * -----------------------------------------------------------------
- * Usage : realtype sqrt_x;
+ * Usage : sunrealtype sqrt_x;
  *         sqrt_x = RSqrt(x);
  * -----------------------------------------------------------------
  * RSqrt(x) returns the square root of x. If x < ZERO, then RSqrt
@@ -104,33 +104,33 @@ SUNDIALS_EXPORT realtype RPowerR(realtype base, realtype exponent);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT realtype RSqrt(realtype x);
+SUNDIALS_EXPORT sunrealtype RSqrt(sunrealtype x);
 
 /*
  * -----------------------------------------------------------------
  * Function : RAbs (a.k.a. ABS)
  * -----------------------------------------------------------------
- * Usage : realtype abs_x;
+ * Usage : sunrealtype abs_x;
  *         abs_x = RAbs(x);
  * -----------------------------------------------------------------
  * RAbs(x) returns the absolute value of x.
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT realtype RAbs(realtype x);
+SUNDIALS_EXPORT sunrealtype RAbs(sunrealtype x);
 
 /*
  * -----------------------------------------------------------------
  * Function : RExp (a.k.a. EXP)
  * -----------------------------------------------------------------
- * Usage : realtype exp_x;
+ * Usage : sunrealtype exp_x;
  *         exp_x = RExp(x);
  * -----------------------------------------------------------------
  * RExp(x) returns e^x (base-e exponential function).
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT realtype RExp(realtype x);
+SUNDIALS_EXPORT sunrealtype RExp(sunrealtype x);
 
 #ifdef __cplusplus
 }

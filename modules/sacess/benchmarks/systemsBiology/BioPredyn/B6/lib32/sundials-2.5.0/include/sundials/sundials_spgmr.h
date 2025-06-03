@@ -115,7 +115,7 @@ extern "C" {
  * xcor is a vector (type N_Vector) which holds the scaled,
  * preconditioned correction to the initial guess.
  *
- * yg is a length (l_max+1) array of realtype used to hold "short"
+ * yg is a length (l_max+1) array of sunrealtype used to hold "short"
  * vectors (e.g. y and g).
  *
  * vtemp is a vector (type N_Vector) used as temporary vector
@@ -128,10 +128,10 @@ typedef struct _SpgmrMemRec {
   int l_max;
 
   N_Vector *V;
-  realtype **Hes;
-  realtype *givens;
+  sunrealtype **Hes;
+  sunrealtype *givens;
   N_Vector xcor;
-  realtype *yg;
+  sunrealtype *yg;
   N_Vector vtemp;
 
 } SpgmrMemRec, *SpgmrMem;
@@ -238,10 +238,10 @@ SUNDIALS_EXPORT SpgmrMem SpgmrMalloc(int l_max, N_Vector vec_tmpl);
  */                                                                
      
 SUNDIALS_EXPORT int SpgmrSolve(SpgmrMem mem, void *A_data, N_Vector x, N_Vector b,
-			       int pretype, int gstype, realtype delta, 
+			       int pretype, int gstype, sunrealtype delta,
 			       int max_restarts, void *P_data, N_Vector s1, 
 			       N_Vector s2, ATimesFn atimes, PSolveFn psolve, 
-			       realtype *res_norm, int *nli, int *nps);
+			       sunrealtype *res_norm, int *nli, int *nps);
 
 
 /* Return values for SpgmrSolve */

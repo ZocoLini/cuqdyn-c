@@ -119,7 +119,7 @@ extern "C" {
  * ----------------------------------------------------------------
  */
 
-typedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp,
+typedef int (*IDAResFn)(sunrealtype tt, N_Vector yy, N_Vector yp,
 			N_Vector rr, void *user_data);
 
 /*
@@ -130,7 +130,7 @@ typedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp,
  * roots are sought during the integration, must have type IDARootFn.
  * The function g takes as input the independent variable value t,
  * the dependent variable vector y, and its t-derivative yp (= y').
- * It stores the nrtfn values g_i(t,y,y') in the realtype array gout.
+ * It stores the nrtfn values g_i(t,y,y') in the sunrealtype array gout.
  * (Allocation of memory for gout is handled within IDA.)
  * The user_data parameter is the same as that passed by the user
  * to the IDASetRdata routine.  This user-supplied pointer is
@@ -141,8 +141,8 @@ typedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp,
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDARootFn)(realtype t, N_Vector y, N_Vector yp,
-			 realtype *gout, void *user_data);
+typedef int (*IDARootFn)(sunrealtype t, N_Vector y, N_Vector yp,
+			 sunrealtype *gout, void *user_data);
 
 /*
  * -----------------------------------------------------------------
@@ -343,10 +343,10 @@ SUNDIALS_EXPORT int IDASetErrFile(void *ida_mem, FILE *errfp);
 SUNDIALS_EXPORT int IDASetUserData(void *ida_mem, void *user_data);
 SUNDIALS_EXPORT int IDASetMaxOrd(void *ida_mem, int maxord);
 SUNDIALS_EXPORT int IDASetMaxNumSteps(void *ida_mem, long int mxsteps);
-SUNDIALS_EXPORT int IDASetInitStep(void *ida_mem, realtype hin);
-SUNDIALS_EXPORT int IDASetMaxStep(void *ida_mem, realtype hmax);
-SUNDIALS_EXPORT int IDASetStopTime(void *ida_mem, realtype tstop);
-SUNDIALS_EXPORT int IDASetNonlinConvCoef(void *ida_mem, realtype epcon);
+SUNDIALS_EXPORT int IDASetInitStep(void *ida_mem, sunrealtype hin);
+SUNDIALS_EXPORT int IDASetMaxStep(void *ida_mem, sunrealtype hmax);
+SUNDIALS_EXPORT int IDASetStopTime(void *ida_mem, sunrealtype tstop);
+SUNDIALS_EXPORT int IDASetNonlinConvCoef(void *ida_mem, sunrealtype epcon);
 SUNDIALS_EXPORT int IDASetMaxErrTestFails(void *ida_mem, int maxnef);
 SUNDIALS_EXPORT int IDASetMaxNonlinIters(void *ida_mem, int maxcor);
 SUNDIALS_EXPORT int IDASetMaxConvFails(void *ida_mem, int maxncf);
@@ -381,7 +381,7 @@ SUNDIALS_EXPORT int IDASetNoInactiveRootWarn(void *ida_mem);
  */
 
 SUNDIALS_EXPORT int IDAInit(void *ida_mem, IDAResFn res,
-                            realtype t0, N_Vector yy0, N_Vector yp0);
+                            sunrealtype t0, N_Vector yy0, N_Vector yp0);
 
 /*
  * ----------------------------------------------------------------
@@ -424,7 +424,7 @@ SUNDIALS_EXPORT int IDAInit(void *ida_mem, IDAResFn res,
  */                                                                
 
 SUNDIALS_EXPORT int IDAReInit(void *ida_mem,
-			      realtype t0, N_Vector yy0, N_Vector yp0);
+			      sunrealtype t0, N_Vector yy0, N_Vector yp0);
 
 /*
  * -----------------------------------------------------------------
@@ -465,8 +465,8 @@ SUNDIALS_EXPORT int IDAReInit(void *ida_mem,
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int IDASStolerances(void *ida_mem, realtype reltol, realtype abstol);
-SUNDIALS_EXPORT int IDASVtolerances(void *ida_mem, realtype reltol, N_Vector abstol);
+SUNDIALS_EXPORT int IDASStolerances(void *ida_mem, sunrealtype reltol, sunrealtype abstol);
+SUNDIALS_EXPORT int IDASVtolerances(void *ida_mem, sunrealtype reltol, N_Vector abstol);
 SUNDIALS_EXPORT int IDAWFtolerances(void *ida_mem, IDAEwtFn efun);
  
 /* ----------------------------------------------------------------
@@ -525,12 +525,12 @@ SUNDIALS_EXPORT int IDAWFtolerances(void *ida_mem, IDAEwtFn efun);
  * ----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int IDASetNonlinConvCoefIC(void *ida_mem, realtype epiccon);
+SUNDIALS_EXPORT int IDASetNonlinConvCoefIC(void *ida_mem, sunrealtype epiccon);
 SUNDIALS_EXPORT int IDASetMaxNumStepsIC(void *ida_mem, int maxnh);
 SUNDIALS_EXPORT int IDASetMaxNumJacsIC(void *ida_mem, int maxnj);
 SUNDIALS_EXPORT int IDASetMaxNumItersIC(void *ida_mem, int maxnit);
 SUNDIALS_EXPORT int IDASetLineSearchOffIC(void *ida_mem, booleantype lsoff);
-SUNDIALS_EXPORT int IDASetStepToleranceIC(void *ida_mem, realtype steptol);
+SUNDIALS_EXPORT int IDASetStepToleranceIC(void *ida_mem, sunrealtype steptol);
 
 /*
  * -----------------------------------------------------------------
@@ -655,7 +655,7 @@ SUNDIALS_EXPORT int IDARootInit(void *ida_mem, int nrtfn, IDARootFn g);
  * ----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int IDACalcIC(void *ida_mem, int icopt, realtype tout1); 
+SUNDIALS_EXPORT int IDACalcIC(void *ida_mem, int icopt, sunrealtype tout1);
 
 /*
  * ----------------------------------------------------------------
@@ -769,7 +769,7 @@ SUNDIALS_EXPORT int IDACalcIC(void *ida_mem, int icopt, realtype tout1);
  * ----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int IDASolve(void *ida_mem, realtype tout, realtype *tret,
+SUNDIALS_EXPORT int IDASolve(void *ida_mem, sunrealtype tout, sunrealtype *tret,
 			     N_Vector yret, N_Vector ypret, int itask);
 
 /*
@@ -790,7 +790,7 @@ SUNDIALS_EXPORT int IDASolve(void *ida_mem, realtype tout, realtype *tret,
  * ----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int IDAGetDky(void *ida_mem, realtype t, int k, N_Vector dky);
+SUNDIALS_EXPORT int IDAGetDky(void *ida_mem, sunrealtype t, int k, N_Vector dky);
 
 /* ----------------------------------------------------------------
  * Integrator optional output extraction functions                
@@ -857,11 +857,11 @@ SUNDIALS_EXPORT int IDAGetNumBacktrackOps(void *ida_mem, long int *nbacktr);
 SUNDIALS_EXPORT int IDAGetConsistentIC(void *ida_mem, N_Vector yy0_mod, N_Vector yp0_mod);
 SUNDIALS_EXPORT int IDAGetLastOrder(void *ida_mem, int *klast);
 SUNDIALS_EXPORT int IDAGetCurrentOrder(void *ida_mem, int *kcur);
-SUNDIALS_EXPORT int IDAGetActualInitStep(void *ida_mem, realtype *hinused);
-SUNDIALS_EXPORT int IDAGetLastStep(void *ida_mem, realtype *hlast);
-SUNDIALS_EXPORT int IDAGetCurrentStep(void *ida_mem, realtype *hcur);
-SUNDIALS_EXPORT int IDAGetCurrentTime(void *ida_mem, realtype *tcur);
-SUNDIALS_EXPORT int IDAGetTolScaleFactor(void *ida_mem, realtype *tolsfact);
+SUNDIALS_EXPORT int IDAGetActualInitStep(void *ida_mem, sunrealtype *hinused);
+SUNDIALS_EXPORT int IDAGetLastStep(void *ida_mem, sunrealtype *hlast);
+SUNDIALS_EXPORT int IDAGetCurrentStep(void *ida_mem, sunrealtype *hcur);
+SUNDIALS_EXPORT int IDAGetCurrentTime(void *ida_mem, sunrealtype *tcur);
+SUNDIALS_EXPORT int IDAGetTolScaleFactor(void *ida_mem, sunrealtype *tolsfact);
 SUNDIALS_EXPORT int IDAGetErrWeights(void *ida_mem, N_Vector eweight);
 SUNDIALS_EXPORT int IDAGetEstLocalErrors(void *ida_mem, N_Vector ele);
 SUNDIALS_EXPORT int IDAGetNumGEvals(void *ida_mem, long int *ngevals);
@@ -877,8 +877,8 @@ SUNDIALS_EXPORT int IDAGetRootInfo(void *ida_mem, int *rootsfound);
 SUNDIALS_EXPORT int IDAGetIntegratorStats(void *ida_mem, long int *nsteps, 
                                           long int *nrevals, long int *nlinsetups, 
                                           long int *netfails, int *qlast, int *qcur, 
-                                          realtype *hinused, realtype *hlast, realtype *hcur, 
-                                          realtype *tcur);
+                                          sunrealtype *hinused, sunrealtype *hlast, sunrealtype *hcur,
+                                          sunrealtype *tcur);
 
 /*
  * ----------------------------------------------------------------

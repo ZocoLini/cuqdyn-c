@@ -69,7 +69,7 @@
 	/* *** Definition of the algebraic variables *** */
 
 /* Right hand side of the system (f(t,x,p))*/
-int amigoRHS_MENDES(realtype t, N_Vector y, N_Vector ydot, void *data){
+int amigoRHS_MENDES(sunrealtype t, N_Vector y, N_Vector ydot, void *data){
 	AMIGO_model* amigo_model=(AMIGO_model*)data;
 
 	/* *** Equations *** */
@@ -89,14 +89,14 @@ int amigoRHS_MENDES(realtype t, N_Vector y, N_Vector ydot, void *data){
 
 
 /* Jacobian of the system (dfdx)*/
-int amigoJAC_MENDES(int N, realtype t, N_Vector y, N_Vector fy, DlsMat J, void *data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
+int amigoJAC_MENDES(int N, sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 	AMIGO_model* amigo_model=(AMIGO_model*)data;
 
 	return(0);
 }
 
 /* R.H.S of the sensitivity dsi/dt = (df/dx)*si + df/dp_i */
-int amigoSensRHS_MENDES(int Ns, realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yS, N_Vector ySdot, void *data, N_Vector tmp1, N_Vector tmp2){
+int amigoSensRHS_MENDES(int Ns, sunrealtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yS, N_Vector ySdot, void *data, N_Vector tmp1, N_Vector tmp2){
 	AMIGO_model* amigo_model=(AMIGO_model*)data;
 
 	return(0);
@@ -953,7 +953,7 @@ void amigoRHS_get_sens_OBS_MENDES(void* data){
 }
 
 
-void amigo_Y_at_tcon_MENDES(void* data, realtype t, N_Vector y){
+void amigo_Y_at_tcon_MENDES(void* data, sunrealtype t, N_Vector y){
     AMIGO_model* amigo_model=(AMIGO_model*)data;
     
 }

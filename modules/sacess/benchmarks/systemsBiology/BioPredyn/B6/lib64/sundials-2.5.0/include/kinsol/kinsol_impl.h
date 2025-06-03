@@ -56,16 +56,16 @@ extern "C" {
 
 typedef struct KINMemRec {
 
-  realtype kin_uround;        /* machine epsilon (or unit roundoff error) 
+  sunrealtype kin_uround;        /* machine epsilon (or unit roundoff error)
 				 (defined in sundials_types.h)                */
 
   /* problem specification data */
 
   KINSysFn kin_func;           /* nonlinear system function implementation     */
   void *kin_user_data;         /* work space available to func routine         */
-  realtype kin_fnormtol;       /* stopping tolerance on L2-norm of function
+  sunrealtype kin_fnormtol;       /* stopping tolerance on L2-norm of function
 				  value                                        */
-  realtype kin_scsteptol;      /* scaled step length tolerance                 */
+  sunrealtype kin_scsteptol;      /* scaled step length tolerance                 */
   int kin_globalstrategy;      /* choices are KIN_NONE and KIN_LINESEARCH      */
   int kin_printfl;             /* level of verbosity of output                 */
   long int kin_mxiter;         /* maximum number of nonlinear iterations       */
@@ -97,20 +97,20 @@ typedef struct KINMemRec {
 				       updated (set by residual monitoring
 				       algorithm)                              */
 
-  realtype kin_mxnewtstep;     /* maximum allowable scaled step length         */
-  realtype kin_sqrt_relfunc;   /* relative error bound for func(u)             */
-  realtype kin_stepl;          /* scaled length of current step                */
-  realtype kin_stepmul;        /* step scaling factor                          */
-  realtype kin_eps;            /* current value of eps                         */
-  realtype kin_eta;            /* current value of eta                         */
-  realtype kin_eta_gamma;      /* gamma value used in eta calculation
+  sunrealtype kin_mxnewtstep;     /* maximum allowable scaled step length         */
+  sunrealtype kin_sqrt_relfunc;   /* relative error bound for func(u)             */
+  sunrealtype kin_stepl;          /* scaled length of current step                */
+  sunrealtype kin_stepmul;        /* step scaling factor                          */
+  sunrealtype kin_eps;            /* current value of eps                         */
+  sunrealtype kin_eta;            /* current value of eta                         */
+  sunrealtype kin_eta_gamma;      /* gamma value used in eta calculation
 				  (choice #2)                                  */
-  realtype kin_eta_alpha;      /* alpha value used in eta calculation
+  sunrealtype kin_eta_alpha;      /* alpha value used in eta calculation
 				  (choice #2)                                  */
   booleantype kin_noInitSetup; /* flag controlling whether or not the KINSol
 				  routine makes an initial call to the
 				  linear solver setup routine (lsetup)         */
-  realtype kin_sthrsh;         /* threshold value for calling the linear   
+  sunrealtype kin_sthrsh;         /* threshold value for calling the linear
 				  solver setup routine                         */
 
   /* counters */
@@ -146,11 +146,11 @@ typedef struct KINMemRec {
 
   /* space requirements for vector storage */ 
 
-  long int kin_lrw1;        /* number of realtype-sized memory blocks needed
+  long int kin_lrw1;        /* number of sunrealtype-sized memory blocks needed
 			       for a single N_Vector                           */ 
   long int kin_liw1;        /* number of int-sized memory blocks needed for
 			       a single N_Vecotr                               */ 
-  long int kin_lrw;         /* total number of realtype-sized memory blocks
+  long int kin_lrw;         /* total number of sunrealtype-sized memory blocks
 			       needed for all KINSOL work vectors              */
   long int kin_liw;         /* total number of int-sized memory blocks needed
 			       for all KINSOL work vectors                     */
@@ -164,7 +164,7 @@ typedef struct KINMemRec {
   int (*kin_lsetup)(struct KINMemRec *kin_mem);
 
   int (*kin_lsolve)(struct KINMemRec *kin_mem, N_Vector xx, N_Vector bb, 
-		    realtype *res_norm );
+		    sunrealtype *res_norm );
 
   void (*kin_lfree)(struct KINMemRec *kin_mem);
 
@@ -175,23 +175,23 @@ typedef struct KINMemRec {
 
   void *kin_lmem;         /* pointer to linear solver memory block             */
 
-  realtype kin_fnorm;     /* value of L2-norm of fscale*fval                   */
-  realtype kin_f1norm;    /* f1norm = 0.5*(fnorm)^2                            */
-  realtype kin_res_norm;  /* value of L2-norm of residual (set by the linear
+  sunrealtype kin_fnorm;     /* value of L2-norm of fscale*fval                   */
+  sunrealtype kin_f1norm;    /* f1norm = 0.5*(fnorm)^2                            */
+  sunrealtype kin_res_norm;  /* value of L2-norm of residual (set by the linear
 			     solver)                                           */
-  realtype kin_sfdotJp;   /* value of scaled func(u) vector (fscale*fval)
+  sunrealtype kin_sfdotJp;   /* value of scaled func(u) vector (fscale*fval)
 			     dotted with scaled J(u)*pp vector                 */
-  realtype kin_sJpnorm;   /* value of L2-norm of fscale*(J(u)*pp)              */
+  sunrealtype kin_sJpnorm;   /* value of L2-norm of fscale*(J(u)*pp)              */
 
-  realtype kin_fnorm_sub; /* value of L2-norm of fscale*fval (subinterval)     */
+  sunrealtype kin_fnorm_sub; /* value of L2-norm of fscale*fval (subinterval)     */
   booleantype kin_eval_omega; /* flag indicating that omega must be evaluated. */
-  realtype kin_omega;     /* constant value for real scalar used in test to
+  sunrealtype kin_omega;     /* constant value for real scalar used in test to
 			     determine if reduction of norm of nonlinear
 			     residual is sufficient. Unless a valid constant 
                              value is specified by the user, omega is estimated
                              from omega_min and omega_max at each iteration.    */
-  realtype kin_omega_min; /* lower bound on omega                               */
-  realtype kin_omega_max; /* upper bound on omega                               */
+  sunrealtype kin_omega_min; /* lower bound on omega                               */
+  sunrealtype kin_omega_max; /* upper bound on omega                               */
   
   /*
    * -----------------------------------------------------------------
@@ -278,7 +278,7 @@ typedef struct KINMemRec {
 /*
  * -----------------------------------------------------------------
  * Function : int (*kin_lsolve)(KINMem kin_mem, N_Vector xx,
- *                              N_Vector bb, realtype *res_norm)
+ *                              N_Vector bb, sunrealtype *res_norm)
  * -----------------------------------------------------------------
  * kin_lsolve interfaces with the subroutine implementing the
  * numerical method to be used to solve the linear system J*xx = bb,

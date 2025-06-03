@@ -141,8 +141,8 @@ typedef int (*PSolveFn)(void *P_data, N_Vector r, N_Vector z, int lr);
  * -----------------------------------------------------------------
  */                                                                
 
-SUNDIALS_EXPORT int ModifiedGS(N_Vector *v, realtype **h, int k, int p, 
-			       realtype *new_vk_norm);
+SUNDIALS_EXPORT int ModifiedGS(N_Vector *v, sunrealtype **h, int k, int p,
+			       sunrealtype *new_vk_norm);
 
 /*
  * -----------------------------------------------------------------
@@ -157,15 +157,15 @@ SUNDIALS_EXPORT int ModifiedGS(N_Vector *v, realtype **h, int k, int p,
  * temp is an N_Vector which can be used as workspace by the      
  * ClassicalGS routine.                                           
  *                                                                
- * s is a length k array of realtype which can be used as         
+ * s is a length k array of sunrealtype which can be used as
  * workspace by the ClassicalGS routine.                          
  *
  * ClassicalGS returns 0 to indicate success. It cannot fail.     
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int ClassicalGS(N_Vector *v, realtype **h, int k, int p, 
-				realtype *new_vk_norm, N_Vector temp, realtype *s);
+SUNDIALS_EXPORT int ClassicalGS(N_Vector *v, sunrealtype **h, int k, int p,
+				sunrealtype *new_vk_norm, N_Vector temp, sunrealtype *s);
 
 /*
  * -----------------------------------------------------------------
@@ -199,7 +199,7 @@ SUNDIALS_EXPORT int ClassicalGS(N_Vector *v, realtype **h, int k, int p,
  * -----------------------------------------------------------------
  */                                                                
 
-SUNDIALS_EXPORT int QRfact(int n, realtype **h, realtype *q, int job);
+SUNDIALS_EXPORT int QRfact(int n, sunrealtype **h, sunrealtype *q, int job);
 
 /*                                                                
  * -----------------------------------------------------------------
@@ -233,7 +233,7 @@ SUNDIALS_EXPORT int QRfact(int n, realtype **h, realtype *q, int job);
  * -----------------------------------------------------------------
  */                                                                
 
-SUNDIALS_EXPORT int QRsol(int n, realtype **h, realtype *q, realtype *b);
+SUNDIALS_EXPORT int QRsol(int n, sunrealtype **h, sunrealtype *q, sunrealtype *b);
 
 #ifdef __cplusplus
 }

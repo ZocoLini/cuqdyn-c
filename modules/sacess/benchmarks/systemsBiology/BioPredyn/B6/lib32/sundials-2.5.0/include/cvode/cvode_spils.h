@@ -154,9 +154,9 @@ extern "C" {
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
+typedef int (*CVSpilsPrecSetupFn)(sunrealtype t, N_Vector y, N_Vector fy,
                                   booleantype jok, booleantype *jcurPtr,
-                                  realtype gamma, void *user_data,
+                                  sunrealtype gamma, void *user_data,
                                   N_Vector tmp1, N_Vector tmp2,
                                   N_Vector tmp3);
 
@@ -211,9 +211,9 @@ typedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
+typedef int (*CVSpilsPrecSolveFn)(sunrealtype t, N_Vector y, N_Vector fy,
                                   N_Vector r, N_Vector z,
-                                  realtype gamma, realtype delta,
+                                  sunrealtype gamma, sunrealtype delta,
                                   int lr, void *user_data, N_Vector tmp);
 
 /*
@@ -248,7 +248,7 @@ typedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
+typedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, sunrealtype t,
                                     N_Vector y, N_Vector fy,
                                     void *user_data, N_Vector tmp);
 
@@ -298,7 +298,7 @@ typedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
 SUNDIALS_EXPORT int CVSpilsSetPrecType(void *cvode_mem, int pretype);
 SUNDIALS_EXPORT int CVSpilsSetGSType(void *cvode_mem, int gstype);
 SUNDIALS_EXPORT int CVSpilsSetMaxl(void *cvode_mem, int maxl);
-SUNDIALS_EXPORT int CVSpilsSetEpsLin(void *cvode_mem, realtype eplifac);
+SUNDIALS_EXPORT int CVSpilsSetEpsLin(void *cvode_mem, sunrealtype eplifac);
 SUNDIALS_EXPORT int CVSpilsSetPreconditioner(void *cvode_mem, 
                                              CVSpilsPrecSetupFn pset,
                                              CVSpilsPrecSolveFn psolve);

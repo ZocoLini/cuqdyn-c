@@ -4007,7 +4007,7 @@ DivideHistory( double t1, double t2, Zygote * zyg ) {
  * 
 void Krylov(double *vin, double *vout, double tin, double tout, double stephint, double accuracy, int n, FILE *slog, SolverInput *sinput, Input *input) {
     int flag, i, j;
-    realtype t, tstop;
+    sunrealtype t, tstop;
     double *divtimes, *divdurations;
 
     inp = input;
@@ -4054,7 +4054,7 @@ void Krylov(double *vin, double *vout, double tin, double tout, double stephint,
     }
 }
 
-int my_f(realtype t, N_Vector y, N_Vector ydot, void *extra_data) { //to call the derivative         //needed by the old Krylov solver
+int my_f(sunrealtype t, N_Vector y, N_Vector ydot, void *extra_data) { //to call the derivative         //needed by the old Krylov solver
     // wrapper function 
     int i, n = NV_LENGTH_S(y);
     ExtraData edata = (ExtraData) extra_data;
@@ -4069,18 +4069,18 @@ int my_f(realtype t, N_Vector y, N_Vector ydot, void *extra_data) { //to call th
     return 0;
 }
 
-int Precond(realtype tn, N_Vector c, N_Vector fc, booleantype jok,
-        booleantype *jcurPtr, realtype gamma, void *extra_data, N_Vector vtemp1,
+int Precond(sunrealtype tn, N_Vector c, N_Vector fc, booleantype jok,
+        booleantype *jcurPtr, sunrealtype gamma, void *extra_data, N_Vector vtemp1,
         N_Vector vtemp2, N_Vector vtemp3) {                                      //needed by the old Krylov solver
 
     const int NRNUC = GetNNucs(&(inp->zyg.defs), inp->zyg.nnucs, tn, &(inp->zyg.times));
 
-    realtype ***P;
+    sunrealtype ***P;
     int **pivot;
     int n, i, j, ier, flag, ii, jj;
 
-    realtype fac, r, r0, save, srur;
-    realtype *f1, *fsave, *cdata, *err_data;
+    sunrealtype fac, r, r0, save, srur;
+    sunrealtype *f1, *fsave, *cdata, *err_data;
 
     ExtraData edata = (ExtraData) extra_data;
     void *cvode_mem = edata->cvode_mem;
@@ -4138,13 +4138,13 @@ int Precond(realtype tn, N_Vector c, N_Vector fc, booleantype jok,
     return 0;
 }
                                                                         
-int PSolve(realtype tn, N_Vector c, N_Vector fc, N_Vector r,             
-        N_Vector z, realtype gamma, realtype delta, int lr,
+int PSolve(sunrealtype tn, N_Vector c, N_Vector fc, N_Vector r,
+        N_Vector z, sunrealtype gamma, sunrealtype delta, int lr,
         void *extra_data, N_Vector vtemp) {                              //needed by the old Krylov solver
 
     const int NRNUC = GetNNucs(&(inp->zyg.defs), inp->zyg.nnucs, tn, &(inp->zyg.times));
 
-    realtype ***P;
+    sunrealtype ***P;
     int **pivot;
     int i;
     ExtraData edata = (ExtraData) extra_data;
@@ -4165,7 +4165,7 @@ int PSolve(realtype tn, N_Vector c, N_Vector fc, N_Vector r,
 }
 
 // This is the old slow Krylov solver
-int InitKrylovSolver(realtype tzero, double stephint, double rel_tol, double abs_tol) {  //needed by the old Krylov solver
+int InitKrylovSolver(sunrealtype tzero, double stephint, double rel_tol, double abs_tol) {  //needed by the old Krylov solver
     int flag;
     neq = inp->zyg.defs.ngenes * GetNNucs(&(inp->zyg.defs), inp->zyg.nnucs, tzero, &(inp->zyg.times));
     cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
@@ -4245,13 +4245,13 @@ ExtraData NewExtraData(int len) {    //needed by the old Krylov solver
     // set length of P and pivot
     edata->size = len;
     // allocating memory
-    edata->P = (realtype ***) malloc(len * sizeof ( realtype **));
+    edata->P = (sunrealtype ***) malloc(len * sizeof ( sunrealtype **));
     edata->pivot = (int **) malloc(len * sizeof ( int *));
     for (i = 0; i < len; ++i) {
         (edata->P)[ i ] = newDenseMat(inp->zyg.defs.ngenes, inp->zyg.defs.ngenes);
         (edata->pivot)[ i ] = newIntArray(inp->zyg.defs.ngenes);
     }
-    edata->fsave = (realtype*) malloc(neq * sizeof ( realtype));
+    edata->fsave = (sunrealtype*) malloc(neq * sizeof ( sunrealtype));
     edata->err_weights = N_VNew_Serial(neq);
 
     return edata;
@@ -4326,7 +4326,7 @@ CheckFlag( void *flagvalue, char *funcname, int opt ) {
 void
 Krylov( double *vin, double *vout, double tin, double tout, double stephint, double accuracy, int n, FILE * slog, SolverInput * sinput, Input * input ) {
     int flag, i, j;
-    realtype t, tstop;
+    sunrealtype t, tstop;
     double *divtimes, *divdurations;
     inp = input;
     si = sinput;
@@ -4365,8 +4365,8 @@ Krylov( double *vin, double *vout, double tin, double tout, double stephint, dou
         // otherwise don't look beyond gastrulation
         tstop = inp->zyg.times.gast_time;
     }
-    CVodeSetMaxStep(cvode_mem,(realtype)50);
-    //CVodeSetMaxStep(cvode_mem,(realtype)50); // 50
+    CVodeSetMaxStep(cvode_mem,(sunrealtype)50);
+    //CVodeSetMaxStep(cvode_mem,(sunrealtype)50); // 50
     CVodeSetMaxErrTestFails(cvode_mem, 1000); //1000
 
     CVodeSetStopTime( cvode_mem, tstop );
@@ -4382,7 +4382,7 @@ Krylov( double *vin, double *vout, double tin, double tout, double stephint, dou
 
 /** wrapper function - to call the derivative */
 int
-my_f_band( realtype t, N_Vector y, N_Vector ydot, void *extra_data ) {  
+my_f_band( sunrealtype t, N_Vector y, N_Vector ydot, void *extra_data ) {
     
     int n = NV_LENGTH_S( y );
     p_deriv( NV_DATA_S( y ), t, NV_DATA_S( ydot ), n, si, inp );
@@ -4390,7 +4390,7 @@ my_f_band( realtype t, N_Vector y, N_Vector ydot, void *extra_data ) {
 }
 
 int
-InitBandSolver( realtype tzero, double stephint, double rel_tol, double abs_tol ) {
+InitBandSolver( sunrealtype tzero, double stephint, double rel_tol, double abs_tol ) {
     int flag;
     neq = inp->zyg.defs.ngenes * GetNNucs( &( inp->zyg.defs ), inp->zyg.nnucs, tzero, &( inp->zyg.times ) );
     cvode_mem = CVodeCreate( CV_BDF, CV_NEWTON );
@@ -4448,7 +4448,7 @@ FreeBandSolver( void ) {        //before initializing again
 }
 
 /*
-void gaussSeidel( realtype gamma, N_Vector z, N_Vector aux, int nrnuc ) {
+void gaussSeidel( sunrealtype gamma, N_Vector z, N_Vector aux, int nrnuc ) {
     // perform max GS_ITER_MAX=5 Gauss-Seidel iterations to compute an
     // approximation to P^inv * z, where P = I - gamma *J_diff, and J_diff
     // represents the diffusion part of the jacobian.
@@ -4464,16 +4464,16 @@ void gaussSeidel( realtype gamma, N_Vector z, N_Vector aux, int nrnuc ) {
     const int GG = defs.ngenes;
     
     int i, iter, ap, base;    
-    realtype *xd = NV_DATA_S( aux );
-    realtype *zd = NV_DATA_S( z );
-    realtype beta[ GG ], beta2[ GG ], coef[ GG ];
-    realtype aux1;
+    sunrealtype *xd = NV_DATA_S( aux );
+    sunrealtype *zd = NV_DATA_S( z );
+    sunrealtype beta[ GG ], beta2[ GG ], coef[ GG ];
+    sunrealtype aux1;
     
     // write matrix as P = D - L - U
     // and load local arrays
     // coef is inverse of diagonal item
     for( i = 0; i < GG; ++i ) {
-        realtype temp = 1.0 / ( 1.0 + 2.0 * gamma * D[ i ] );
+        sunrealtype temp = 1.0 / ( 1.0 + 2.0 * gamma * D[ i ] );
         
         beta[ i ] = gamma * D[ i ] * temp;
         beta2[ i ] = 2 * gamma * D[ i ] * temp;
@@ -4523,17 +4523,17 @@ void gaussSeidel( realtype gamma, N_Vector z, N_Vector aux, int nrnuc ) {
     }
 }
 
-void vec_prod( realtype u[], realtype v[], realtype w[], int n ) {
+void vec_prod( sunrealtype u[], sunrealtype v[], sunrealtype w[], int n ) {
     int i;
     for( i = 0; i < n; ++i ) u[ i ] = v[ i ] * w[ i ];
 }
 
-void vec_inc_by_prod( realtype u[], realtype v[], realtype w[], int n ) {
+void vec_inc_by_prod( sunrealtype u[], sunrealtype v[], sunrealtype w[], int n ) {
     int i;
     for( i = 0; i < n; ++i ) u[ i ] += v[ i ] * w[ i ];
 }
 
-void vec_zero( realtype u[], int n ) {
+void vec_zero( sunrealtype u[], int n ) {
     int i;
     for( i = 0; i < n; ++i ) u[ i ] = 0;
 }

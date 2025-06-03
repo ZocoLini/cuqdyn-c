@@ -11,18 +11,18 @@
  * All rights reserved.
  * For details, see the LICENSE file.
  *------------------------------------------------------------------
- * This header file exports two types: realtype and booleantype,
+ * This header file exports two types: sunrealtype and booleantype,
  * as well as the constants TRUE and FALSE.
  *
  * Users should include the header file sundials_types.h in every
- * program file and use the exported name realtype instead of
+ * program file and use the exported name sunrealtype instead of
  * float, double or long double.
  *
  * The constants SUNDIALS_SINGLE_PRECISION, SUNDIALS_DOUBLE_PRECISION
  * and SUNDIALS_LONG_DOUBLE_PRECISION indicate the underlying data
- * type of realtype. It is set at the configuration stage.
+ * type of sunrealtype. It is set at the configuration stage.
  *
- * The legal types for realtype are float, double and long double.
+ * The legal types for sunrealtype are float, double and long double.
  *
  * The macro RCONST gives the user a convenient way to define
  * real-valued constants. To use the constant 1.0, for example,
@@ -30,11 +30,11 @@
  *
  *   #define ONE RCONST(1.0)
  *
- * If realtype is defined as a double, then RCONST(1.0) expands
- * to 1.0. If realtype is defined as a float, then RCONST(1.0)
- * expands to 1.0F. If realtype is defined as a long double,
+ * If sunrealtype is defined as a double, then RCONST(1.0) expands
+ * to 1.0. If sunrealtype is defined as a float, then RCONST(1.0)
+ * expands to 1.0F. If sunrealtype is defined as a long double,
  * then RCONST(1.0) expands to 1.0L. There is never a need to
- * explicitly cast 1.0 to (realtype).
+ * explicitly cast 1.0 to (sunrealtype).
  *------------------------------------------------------------------
  */
   
@@ -54,7 +54,7 @@ extern "C" {
 
 /*
  *------------------------------------------------------------------
- * Type realtype
+ * Type sunrealtype
  * Macro RCONST
  * Constants BIG_REAL, SMALL_REAL, and UNIT_ROUNDOFF
  *------------------------------------------------------------------
@@ -62,7 +62,7 @@ extern "C" {
 
 #if defined(SUNDIALS_SINGLE_PRECISION)
 
-typedef float realtype;
+typedef float sunrealtype;
 # define RCONST(x) x##F
 # define BIG_REAL FLT_MAX
 # define SMALL_REAL FLT_MIN
@@ -70,7 +70,7 @@ typedef float realtype;
 
 #elif defined(SUNDIALS_DOUBLE_PRECISION)
 
-typedef double realtype;
+typedef double sunrealtype;
 # define RCONST(x) x
 # define BIG_REAL DBL_MAX
 # define SMALL_REAL DBL_MIN
@@ -78,7 +78,7 @@ typedef double realtype;
 
 #elif defined(SUNDIALS_EXTENDED_PRECISION)
 
-typedef long double realtype;
+typedef long double sunrealtype;
 # define RCONST(x) x##L
 # define BIG_REAL LDBL_MAX
 # define SMALL_REAL LDBL_MIN

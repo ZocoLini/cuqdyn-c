@@ -2,14 +2,14 @@
 
 
 #include <matio.h>
-#include <nvector_old/nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "../include/cuqdyn.h"
 
-int read_data_file(const char *data_file, N_Vector *t, DlsMat *y)
+int read_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
 {
     const char *ext = strrchr(data_file, '.');
 
@@ -26,7 +26,7 @@ int read_data_file(const char *data_file, N_Vector *t, DlsMat *y)
     return 1;
 }
 
-int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
+int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
 {
     const char *ext = strrchr(data_file, '.');
     if (ext && strcmp(ext, ".txt") != 0)
@@ -44,11 +44,11 @@ int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
     fscanf(f, "%ld", &rows);
     fscanf(f, "%ld", &cols);
 
-    *t = N_VNew_Serial(rows);
-    realtype *data_t = N_VGetArrayPointer(*t);
+    *t = New_Serial(rows);
+    sunsunrealtype *data_t = N_VGetArrayPointer(*t);
 
-    *y = SUNDenseMatrix(rows, cols - 1);
-    realtype *data_y = (*y)->data;
+    *y = NewDenseMatrix(rows, cols - 1);
+    sunsunrealtype *data_y = ((SUNMatrixContent_Dense)(*y)->content)->data;
 
     double tmp;
 
@@ -67,7 +67,7 @@ int read_txt_data_file(const char *data_file, N_Vector *t, DlsMat *y)
     return 0;
 }
 
-int read_mat_data_file(const char *data_file, N_Vector *t, DlsMat *y)
+int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
 {
     mat_t *matfp = Mat_Open(data_file, MAT_ACC_RDONLY);
     if (matfp == NULL)
@@ -106,11 +106,11 @@ int read_mat_data_file(const char *data_file, N_Vector *t, DlsMat *y)
     // The first column of the matrix is the time vector
     // The first row of the matrix are the initial values [t0 y10 y20 ...]
 
-    *t = N_VNew_Serial((long) rows);
-    realtype *data_t = N_VGetArrayPointer(*t);
+    *t = New_Serial((long) rows);
+    sunsunrealtype *data_t = N_VGetArrayPointer(*t);
 
-    *y = SUNDenseMatrix((long) rows, (long) cols - 1);
-    realtype *data_y = (*y)->data;
+    *y = NewDenseMatrix((long) rows, (long) cols - 1);
+    sunsunrealtype *data_y = ((SUNMatrixContent_Dense)(*y)->content)->data;
 
     const double *file_data = matvar->data;
 

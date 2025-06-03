@@ -3,10 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <cvodes_old/cvodes_dense.h>
-#include <sundials_old/sundials_types.h> /* definition of type realtype */
-#include <nvector_old/nvector_serial.h>/* serial N_Vector types, fcts., and macros */
-#include <sundials_old/sundials_math.h>
+#include <sundials/sundials_types.h> /* definition of type sunrealtype */
+#include <nvector/nvector_serial.h>/* serial N_Vector types, fcts., and macros */
+#include <sunmatrix/sunmatrix_dense.h>
 #include <include_amigo/simulate_amigo_model.h>
 #include <math.h>
 #include <stddef.h>
@@ -103,13 +102,13 @@ typedef struct
 	int index_t_stim;
 
 	//Function
-	int(*rhs)(realtype,N_Vector, N_Vector, void*);
-	int(*jac)(int, realtype,N_Vector, N_Vector, DlsMat, void*, N_Vector, N_Vector, N_Vector);
+	int(*rhs)(sunrealtype,N_Vector, N_Vector, void*);
+	int(*jac)(int, sunrealtype,N_Vector, N_Vector, SUNMatrix, void*, N_Vector, N_Vector, N_Vector);
 	void (*jY)(int);
 	void (*jS)(int);
 	void (*obs_func)(void*);
 	void (*obs_sen_func)(void*);
-	void (*changeYatTcon)(void*, realtype, N_Vector);
+	void (*changeYatTcon)(void*, sunrealtype, N_Vector);
 
 
 	//Storing matrixes

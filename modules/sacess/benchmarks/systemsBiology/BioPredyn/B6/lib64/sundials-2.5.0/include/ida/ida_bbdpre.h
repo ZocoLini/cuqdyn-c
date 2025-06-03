@@ -136,7 +136,7 @@ extern "C" {
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDABBDLocalFn)(long int Nlocal, realtype tt,
+typedef int (*IDABBDLocalFn)(long int Nlocal, sunrealtype tt,
 			     N_Vector yy, N_Vector yp, N_Vector gval,
 			     void *user_data);
 
@@ -168,7 +168,7 @@ typedef int (*IDABBDLocalFn)(long int Nlocal, realtype tt,
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDABBDCommFn)(long int Nlocal, realtype tt,
+typedef int (*IDABBDCommFn)(long int Nlocal, sunrealtype tt,
 			    N_Vector yy, N_Vector yp,
 			    void *user_data);
 
@@ -218,7 +218,7 @@ typedef int (*IDABBDCommFn)(long int Nlocal, realtype tt,
 SUNDIALS_EXPORT int IDABBDPrecInit(void *ida_mem, long int Nlocal,
                                    long int mudq, long int mldq,
                                    long int mukeep, long int mlkeep,
-                                   realtype dq_rel_yy,
+                                   sunrealtype dq_rel_yy,
                                    IDABBDLocalFn Gres, IDABBDCommFn Gcomm);
 
 /*
@@ -245,7 +245,7 @@ SUNDIALS_EXPORT int IDABBDPrecInit(void *ida_mem, long int Nlocal,
 
 SUNDIALS_EXPORT int IDABBDPrecReInit(void *ida_mem,
 				     long int mudq, long int mldq,
-				     realtype dq_rel_yy);
+				     sunrealtype dq_rel_yy);
 
 /*
  * -----------------------------------------------------------------

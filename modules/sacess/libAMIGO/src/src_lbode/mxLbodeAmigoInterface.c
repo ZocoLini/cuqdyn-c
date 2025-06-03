@@ -11,7 +11,7 @@
 #include "mat.h"
 
 
-int lbode_AMIGO_rhs(realtype t, N_Vector y, N_Vector ydot, void *data);
+int lbode_AMIGO_rhs(sunrealtype t, N_Vector y, N_Vector ydot, void *data);
  
 AMIGO_model* mxAllocateAMIGOmodel(mxArray* privstruct_ptr,mxArray* inputs_ptr, int exp_num);
 

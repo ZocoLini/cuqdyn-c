@@ -53,7 +53,7 @@ int set_simulation_stats(void* cvode_mem, AMIGO_model* amigo_model){
 int simulate_amigo_model(AMIGO_model* amigo_model,int verbose){
 	int i,j,k,neq,NS,flag,stop_ti,temp,TS_index;
 	booleantype err_con;
-	realtype tout, tstop, ti, tf, t,previous_tstop;
+	sunrealtype tout, tstop, ti, tf, t,previous_tstop;
 	
 	int* plist;
 
@@ -90,7 +90,7 @@ int simulate_amigo_model(AMIGO_model* amigo_model,int verbose){
 		tout=ti;
 		TS_index=1;
 		for(i=0; i<(*amigo_model).n_states; i++){
-			Ith(y,i) =(realtype)(*amigo_model).y0[i];
+			Ith(y,i) =(sunrealtype)(*amigo_model).y0[i];
 			(*amigo_model).sim_results[i][0]=(*amigo_model).y0[i];
 		}
 	}
@@ -98,7 +98,7 @@ int simulate_amigo_model(AMIGO_model* amigo_model,int verbose){
 		tout=ti;
 		TS_index=0;
 		for(i=0; i<(*amigo_model).n_states; i++){
-			Ith(y,i) =(realtype)(*amigo_model).y0[i];
+			Ith(y,i) =(sunrealtype)(*amigo_model).y0[i];
 		}
 	}
 
@@ -127,7 +127,7 @@ int simulate_amigo_model(AMIGO_model* amigo_model,int verbose){
 		return(0);
 	}
 
-	flag = CVodeSStolerances(cvode_mem,(realtype)(*amigo_model).reltol,(realtype)(*amigo_model).atol);
+	flag = CVodeSStolerances(cvode_mem,(sunrealtype)(*amigo_model).reltol,(sunrealtype)(*amigo_model).atol);
 
 	if(check_flag(&flag,  1,cvode_mem,amigo_model)) return(0);
 
@@ -147,7 +147,7 @@ int simulate_amigo_model(AMIGO_model* amigo_model,int verbose){
 	
 	}
 
-	CVodeSetMaxStep(cvode_mem,(realtype)(*amigo_model).max_step_size);
+	CVodeSetMaxStep(cvode_mem,(sunrealtype)(*amigo_model).max_step_size);
 
 	CVodeSetMaxErrTestFails(cvode_mem, (*amigo_model).max_error_test_fails);
 
@@ -192,7 +192,7 @@ int simulate_amigo_model(AMIGO_model* amigo_model,int verbose){
 		flag = CVodeSetSensErrCon(cvode_mem, err_con);
 		if (check_flag(&flag,  1,cvode_mem,amigo_model)) return(0);
 
-		flag = CVodeSetSensParams(cvode_mem,(realtype*)(*amigo_model).pars, NULL,plist);
+		flag = CVodeSetSensParams(cvode_mem,(sunrealtype*)(*amigo_model).pars, NULL,plist);
 		if (check_flag(&flag, 1,cvode_mem,amigo_model)) return(0);         
 
 	} 

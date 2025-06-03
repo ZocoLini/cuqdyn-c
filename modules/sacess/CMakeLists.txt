@@ -76,7 +76,9 @@ target_link_directories(sacess
 
 target_link_libraries(sacess
         PUBLIC
-        cvodes_old
+        SUNDIALS::nvecserial
+        SUNDIALS::cvodes
+        SUNDIALS::sunmatrixdense
         xml2
 
         # Needed by modules/sacess/src/method_module_fortran/eSS/localsolvers/misqp/misqp_interface.f90

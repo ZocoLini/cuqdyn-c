@@ -460,16 +460,16 @@ SUNDIALS_EXPORT int KINSetNoResMon(void *kinmem, booleantype noNNIResMon);
 SUNDIALS_EXPORT int KINSetMaxSetupCalls(void *kinmem, long int msbset);
 SUNDIALS_EXPORT int KINSetMaxSubSetupCalls(void *kinmem, long int msbsetsub);
 SUNDIALS_EXPORT int KINSetEtaForm(void *kinmem, int etachoice);
-SUNDIALS_EXPORT int KINSetEtaConstValue(void *kinmem, realtype eta);
-SUNDIALS_EXPORT int KINSetEtaParams(void *kinmem, realtype egamma, realtype ealpha);
-SUNDIALS_EXPORT int KINSetResMonParams(void *kinmem, realtype omegamin, realtype omegamax);
-SUNDIALS_EXPORT int KINSetResMonConstValue(void *kinmem, realtype omegaconst);
+SUNDIALS_EXPORT int KINSetEtaConstValue(void *kinmem, sunrealtype eta);
+SUNDIALS_EXPORT int KINSetEtaParams(void *kinmem, sunrealtype egamma, sunrealtype ealpha);
+SUNDIALS_EXPORT int KINSetResMonParams(void *kinmem, sunrealtype omegamin, sunrealtype omegamax);
+SUNDIALS_EXPORT int KINSetResMonConstValue(void *kinmem, sunrealtype omegaconst);
 SUNDIALS_EXPORT int KINSetNoMinEps(void *kinmem, booleantype noMinEps);
-SUNDIALS_EXPORT int KINSetMaxNewtonStep(void *kinmem, realtype mxnewtstep);
+SUNDIALS_EXPORT int KINSetMaxNewtonStep(void *kinmem, sunrealtype mxnewtstep);
 SUNDIALS_EXPORT int KINSetMaxBetaFails(void *kinmem, long int mxnbcf);
-SUNDIALS_EXPORT int KINSetRelErrFunc(void *kinmem, realtype relfunc);
-SUNDIALS_EXPORT int KINSetFuncNormTol(void *kinmem, realtype fnormtol);
-SUNDIALS_EXPORT int KINSetScaledStepTol(void *kinmem, realtype scsteptol);
+SUNDIALS_EXPORT int KINSetRelErrFunc(void *kinmem, sunrealtype relfunc);
+SUNDIALS_EXPORT int KINSetFuncNormTol(void *kinmem, sunrealtype fnormtol);
+SUNDIALS_EXPORT int KINSetScaledStepTol(void *kinmem, sunrealtype scsteptol);
 SUNDIALS_EXPORT int KINSetConstraints(void *kinmem, N_Vector constraints);
 SUNDIALS_EXPORT int KINSetSysFunc(void *kinmem, KINSysFn func);
 
@@ -682,7 +682,7 @@ SUNDIALS_EXPORT int KINSol(void *kinmem, N_Vector uu, int strategy,
  *                           | (total number of long int-sized blocks
  *                           | of memory allocated by KINSOL for
  *                           | vector storage) and real workspace
- *                           | size (total number of realtype-sized
+ *                           | size (total number of sunrealtype-sized
  *                           | blocks of memory allocated by KINSOL
  *                           | for vector storage)
  *                           |
@@ -739,8 +739,8 @@ SUNDIALS_EXPORT int KINGetNumNonlinSolvIters(void *kinmem, long int *nniters);
 SUNDIALS_EXPORT int KINGetNumFuncEvals(void *kinmem, long int *nfevals);
 SUNDIALS_EXPORT int KINGetNumBetaCondFails(void *kinmem, long int *nbcfails); 
 SUNDIALS_EXPORT int KINGetNumBacktrackOps(void *kinmem, long int *nbacktr);
-SUNDIALS_EXPORT int KINGetFuncNorm(void *kinmem, realtype *fnorm);
-SUNDIALS_EXPORT int KINGetStepLength(void *kinmem, realtype *steplength);
+SUNDIALS_EXPORT int KINGetFuncNorm(void *kinmem, sunrealtype *fnorm);
+SUNDIALS_EXPORT int KINGetStepLength(void *kinmem, sunrealtype *steplength);
 SUNDIALS_EXPORT char *KINGetReturnFlagName(long int flag);
 
 /*

@@ -7,7 +7,7 @@
 
 #define Ith(v,i) ( NV_DATA_S(v)[i] )
 
-int lbode_AMIGO_rhs(realtype t, N_Vector y, N_Vector ydot, void *data)
+int lbode_AMIGO_rhs(sunrealtype t, N_Vector y, N_Vector ydot, void *data)
 {
 	int i,j,k;
 	AMIGO_model* amigo_model=(AMIGO_model*) data;

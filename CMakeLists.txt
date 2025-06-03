@@ -10,7 +10,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY .)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY .)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY .)
 
-add_subdirectory(modules/cvodes_old)
 add_subdirectory(modules/sacess)
 add_subdirectory(modules/cuqdyn-c)
 add_subdirectory(modules/cli)

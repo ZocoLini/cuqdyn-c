@@ -293,7 +293,7 @@ extern "C" {
         double *seed;
         int contadorseed;
         N_Vector texp;
-        DlsMat yexp;
+        SUNMatrix yexp;
         N_Vector initial_values;
     }experiment_total;
 
@@ -331,7 +331,7 @@ extern "C" {
     } output_function;
 
 
-    int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, DlsMat yexp, N_Vector initial_values);
+    int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, SUNMatrix yexp, N_Vector initial_values);
 
 void init_result_data(result_solver *, int);
 

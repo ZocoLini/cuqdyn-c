@@ -170,9 +170,9 @@ extern "C" {
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
+typedef int (*CVSpilsPrecSetupFn)(sunrealtype t, N_Vector y, N_Vector fy,
 				  booleantype jok, booleantype *jcurPtr,
-				  realtype gamma, void *user_data,
+				  sunrealtype gamma, void *user_data,
 				  N_Vector tmp1, N_Vector tmp2,
 				  N_Vector tmp3);
 
@@ -227,9 +227,9 @@ typedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
+typedef int (*CVSpilsPrecSolveFn)(sunrealtype t, N_Vector y, N_Vector fy,
 				  N_Vector r, N_Vector z,
-				  realtype gamma, realtype delta,
+				  sunrealtype gamma, sunrealtype delta,
 				  int lr, void *user_data, N_Vector tmp);
 
 /*
@@ -264,7 +264,7 @@ typedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
+typedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, sunrealtype t,
 				    N_Vector y, N_Vector fy,
 				    void *user_data, N_Vector tmp);
 
@@ -313,7 +313,7 @@ typedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
 SUNDIALS_EXPORT int CVSpilsSetPrecType(void *cvode_mem, int pretype);
 SUNDIALS_EXPORT int CVSpilsSetGSType(void *cvode_mem, int gstype);
 SUNDIALS_EXPORT int CVSpilsSetMaxl(void *cvode_mem, int maxl);
-SUNDIALS_EXPORT int CVSpilsSetEpsLin(void *cvode_mem, realtype eplifac);
+SUNDIALS_EXPORT int CVSpilsSetEpsLin(void *cvode_mem, sunrealtype eplifac);
 SUNDIALS_EXPORT int CVSpilsSetPreconditioner(void *cvode_mem,
                                              CVSpilsPrecSetupFn pset, 
 					     CVSpilsPrecSolveFn psolve);
@@ -389,10 +389,10 @@ SUNDIALS_EXPORT char *CVSpilsGetReturnFlagName(long int flag);
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsPrecSetupFnB)(realtype t, N_Vector y,
+typedef int (*CVSpilsPrecSetupFnB)(sunrealtype t, N_Vector y,
 				   N_Vector yB, N_Vector fyB,
 				   booleantype jokB,
-				   booleantype *jcurPtrB, realtype gammaB,
+				   booleantype *jcurPtrB, sunrealtype gammaB,
 				   void *user_dataB,
 				   N_Vector tmp1B, N_Vector tmp2B,
 				   N_Vector tmp3B);
@@ -407,10 +407,10 @@ typedef int (*CVSpilsPrecSetupFnB)(realtype t, N_Vector y,
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsPrecSolveFnB)(realtype t, N_Vector y,
+typedef int (*CVSpilsPrecSolveFnB)(sunrealtype t, N_Vector y,
 				   N_Vector yB, N_Vector fyB,
 				   N_Vector rB, N_Vector zB,
-				   realtype gammaB, realtype deltaB,
+				   sunrealtype gammaB, sunrealtype deltaB,
 				   int lrB, void *user_dataB, N_Vector tmpB);
 
 /*
@@ -422,7 +422,7 @@ typedef int (*CVSpilsPrecSolveFnB)(realtype t, N_Vector y,
  * -----------------------------------------------------------------
  */
 
-typedef int (*CVSpilsJacTimesVecFnB)(N_Vector vB, N_Vector JvB, realtype t,
+typedef int (*CVSpilsJacTimesVecFnB)(N_Vector vB, N_Vector JvB, sunrealtype t,
 				     N_Vector y, N_Vector yB, N_Vector fyB,
 				     void *jac_dataB, N_Vector tmpB);
 
@@ -434,7 +434,7 @@ typedef int (*CVSpilsJacTimesVecFnB)(N_Vector vB, N_Vector JvB, realtype t,
 
 SUNDIALS_EXPORT int CVSpilsSetPrecTypeB(void *cvode_mem, int which, int pretypeB);
 SUNDIALS_EXPORT int CVSpilsSetGSTypeB(void *cvode_mem, int which, int gstypeB);
-SUNDIALS_EXPORT int CVSpilsSetEpslinB(void *cvode_mem, int which, realtype eplifacB);
+SUNDIALS_EXPORT int CVSpilsSetEpslinB(void *cvode_mem, int which, sunrealtype eplifacB);
 SUNDIALS_EXPORT int CVSpilsSetMaxlB(void *cvode_mem, int which, int maxlB);
 SUNDIALS_EXPORT int CVSpilsSetPreconditionerB(void *cvode_mem, int which, 
                                               CVSpilsPrecSetupFnB psetB,

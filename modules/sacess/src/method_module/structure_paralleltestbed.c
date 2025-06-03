@@ -119,7 +119,7 @@ int returnfailevals_(void *exp_){
 }
 
 int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init,
-    N_Vector texp, DlsMat yexp, N_Vector initial_values){
+    N_Vector texp, SUNMatrix yexp, N_Vector initial_values){
     int error, counter;
 	exptotal->test.bench.max_dom = NULL;
 	exptotal->test.bench.min_dom = NULL;

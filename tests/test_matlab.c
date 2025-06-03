@@ -55,9 +55,9 @@ int main(void)
 
 void test_copy_vector_remove_indices()
 {
-    N_Vector vector = N_VNew_Serial(5);
+    N_Vector vector = New_Serial(5);
 
-    realtype *data = N_VGetArrayPointer(vector);
+    sunrealtype *data = N_VGetArrayPointer(vector);
     for (int i = 0; i < 5; ++i)
     {
         data[i] = i + 1;
@@ -79,15 +79,15 @@ void test_copy_vector_remove_indices()
 
 void test_copy_matrix_remove_rows()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3);
+    SUNMatrix matrix = NewDenseMatrix(3, 3);
 
-    realtype *data = SM_DATA_D(matrix);
+    sunrealtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 9; ++i)
     {
         data[i] = i + 1;
     }
 
-    DlsMat copy = copy_matrix_remove_rows(matrix, create_array((long[]) {1, 2}, 2));
+    SUNMatrix copy = copy_matrix_remove_rows(matrix, create_array((long[]) {1, 2}, 2));
 
     assert(SM_ROWS_D(copy) == 1);
     assert(SM_COLUMNS_D(copy) == 3);
@@ -102,15 +102,15 @@ void test_copy_matrix_remove_rows()
 
 void test_copy_matrix_remove_cols()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 5);
+    SUNMatrix matrix = NewDenseMatrix(3, 5);
 
-    realtype *data = SM_DATA_D(matrix);
+    sunrealtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 15; ++i)
     {
         data[i] = i + 1;
     }
 
-    DlsMat copy = copy_matrix_remove_columns(matrix, create_array((long[]) {1, 2}, 2));
+    SUNMatrix copy = copy_matrix_remove_columns(matrix, create_array((long[]) {1, 2}, 2));
 
     assert(SM_ROWS_D(copy) == 3);
     assert(SM_COLUMNS_D(copy) == 3);
@@ -133,15 +133,15 @@ void test_copy_matrix_remove_cols()
 
 void test_copy_matrix_remove_rows_and_cols()
 {
-    DlsMat matrix = SUNDenseMatrix(4, 3);
+    SUNMatrix matrix = NewDenseMatrix(4, 3);
 
-    realtype *data = SM_DATA_D(matrix);
+    sunrealtype *data = SM_DATA_D(matrix);
     for (int i = 0; i < 12; ++i)
     {
         data[i] = i + 1;
     }
 
-    DlsMat copy = copy_matrix_remove_rows_and_columns(matrix, create_array((long[]) {1, 2, 3}, 3),
+    SUNMatrix copy = copy_matrix_remove_rows_and_columns(matrix, create_array((long[]) {1, 2, 3}, 3),
                                                          create_array((long[]) {1, 2}, 2));
 
     assert(SM_ROWS_D(copy) == 1);
@@ -155,19 +155,19 @@ void test_copy_matrix_remove_rows_and_cols()
 
 void test_set_matrix_row()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3);
+    SUNMatrix matrix = NewDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
     }
 
-    N_Vector vector = N_VNew_Serial(3);
+    N_Vector vector = New_Serial(3);
     for (int i = 0; i < 3; ++i)
     {
         NV_Ith_S(vector, i) = 0;
     }
 
-    realtype expected_data[3][3] = {
+    sunrealtype expected_data[3][3] = {
             1, 4, 7, 0, 0, 0, 3, 6, 9,
     };
 
@@ -184,19 +184,19 @@ void test_set_matrix_row()
 
 void test_set_matrix_column()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3);
+    SUNMatrix matrix = NewDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
     }
 
-    N_Vector vector = N_VNew_Serial(3);
+    N_Vector vector = New_Serial(3);
     for (int i = 0; i < 3; ++i)
     {
         NV_Ith_S(vector, i) = i + 1;
     }
 
-    realtype expected_data[3][3] = {
+    sunrealtype expected_data[3][3] = {
             1, 4, 7, 1, 5, 8, 2, 6, 9,
     };
 
@@ -206,8 +206,8 @@ void test_set_matrix_column()
     {
         for (int j = 0; j < 3; ++j)
         {
-            realtype value = SM_ELEMENT_D(matrix, i, j);
-            realtype expected = expected_data[i][j];
+            sunrealtype value = SM_ELEMENT_D(matrix, i, j);
+            sunrealtype expected = expected_data[i][j];
 
             assert(value == expected);
         }
@@ -216,13 +216,13 @@ void test_set_matrix_column()
 
 void test_copy_matrix_row()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3);
+    SUNMatrix matrix = NewDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
     }
 
-    realtype expected_data[3] = {
+    sunrealtype expected_data[3] = {
             3,
             6,
             9,
@@ -238,13 +238,13 @@ void test_copy_matrix_row()
 
 void test_copy_matrix_column()
 {
-    DlsMat matrix = SUNDenseMatrix(3, 3);
+    SUNMatrix matrix = NewDenseMatrix(3, 3);
     for (int i = 0; i < 9; ++i)
     {
         SM_DATA_D(matrix)[i] = i + 1;
     }
 
-    realtype expected_data[1] = {
+    sunrealtype expected_data[1] = {
             3,
     };
 
@@ -258,7 +258,7 @@ void test_copy_matrix_column()
 
 void test_quantile()
 {
-    N_Vector values = N_VNew_Serial(7);
+    N_Vector values = New_Serial(7);
     NV_Ith_S(values, 0) = 0.5377;
     NV_Ith_S(values, 1) = 1.8339;
     NV_Ith_S(values, 2) = -2.2588;
@@ -267,12 +267,12 @@ void test_quantile()
     NV_Ith_S(values, 5) = -1.3077;
     NV_Ith_S(values, 6) = -0.4336;
 
-    realtype q[7] = {1, 0.3, 0.025, 0.25, 0.5, 0.75, 0.975};
-    realtype expected[7] = {1.8339, -0.7832, -2.2588, -1.0892, 0.3188, 0.7810, 1.8339};
+    sunrealtype q[7] = {1, 0.3, 0.025, 0.25, 0.5, 0.75, 0.975};
+    sunrealtype expected[7] = {1.8339, -0.7832, -2.2588, -1.0892, 0.3188, 0.7810, 1.8339};
 
     for (int i = 0; i < 7; ++i)
     {
-        realtype result = quantile(values, q[i]);
+        sunrealtype result = quantile(values, q[i]);
         assert(fabs(result - expected[i]) < 0.0001);
     }
 }

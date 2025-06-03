@@ -275,7 +275,7 @@ void handle_AMIGO_problem_stat_fails(int ith_model,AMIGO_problem* amigo_problem)
 	}
 }
 
-void set_AMIGO_problem_rhs(AMIGO_problem* amigo_problem, int(*rhs)(realtype,N_Vector, N_Vector, void*),void(change_y_func)(void*,realtype,N_Vector)){
+void set_AMIGO_problem_rhs(AMIGO_problem* amigo_problem, int(*rhs)(sunrealtype,N_Vector, N_Vector, void*),void(change_y_func)(void*,sunrealtype,N_Vector)){
 
 	int i;
 

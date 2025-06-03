@@ -116,9 +116,9 @@ extern "C" {
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDASpilsPrecSetupFn)(realtype tt,
+typedef int (*IDASpilsPrecSetupFn)(sunrealtype tt,
 				   N_Vector yy, N_Vector yp, N_Vector rr,
-				   realtype c_j, void *user_data,
+				   sunrealtype c_j, void *user_data,
 				   N_Vector tmp1, N_Vector tmp2,
 				   N_Vector tmp3);
 
@@ -172,10 +172,10 @@ typedef int (*IDASpilsPrecSetupFn)(realtype tt,
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDASpilsPrecSolveFn)(realtype tt,
+typedef int (*IDASpilsPrecSolveFn)(sunrealtype tt,
 				   N_Vector yy, N_Vector yp, N_Vector rr,
 				   N_Vector rvec, N_Vector zvec,
-				   realtype c_j, realtype delta, void *user_data,
+				   sunrealtype c_j, sunrealtype delta, void *user_data,
 				   N_Vector tmp);
 
 /*
@@ -216,10 +216,10 @@ typedef int (*IDASpilsPrecSolveFn)(realtype tt,
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDASpilsJacTimesVecFn)(realtype tt,
+typedef int (*IDASpilsJacTimesVecFn)(sunrealtype tt,
 				     N_Vector yy, N_Vector yp, N_Vector rr,
 				     N_Vector v, N_Vector Jv,
-				     realtype c_j, void *user_data,
+				     sunrealtype c_j, void *user_data,
 				     N_Vector tmp1, N_Vector tmp2);
 
 
@@ -276,8 +276,8 @@ SUNDIALS_EXPORT int IDASpilsSetJacTimesVecFn(void *ida_mem,
 SUNDIALS_EXPORT int IDASpilsSetGSType(void *ida_mem, int gstype);
 SUNDIALS_EXPORT int IDASpilsSetMaxRestarts(void *ida_mem, int maxrs);
 SUNDIALS_EXPORT int IDASpilsSetMaxl(void *ida_mem, int maxl);
-SUNDIALS_EXPORT int IDASpilsSetEpsLin(void *ida_mem, realtype eplifac);
-SUNDIALS_EXPORT int IDASpilsSetIncrementFactor(void *ida_mem, realtype dqincfac);
+SUNDIALS_EXPORT int IDASpilsSetEpsLin(void *ida_mem, sunrealtype eplifac);
+SUNDIALS_EXPORT int IDASpilsSetIncrementFactor(void *ida_mem, sunrealtype dqincfac);
 
 /*
  * -----------------------------------------------------------------
@@ -342,10 +342,10 @@ SUNDIALS_EXPORT char *IDASpilsGetReturnFlagName(long int flag);
  * the prototype given below.
  * -----------------------------------------------------------------
  */
-typedef int (*IDASpilsPrecSetupFnB)(realtype tt, 
+typedef int (*IDASpilsPrecSetupFnB)(sunrealtype tt,
 				    N_Vector yy, N_Vector yp,
 				    N_Vector yyB, N_Vector ypB, N_Vector rrB, 
-				    realtype c_jB, void *user_dataB,
+				    sunrealtype c_jB, void *user_dataB,
 				    N_Vector tmp1B, N_Vector tmp2B, 
 				    N_Vector tmp3B);
 
@@ -358,11 +358,11 @@ typedef int (*IDASpilsPrecSetupFnB)(realtype tt,
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDASpilsPrecSolveFnB)(realtype tt, 
+typedef int (*IDASpilsPrecSolveFnB)(sunrealtype tt,
 				    N_Vector yy, N_Vector yp,
 				    N_Vector yyB, N_Vector ypB, N_Vector rrB, 
 				    N_Vector rvecB, N_Vector zvecB,
-				    realtype c_jB, realtype deltaB,
+				    sunrealtype c_jB, sunrealtype deltaB,
 				    void *user_dataB, N_Vector tmpB);
 
 /*
@@ -374,11 +374,11 @@ typedef int (*IDASpilsPrecSolveFnB)(realtype tt,
  * -----------------------------------------------------------------
  */
 
-typedef int (*IDASpilsJacTimesVecFnB)(realtype t,
+typedef int (*IDASpilsJacTimesVecFnB)(sunrealtype t,
 				      N_Vector yy, N_Vector yp,
 				      N_Vector yyB, N_Vector ypB, N_Vector rrB,
 				      N_Vector vB, N_Vector JvB, 
-				      realtype c_jB, void *user_dataB, 
+				      sunrealtype c_jB, void *user_dataB,
 				      N_Vector tmp1B, N_Vector tmp2B);
 
 /*
@@ -391,12 +391,12 @@ SUNDIALS_EXPORT int IDASpilsSetGSTypeB(void *ida_mem, int which, int gstypeB);
 
 SUNDIALS_EXPORT int IDASpilsSetMaxRestartsB(void *ida_mem, int which, int maxrsB);
 
-SUNDIALS_EXPORT int IDASpilsSetEpsLinB(void *ida_mem, int which, realtype eplifacB);
+SUNDIALS_EXPORT int IDASpilsSetEpsLinB(void *ida_mem, int which, sunrealtype eplifacB);
 
 SUNDIALS_EXPORT int IDASpilsSetMaxlB(void *ida_mem, int which, int maxlB);
 
 SUNDIALS_EXPORT int IDASpilsSetIncrementFactorB(void *ida_mem, int which, 
-                                                realtype dqincfacB);
+                                                sunrealtype dqincfacB);
 
 SUNDIALS_EXPORT int IDASpilsSetPreconditionerB(void *ida_mem, int which,
                                                IDASpilsPrecSetupFnB psetB,

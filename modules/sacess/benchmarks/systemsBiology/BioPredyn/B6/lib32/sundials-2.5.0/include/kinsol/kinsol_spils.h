@@ -263,7 +263,7 @@ SUNDIALS_EXPORT int KINSpilsSetJacTimesVecFn(void *kinmem,
  *                            | (total number of long int-sized blocks
  *                            | of memory allocated  for
  *                            | vector storage), and real workspace
- *                            | size (total number of realtype-sized
+ *                            | size (total number of sunrealtype-sized
  *                            | blocks of memory allocated
  *                            | for vector storage)
  *                            |

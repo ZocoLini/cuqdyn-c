@@ -79,7 +79,7 @@ EXPORTIT double eval_AMIGO_problem_LSQ(AMIGO_problem* amigo_problem);
 
 EXPORTIT double eval_AMIGO_problem_LLK(AMIGO_problem* amigo_problem);
 
-EXPORTIT void set_AMIGO_problem_rhs(AMIGO_problem* amigo_problem, int(*rhs)(realtype,N_Vector, N_Vector, void*),void(change_y_func)(void*,realtype,N_Vector));
+EXPORTIT void set_AMIGO_problem_rhs(AMIGO_problem* amigo_problem, int(*rhs)(sunrealtype,N_Vector, N_Vector, void*),void(change_y_func)(void*,sunrealtype,N_Vector));
 
 EXPORTIT double AMIGO_dummy(AMIGO_problem* amigo_problem);
 

@@ -47,9 +47,9 @@ extern "C" {
 
 /*
  * -----------------------------------------------------------------
- * Type : DlsMat
+ * Type : SUNMatrix
  * -----------------------------------------------------------------
- * The type DlsMat is defined to be a pointer to a structure
+ * The type SUNMatrix is defined to be a pointer to a structure
  * with various sizes, a data field, and an array of pointers to
  * the columns which defines a dense or band matrix for use in 
  * direct linear solvers. The M and N fields indicates the number 
@@ -57,19 +57,19 @@ extern "C" {
  * dimensional array used for component storage. The cols field 
  * stores the pointers in data for the beginning of each column.
  * -----------------------------------------------------------------
- * For DENSE matrices, the relevant fields in DlsMat are:
+ * For DENSE matrices, the relevant fields in SUNMatrix are:
  *    type  = SUNDIALS_DENSE
  *    M     - number of rows
  *    N     - number of columns
  *    ldim  - leading dimension (ldim >= M)
- *    data  - pointer to a contiguous block of realtype variables
+ *    data  - pointer to a contiguous block of sunrealtype variables
  *    ldata - length of the data array =ldim*N
  *    cols  - array of pointers. cols[j] points to the first element 
  *            of the j-th column of the matrix in the array data.
  *
  * The elements of a dense matrix are stored columnwise (i.e columns 
  * are stored one on top of the other in memory). 
- * If A is of type DlsMat, then the (i,j)th element of A (with 
+ * If A is of type SUNMatrix, then the (i,j)th element of A (with
  * 0 <= i < M and 0 <= j < N) is given by (A->data)[j*n+i]. 
  *
  * The DENSE_COL and DENSE_ELEM macros below allow a user to access 
@@ -79,7 +79,7 @@ extern "C" {
  * that elements are stored columnwise and that a pointer to the 
  * jth column of elements can be obtained via the DENSE_COL macro.
  * -----------------------------------------------------------------
- * For BAND matrices, the relevant fields in DlsMat are:
+ * For BAND matrices, the relevant fields in SUNMatrix are:
  *    type  = SUNDIALS_BAND
  *    M     - number of rows
  *    N     - number of columns
@@ -92,7 +92,7 @@ extern "C" {
  *            partial pivoting. The s_mu field holds the upper 
  *            bandwidth allocated for A.
  *    ldim  - leading dimension (ldim >= s_mu)
- *    data  - pointer to a contiguous block of realtype variables
+ *    data  - pointer to a contiguous block of sunrealtype variables
  *    ldata - length of the data array =ldim*(s_mu+ml+1)
  *    cols  - array of pointers. cols[j] points to the first element 
  *            of the j-th column of the matrix in the array data.
@@ -111,7 +111,7 @@ extern "C" {
  * -----------------------------------------------------------------
  */
 
-typedef struct _DlsMat {
+typedef struct _SUNMatrix {
   int type;
   long int M;
   long int N;
@@ -119,10 +119,10 @@ typedef struct _DlsMat {
   long int mu;
   long int ml;
   long int s_mu;
-  realtype *data;
+  sunrealtype *data;
   long int ldata;
-  realtype **cols;
-} *DlsMat;
+  sunrealtype **cols;
+} *SUNMatrix;
 
 /*
  * ==================================================================
@@ -137,7 +137,7 @@ typedef struct _DlsMat {
  *
  * DENSE_COL(A,j) references the jth column of the M-by-N dense
  * matrix A, 0 <= j < N. The type of the expression DENSE_COL(A,j) 
- * is (realtype *). After the assignment in the usage above, col_j 
+ * is (sunrealtype *). After the assignment in the usage above, col_j
  * may be treated as an array indexed from 0 to M-1. The (i,j)-th 
  * element of A is thus referenced by col_j[i].
  *
@@ -157,7 +157,7 @@ typedef struct _DlsMat {
  *  
  * BAND_COL(A,j) references the diagonal element of the jth column 
  * of the N by N band matrix A, 0 <= j <= N-1. The type of the 
- * expression BAND_COL(A,j) is realtype *. The pointer returned by 
+ * expression BAND_COL(A,j) is sunrealtype *. The pointer returned by
  * the call BAND_COL(A,j) can be treated as an array which is 
  * indexed from -(A->mu) to (A->ml).
  * 
@@ -178,7 +178,7 @@ typedef struct _DlsMat {
 
 /*
  * ==================================================================
- * Exported function prototypes (functions working on dlsMat)
+ * Exported function prototypes (functions working on SUNMatrix)
  * ==================================================================
  */
 
@@ -187,14 +187,14 @@ typedef struct _DlsMat {
  * Function: NewDenseMat
  * -----------------------------------------------------------------
  * NewDenseMat allocates memory for an M-by-N dense matrix and
- * returns the storage allocated (type DlsMat). NewDenseMat
+ * returns the storage allocated (type SUNMatrix). NewDenseMat
  * returns NULL if the request for matrix storage cannot be
- * satisfied. See the above documentation for the type DlsMat
+ * satisfied. See the above documentation for the type SUNMatrix
  * for matrix storage details.
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT DlsMat NewDenseMat(long int M, long int N);
+SUNDIALS_EXPORT SUNMatrix NewDenseMat(long int M, long int N);
 
 /*
  * -----------------------------------------------------------------
@@ -209,14 +209,14 @@ SUNDIALS_EXPORT DlsMat NewDenseMat(long int M, long int N);
  *
  * (2) Pass smu = MIN(N-1,mu+ml) if A will be factored.
  *
- * NewBandMat returns the storage allocated (type DlsMat) or
+ * NewBandMat returns the storage allocated (type SUNMatrix) or
  * NULL if the request for matrix storage cannot be satisfied.
- * See the documentation for the type DlsMat for matrix storage
+ * See the documentation for the type SUNMatrix for matrix storage
  * details.
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT DlsMat NewBandMat(long int N, long int mu, long int ml, long int smu);
+SUNDIALS_EXPORT SUNMatrix NewBandMat(long int N, long int mu, long int ml, long int smu);
 
 /*
  * -----------------------------------------------------------------
@@ -226,7 +226,7 @@ SUNDIALS_EXPORT DlsMat NewBandMat(long int N, long int mu, long int ml, long int
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void DestroyMat(DlsMat A);
+SUNDIALS_EXPORT void DestroyMat(SUNMatrix A);
 
 /*
  * -----------------------------------------------------------------
@@ -256,13 +256,13 @@ SUNDIALS_EXPORT long int *NewLintArray(long int N);
  * -----------------------------------------------------------------
  * Function: NewRealArray
  * -----------------------------------------------------------------
- * NewRealArray allocates memory an array of N realtype and returns
+ * NewRealArray allocates memory an array of N sunrealtype and returns
  * the pointer to the memory it allocates. If the request for
  * memory storage cannot be satisfied, it returns NULL.
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT realtype *NewRealArray(long int N);
+SUNDIALS_EXPORT sunrealtype *NewRealArray(long int N);
 
 /*
  * -----------------------------------------------------------------
@@ -287,7 +287,7 @@ SUNDIALS_EXPORT void DestroyArray(void *p);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void AddIdentity(DlsMat A);
+SUNDIALS_EXPORT void AddIdentity(SUNMatrix A);
 
 /*
  * -----------------------------------------------------------------
@@ -297,7 +297,7 @@ SUNDIALS_EXPORT void AddIdentity(DlsMat A);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void SetToZero(DlsMat A);
+SUNDIALS_EXPORT void SetToZero(SUNMatrix A);
 
 /*
  * -----------------------------------------------------------------
@@ -311,21 +311,21 @@ SUNDIALS_EXPORT void SetToZero(DlsMat A);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void PrintMat(DlsMat A);
+SUNDIALS_EXPORT void PrintMat(SUNMatrix A);
 
 
 /*
  * ==================================================================
- * Exported function prototypes (functions working on realtype**)
+ * Exported function prototypes (functions working on sunrealtype**)
  * ==================================================================
  */
 
-SUNDIALS_EXPORT realtype **newDenseMat(long int m, long int n);
-SUNDIALS_EXPORT realtype **newBandMat(long int n, long int smu, long int ml);
-SUNDIALS_EXPORT void destroyMat(realtype **a);
+SUNDIALS_EXPORT sunrealtype **newDenseMat(long int m, long int n);
+SUNDIALS_EXPORT sunrealtype **newBandMat(long int n, long int smu, long int ml);
+SUNDIALS_EXPORT void destroyMat(sunrealtype **a);
 SUNDIALS_EXPORT int *newIntArray(int n);
 SUNDIALS_EXPORT long int *newLintArray(long int n);
-SUNDIALS_EXPORT realtype *newRealArray(long int m);
+SUNDIALS_EXPORT sunrealtype *newRealArray(long int m);
 SUNDIALS_EXPORT void destroyArray(void *v);
 
 

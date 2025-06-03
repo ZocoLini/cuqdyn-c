@@ -184,7 +184,7 @@ SUNDIALS_EXPORT SptfqmrMem SptfqmrMalloc(int l_max, N_Vector vec_tmpl);
  *          preconditioned linear system Pz = r (ignored if
  *          pretype == PREC_NONE) (see sundials_iterative.h)
  *
- *  res_norm  pointer (type realtype*) to the L2 norm of the
+ *  res_norm  pointer (type sunrealtype*) to the L2 norm of the
  *            scaled, preconditioned residual (if return value
  *            is either SPTFQMR_SUCCESS or SPTFQMR_RES_REDUCED, then
  *            *res_norm = ||sb*P1_inv*(b-Ax)||_L2, where x is
@@ -201,9 +201,9 @@ SUNDIALS_EXPORT SptfqmrMem SptfqmrMalloc(int l_max, N_Vector vec_tmpl);
  */
 
 SUNDIALS_EXPORT int SptfqmrSolve(SptfqmrMem mem, void *A_data, N_Vector x, N_Vector b,
-				 int pretype, realtype delta, void *P_data, N_Vector sx,
+				 int pretype, sunrealtype delta, void *P_data, N_Vector sx,
 				 N_Vector sb, ATimesFn atimes, PSolveFn psolve,
-				 realtype *res_norm, int *nli, int *nps);
+				 sunrealtype *res_norm, int *nli, int *nps);
 
 /* Return values for SptfqmrSolve */
 

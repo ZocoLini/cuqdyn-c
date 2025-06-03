@@ -4,15 +4,15 @@ Check README.txt
 
 #include <AMIGO_problem.h>
 
-int amigoRHS_B1(realtype t, N_Vector y, N_Vector ydot, void *data);
+int amigoRHS_B1(sunrealtype t, N_Vector y, N_Vector ydot, void *data);
 
-void amigo_Y_at_tcon_B1(void* amigo_model, realtype t, N_Vector y);
+void amigo_Y_at_tcon_B1(void* amigo_model, sunrealtype t, N_Vector y);
 
 void amigoRHS_get_OBS_B1(void* data);
 
 void amigoRHS_get_sens_OBS_B1(void* data);
  
-int amigoRHS_B1(realtype t, N_Vector y, N_Vector ydot, void *data);
+int amigoRHS_B1(sunrealtype t, N_Vector y, N_Vector ydot, void *data);
 
 double objective_function_B1(double* x, void* data); 
  
@@ -2366,7 +2366,7 @@ double objective_function_B1(double* x, void* data){
 #define s_0565	((*amigo_model).controls_v[0][(*amigo_model).index_t_stim]+(t-(*amigo_model).tlast)*(*amigo_model).slope[0][(*amigo_model).index_t_stim])
 
 /* Right hand side of the system (f(t,x,p))*/
-int amigoRHS_B1(realtype t, N_Vector y, N_Vector ydot, void *data){
+int amigoRHS_B1(sunrealtype t, N_Vector y, N_Vector ydot, void *data){
 	AMIGO_model* amigo_model=(AMIGO_model*)data;
 	/* *** Definition of the algebraic variables *** */
 
@@ -3226,14 +3226,14 @@ int amigoRHS_B1(realtype t, N_Vector y, N_Vector ydot, void *data){
 
 
 /* Jacobian of the system (dfdx)*/
-int amigoJAC_B1(int N, realtype t, N_Vector y, N_Vector fy, DlsMat J, void *data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
+int amigoJAC_B1(int N, sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 	AMIGO_model* amigo_model=(AMIGO_model*)data;
 
 	return(0);
 }
 
 /* R.H.S of the sensitivity dsi/dt = (df/dx)*si + df/dp_i */
-int amigoSensRHS_B1(int Ns, realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yS, N_Vector ySdot, void *data, N_Vector tmp1, N_Vector tmp2){
+int amigoSensRHS_B1(int Ns, sunrealtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yS, N_Vector ySdot, void *data, N_Vector tmp1, N_Vector tmp2){
 	AMIGO_model* amigo_model=(AMIGO_model*)data;
 
 	return(0);
@@ -4030,7 +4030,7 @@ void amigoRHS_get_sens_OBS_B1(void* data){
 }
 
 
-void amigo_Y_at_tcon_B1(void* data, realtype t, N_Vector y){
+void amigo_Y_at_tcon_B1(void* data, sunrealtype t, N_Vector y){
     AMIGO_model* amigo_model=(AMIGO_model*)data;
     
 }

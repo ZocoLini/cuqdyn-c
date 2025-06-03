@@ -11,13 +11,13 @@
  * For details, see the LICENSE file.
  * -----------------------------------------------------------------
  * This is the header file for a generic BAND linear solver
- * package, based on the DlsMat type defined in sundials_direct.h.
+ * package, based on the SUNMatrix type defined in sundials_direct.h.
  *
  * There are two sets of band solver routines listed in
- * this file: one set uses type DlsMat defined below and the
- * other set uses the type realtype ** for band matrix arguments.
- * Routines that work with the type DlsMat begin with "Band".
- * Routines that work with realtype ** begin with "band"
+ * this file: one set uses type SUNMatrix defined below and the
+ * other set uses the type sunrealtype ** for band matrix arguments.
+ * Routines that work with the type SUNMatrix begin with "Band".
+ * Routines that work with sunrealtype ** begin with "band"
  * -----------------------------------------------------------------
  */
 
@@ -71,13 +71,13 @@ extern "C" {
  * handled by the BandGBTRF routine.
  *
  * BandGBTRF is only a wrapper around bandGBTRF. All work is done
- * in bandGBTRF works directly on the data in the DlsMat A (i.e.,
+ * in bandGBTRF works directly on the data in the SUNMatrix A (i.e.,
  * the field cols).
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT long int BandGBTRF(DlsMat A, long int *p);
-SUNDIALS_EXPORT long int bandGBTRF(realtype **a, long int n, long int mu, long int ml,
+SUNDIALS_EXPORT long int BandGBTRF(SUNMatrix A, long int *p);
+SUNDIALS_EXPORT long int bandGBTRF(sunrealtype **a, long int n, long int mu, long int ml,
                                    long int smu, long int *p);
 
 /*
@@ -93,12 +93,12 @@ SUNDIALS_EXPORT long int bandGBTRF(realtype **a, long int n, long int mu, long i
  * did not fail.
  *
  * BandGBTRS is only a wrapper around bandGBTRS which does all the
- * work directly on the data in the DlsMat A (i.e., the field cols).
+ * work directly on the data in the SUNMatrix A (i.e., the field cols).
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void BandGBTRS(DlsMat A, long int *p, realtype *b);
-SUNDIALS_EXPORT void bandGBTRS(realtype **a, long int n, long int smu, long int ml, long int *p, realtype *b);
+SUNDIALS_EXPORT void BandGBTRS(SUNMatrix A, long int *p, sunrealtype *b);
+SUNDIALS_EXPORT void bandGBTRS(sunrealtype **a, long int n, long int smu, long int ml, long int *p, sunrealtype *b);
 
 /*
  * -----------------------------------------------------------------
@@ -111,12 +111,12 @@ SUNDIALS_EXPORT void bandGBTRS(realtype **a, long int n, long int smu, long int 
  * band matrix B.
  * 
  * BandCopy is a wrapper around bandCopy which accesses the data
- * in the DlsMat A and B (i.e. the fields cols)
+ * in the SUNMatrix A and B (i.e. the fields cols)
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void BandCopy(DlsMat A, DlsMat B, long int copymu, long int copyml);
-SUNDIALS_EXPORT void bandCopy(realtype **a, realtype **b, long int n, long int a_smu, long int b_smu,
+SUNDIALS_EXPORT void BandCopy(SUNMatrix A, SUNMatrix B, long int copymu, long int copyml);
+SUNDIALS_EXPORT void bandCopy(sunrealtype **a, sunrealtype **b, long int n, long int a_smu, long int b_smu,
 			      long int copymu, long int copyml);
 
 /*
@@ -128,24 +128,24 @@ SUNDIALS_EXPORT void bandCopy(realtype **a, realtype **b, long int n, long int a
  * A(i,j) <- c*A(i,j),   j-(A->mu) <= i <= j+(A->ml).
  *
  * BandScale is a wrapper around bandScale which performs the actual
- * scaling by accessing the data in the DlsMat A (i.e. the field
+ * scaling by accessing the data in the SUNMatrix A (i.e. the field
  * cols).
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void BandScale(realtype c, DlsMat A);
-SUNDIALS_EXPORT void bandScale(realtype c, realtype **a, long int n, long int mu, long int ml, long int smu);
+SUNDIALS_EXPORT void BandScale(sunrealtype c, SUNMatrix A);
+SUNDIALS_EXPORT void bandScale(sunrealtype c, sunrealtype **a, long int n, long int mu, long int ml, long int smu);
 
 /*
  * -----------------------------------------------------------------
  * Function: bandAddIdentity
  * -----------------------------------------------------------------
  * bandAddIdentity adds the identity matrix to the n-by-n matrix
- * stored in the realtype** arrays.
+ * stored in the sunrealtype** arrays.
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT void bandAddIdentity(realtype **a, long int n, long int smu);
+SUNDIALS_EXPORT void bandAddIdentity(sunrealtype **a, long int n, long int smu);
 
 #ifdef __cplusplus
 }

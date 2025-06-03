@@ -9,7 +9,7 @@
 
 static int check_retval(void *, const char *, int);
 
-DlsMat solve_ode(N_Vector parameters, N_Vector initial_values, realtype t0, N_Vector times)
+SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunsunrealtype t0, N_Vector times)
 {
     CuqdynConf *cuqdyn_conf = get_cuqdyn_conf();
     Tolerances tolerances = cuqdyn_conf->tolerances;
@@ -21,8 +21,8 @@ DlsMat solve_ode(N_Vector parameters, N_Vector initial_values, realtype t0, N_Ve
     retval = CVodeInit(cvode_mem, ode_model_fun, t0, initial_values);
     if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
 
-    N_Vector cloned_abs_tol = N_VNew_Serial(NV_LENGTH_S(tolerances.atol));
-    memcpy(NV_DATA_S(cloned_abs_tol), NV_DATA_S(tolerances.atol), NV_LENGTH_S(tolerances.atol) * sizeof(realtype));
+    N_Vector cloned_abs_tol = New_Serial(NV_LENGTH_S(tolerances.atol));
+    memcpy(NV_DATA_S(cloned_abs_tol), NV_DATA_S(tolerances.atol), NV_LENGTH_S(tolerances.atol) * sizeof(sunsunrealtype));
 
     // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
     retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, cloned_abs_tol);
@@ -35,15 +35,15 @@ DlsMat solve_ode(N_Vector parameters, N_Vector initial_values, realtype t0, N_Ve
     if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) { return NULL; }
 
     /* Time points */
-    realtype t;
+    sunsunrealtype t;
 
-    N_Vector yout = N_VNew_Serial(NV_LENGTH_S(initial_values));
+    N_Vector yout = New_Serial(NV_LENGTH_S(initial_values));
     int result_cols = cuqdyn_conf->ode_expr.y_count + 1; // We add the time col
-    DlsMat result = SUNDenseMatrix(NV_LENGTH_S(times), result_cols);
+    SUNMatrix result = NewDenseMatrix(NV_LENGTH_S(times), result_cols);
 
     for (int i = 0; i < NV_LENGTH_S(times); ++i)
     {
-        const realtype actual_time = NV_Ith_S(times, i);
+        const sunsunrealtype actual_time = NV_Ith_S(times, i);
 
         if (actual_time == t0)
         {

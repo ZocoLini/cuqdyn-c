@@ -1,18 +1,19 @@
-#include <nvector_old/nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sunmatrix/sunmatrix_dense.h>
 
 #include "cuqdyn.h"
 
 N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 {
-    realtype *original_data = N_VGetArrayPointer(original);
+    sunsunrealtype *original_data = N_VGetArrayPointer(original);
     long N = NV_LENGTH_S(original);
 
-    N_Vector new_vector = N_VNew_Serial(N - indices.len);
+    N_Vector new_vector = New_Serial(N - indices.len);
 
-    realtype *new_data = N_VGetArrayPointer(new_vector);
+    sunsunrealtype *new_data = N_VGetArrayPointer(new_vector);
 
     long new_index = 0; // Index to track the current index in the new vector
     long skip_index = 0; // Index to track the current index in the indices array
@@ -32,15 +33,15 @@ N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 }
 
 // the indices are 1-based
-DlsMat copy_matrix_remove_rows_and_columns(DlsMat matrix, LongArray row_indices, LongArray col_indices)
+SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix matrix, LongArray row_indices, LongArray col_indices)
 {
     const long rows = SM_ROWS_D(matrix);
     const long cols = SM_COLUMNS_D(matrix);
 
-    DlsMat copy = SUNDenseMatrix(rows - row_indices.len, cols - col_indices.len);
+    SUNMatrix copy = NewDenseMatrix(rows - row_indices.len, cols - col_indices.len);
 
-    realtype *original_data = SM_DATA_D(matrix);
-    realtype *copy_data = SM_DATA_D(copy);
+    sunsunrealtype *original_data = SM_DATA_D(matrix);
+    sunsunrealtype *copy_data = SM_DATA_D(copy);
 
     // copy_index: Index to track the current index in the copy matrix
     // row_skip_index: Index to track the current index in the row_indices array
@@ -85,18 +86,18 @@ DlsMat copy_matrix_remove_rows_and_columns(DlsMat matrix, LongArray row_indices,
 }
 
 // the indices are 1-based
-DlsMat copy_matrix_remove_rows(DlsMat matrix, LongArray indices)
+SUNMatrix copy_matrix_remove_rows(SUNMatrix matrix, LongArray indices)
 {
     return copy_matrix_remove_rows_and_columns(matrix, indices, create_empty_array());
 }
 
 // the indices are 1-based
-DlsMat copy_matrix_remove_columns(DlsMat matrix, LongArray indices)
+SUNMatrix copy_matrix_remove_columns(SUNMatrix matrix, LongArray indices)
 {
     return copy_matrix_remove_rows_and_columns(matrix, create_empty_array(), indices);
 }
 
-void set_matrix_row(DlsMat matrix, N_Vector vec, const long row_index, const long start,
+void set_matrix_row(SUNMatrix matrix, N_Vector vec, const long row_index, const long start,
                     const long end)
 {
     for (long i = start; i < end; ++i)
@@ -105,7 +106,7 @@ void set_matrix_row(DlsMat matrix, N_Vector vec, const long row_index, const lon
     }
 }
 
-void set_matrix_column(DlsMat matrix, N_Vector vec, const long col_index, const long start,
+void set_matrix_column(SUNMatrix matrix, N_Vector vec, const long col_index, const long start,
                        const long end)
 {
     for (long i = start; i < end; ++i)
@@ -114,9 +115,9 @@ void set_matrix_column(DlsMat matrix, N_Vector vec, const long col_index, const 
     }
 }
 
-N_Vector copy_matrix_row(DlsMat matrix, long row_index, long start, long end)
+N_Vector copy_matrix_row(SUNMatrix matrix, long row_index, long start, long end)
 {
-    N_Vector vec = N_VNew_Serial(end - start);
+    N_Vector vec = New_Serial(end - start);
 
     for (long i = start; i < end; ++i)
     {
@@ -126,9 +127,9 @@ N_Vector copy_matrix_row(DlsMat matrix, long row_index, long start, long end)
     return vec;
 }
 
-N_Vector copy_matrix_column(DlsMat matrix, long col_index, long start, long end)
+N_Vector copy_matrix_column(SUNMatrix matrix, long col_index, long start, long end)
 {
-    N_Vector vec = N_VNew_Serial(end - start);
+    N_Vector vec = New_Serial(end - start);
 
     for (long i = start; i < end; ++i)
     {
@@ -138,7 +139,7 @@ N_Vector copy_matrix_column(DlsMat matrix, long col_index, long start, long end)
     return vec;
 }
 
-DlsMat sum_two_matrices(DlsMat a, DlsMat b)
+SUNMatrix sum_two_matrices(SUNMatrix a, SUNMatrix b)
 {
     long rows = SM_ROWS_D(b);
     long cols = SM_COLUMNS_D(b);
@@ -148,7 +149,7 @@ DlsMat sum_two_matrices(DlsMat a, DlsMat b)
         return NULL;
     }
 
-    DlsMat result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a));
+    SUNMatrix result = NewDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a));
 
     for (long i = 0; i < rows * cols; i++)
     {
@@ -158,7 +159,7 @@ DlsMat sum_two_matrices(DlsMat a, DlsMat b)
     return result;
 }
 
-DlsMat subtract_two_matrices(DlsMat a, DlsMat b)
+SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b)
 {
     long rows = SM_ROWS_D(b);
     long cols = SM_COLUMNS_D(b);
@@ -168,7 +169,7 @@ DlsMat subtract_two_matrices(DlsMat a, DlsMat b)
         return NULL;
     }
 
-    DlsMat result = SUNDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a));
+    SUNMatrix result = NewDenseMatrix(SM_ROWS_D(a), SM_COLUMNS_D(a));
 
     for (long i = 0; i < rows * cols; i++)
     {
@@ -178,10 +179,10 @@ DlsMat subtract_two_matrices(DlsMat a, DlsMat b)
     return result;
 }
 
-int cmp_realtype(const void *a, const void *b)
+int cmp_sunsunrealtype(const void *a, const void *b)
 {
-    double x = *(realtype *) a;
-    double y = *(realtype *) b;
+    double x = *(sunsunrealtype *) a;
+    double y = *(sunsunrealtype *) b;
 
     if (x < y)
         return -1;
@@ -190,17 +191,17 @@ int cmp_realtype(const void *a, const void *b)
     return 0;
 }
 
-realtype quantile(N_Vector vec, realtype q)
+sunsunrealtype quantile(N_Vector vec, sunsunrealtype q)
 {
     const long n = NV_LENGTH_S(vec);
-    realtype *data = malloc(n * sizeof(realtype));
+    sunsunrealtype *data = malloc(n * sizeof(sunsunrealtype));
 
-    memcpy(data, NV_DATA_S(vec), n * sizeof(realtype));
+    memcpy(data, NV_DATA_S(vec), n * sizeof(sunsunrealtype));
 
-    qsort(data, n, sizeof(realtype), cmp_realtype);
+    qsort(data, n, sizeof(sunsunrealtype), cmp_sunsunrealtype);
 
-    const double min_q = 0.5 / (realtype) n;
-    const double max_q = ((realtype) n - 0.5) / (realtype) n;
+    const double min_q = 0.5 / (sunsunrealtype) n;
+    const double max_q = ((sunsunrealtype) n - 0.5) / (sunsunrealtype) n;
 
     if (q <= min_q) {
         const double val = data[0];
@@ -214,7 +215,7 @@ realtype quantile(N_Vector vec, realtype q)
         return val;
     }
 
-    const double pos = q * (realtype) n - 0.5;
+    const double pos = q * (sunsunrealtype) n - 0.5;
     const int i = (int) pos;
     const double delta = pos - i;
 

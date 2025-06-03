@@ -63,7 +63,7 @@ extern "C" {
  *
  * N   is the problem size.
  *
- * Jac is the dense matrix (of type DlsMat) that will be loaded
+ * Jac is the dense matrix (of type SUNMatrix) that will be loaded
  *     by a CVDlsDenseJacFn with an approximation to the Jacobian 
  *     matrix J = (df_i/dy_j) at the point (t,y). 
  *
@@ -119,9 +119,9 @@ extern "C" {
  */
   
   
-typedef int (*CVDlsDenseJacFn)(long int N, realtype t,
+typedef int (*CVDlsDenseJacFn)(long int N, sunrealtype t,
 			       N_Vector y, N_Vector fy, 
-			       DlsMat Jac, void *user_data,
+			       SUNMatrix Jac, void *user_data,
 			       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
   
 /*
@@ -149,7 +149,7 @@ typedef int (*CVDlsDenseJacFn)(long int N, realtype t,
  *
  * fy is the vector f(t,y).
  *
- * Jac is the band matrix (of type DlsMat) that will be loaded
+ * Jac is the band matrix (of type SUNMatrix) that will be loaded
  * by a CVDlsBandJacFn with an approximation to the Jacobian matrix
  * Jac = (df_i/dy_j) at the point (t,y).
  * Three efficient ways to load J are:
@@ -207,8 +207,8 @@ typedef int (*CVDlsDenseJacFn)(long int N, realtype t,
  */
 
 typedef int (*CVDlsBandJacFn)(long int N, long int mupper, long int mlower,
-			      realtype t, N_Vector y, N_Vector fy, 
-			      DlsMat Jac, void *user_data,
+			      sunrealtype t, N_Vector y, N_Vector fy,
+			      SUNMatrix Jac, void *user_data,
 			      N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 /*

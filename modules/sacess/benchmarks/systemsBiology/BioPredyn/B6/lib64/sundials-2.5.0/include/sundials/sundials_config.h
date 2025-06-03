@@ -34,7 +34,7 @@
  */
 #define SUNDIALS_F77_FUNC_(name,NAME) name ## __
 
-/* Define precision of SUNDIALS data type 'realtype' 
+/* Define precision of SUNDIALS data type 'sunrealtype'
  * Depending on the precision level, one of the following 
  * three macros will be defined:
  *     #define SUNDIALS_SINGLE_PRECISION 1

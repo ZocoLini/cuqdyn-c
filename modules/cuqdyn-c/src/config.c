@@ -69,7 +69,7 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
     xmlNodePtr root = xmlDocGetRootElement(doc);
     xmlNodePtr cur = root->children;
 
-    realtype rtol = 1e-6;
+    sunsunrealtype rtol = 1e-6;
     N_Vector atol = NULL;
     int y_count = 0;
     char **odes = NULL;
@@ -110,7 +110,7 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
                     }
                     free(tmp1);
 
-                    atol = N_VNew_Serial(count);
+                    atol = New_Serial(count);
                     if (!atol)
                     {
                         fprintf(stderr, "Error: failed to allocate atol N_Vector\n");
@@ -213,7 +213,7 @@ CuqdynConf *get_cuqdyn_conf()
     return config;
 }
 
-Tolerances create_tolerances(realtype scalar_rtol, N_Vector atol)
+Tolerances create_tolerances(sunsunrealtype scalar_rtol, N_Vector atol)
 {
     Tolerances tolerances;
     tolerances.rtol = scalar_rtol;

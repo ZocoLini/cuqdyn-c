@@ -69,7 +69,7 @@ extern "C" {
  *            system function evaluated at current iterate:
  *            fu = F(u) [input]
  *
- * J        - dense matrix (of type DlsMat) that will be loaded
+ * J        - dense matrix (of type SUNMatrix) that will be loaded
  *            by a KINDlsDenseJacFn with an approximation to the
  *            Jacobian matrix J = (dF_i/dy_j).
  *
@@ -111,7 +111,7 @@ extern "C" {
   
 typedef int (*KINDlsDenseJacFn)(long int N,
 				N_Vector u, N_Vector fu, 
-				DlsMat J, void *user_data,
+				SUNMatrix J, void *user_data,
 				N_Vector tmp1, N_Vector tmp2);
   
 /*
@@ -138,7 +138,7 @@ typedef int (*KINDlsDenseJacFn)(long int N,
  *            system function evaluated at current iterate:
  *            fu = F(uu) [input]
  *
- * J        - band matrix (of type DlsMat) that will be loaded by a
+ * J        - band matrix (of type SUNMatrix) that will be loaded by a
  *            KINDlsBandJacFn with an approximation to the Jacobian
  *            matrix Jac = (dF_i/dy_j).
  *
@@ -192,7 +192,7 @@ typedef int (*KINDlsDenseJacFn)(long int N,
 
 typedef int (*KINDlsBandJacFn)(long int N, long int mupper, long int mlower,
 			       N_Vector u, N_Vector fu, 
-			       DlsMat J, void *user_data,
+			       SUNMatrix J, void *user_data,
 			       N_Vector tmp1, N_Vector tmp2);
 
 /*

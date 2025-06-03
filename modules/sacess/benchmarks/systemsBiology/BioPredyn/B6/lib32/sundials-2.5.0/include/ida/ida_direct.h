@@ -80,7 +80,7 @@ extern "C" {
  * user_data is a pointer to user Jacobian data - the same as the    
  *     user_data parameter passed to IDASetRdata.                     
  *                                                                
- * Jac is the dense matrix (of type DlsMat) to be loaded by  
+ * Jac is the dense matrix (of type SUNMatrix) to be loaded by
  *     an IDADlsDenseJacFn routine with an approximation to the   
  *     system Jacobian matrix                                  
  *            J = dF/dy' + gamma*dF/dy                            
@@ -133,9 +133,9 @@ extern "C" {
  */
   
   
-typedef int (*IDADlsDenseJacFn)(long int N, realtype t, realtype c_j,
+typedef int (*IDADlsDenseJacFn)(long int N, sunrealtype t, sunrealtype c_j,
 				N_Vector y, N_Vector yp, N_Vector r, 
-				DlsMat Jac, void *user_data,
+				SUNMatrix Jac, void *user_data,
 				N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 /*
@@ -222,9 +222,9 @@ typedef int (*IDADlsDenseJacFn)(long int N, realtype t, realtype c_j,
  */
 
 typedef int (*IDADlsBandJacFn)(long int N, long int mupper, long int mlower,
-			       realtype t, realtype c_j, 
+			       sunrealtype t, sunrealtype c_j,
 			       N_Vector y, N_Vector yp, N_Vector r,
-			       DlsMat Jac, void *user_data,
+			       SUNMatrix Jac, void *user_data,
 			       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
   
 /*
