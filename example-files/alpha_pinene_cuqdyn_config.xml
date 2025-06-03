@@ -2,8 +2,8 @@
 
 <cuqdyn-config>
     <tolerances>
-        <rtol>1e-16</rtol>
-        <atol>1e-16, 1e-16, 1e-16, 1e-16, 1e-16</atol>
+        <rtol>1e-14</rtol>
+        <atol>1e-14, 1e-14, 1e-14, 1e-14, 1e-14</atol>
     </tolerances>
     <ode_expr y_count="5" p_count="5">
         alpha-pinene
