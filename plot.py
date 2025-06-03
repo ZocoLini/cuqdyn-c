@@ -85,9 +85,9 @@ for j in range(num_columns):
     plt.xlabel("Times")
     plt.ylabel("Values")
 
-    plt.plot(range(0, len(data_matrix)), [row[j] for row in data_matrix], '-', label=f"Median y{j}")
-    plt.plot(range(0, len(data_matrix)), [row[j] for row in q_low], '--', label=f"Q_low y{j}")
-    plt.plot(range(0, len(data_matrix)), [row[j] for row in q_up], '--', label=f"Q_up y{j}")
+    plt.plot(times[0], [row[j] for row in data_matrix], '-', label=f"Median y{j}")
+    plt.plot(times[0], [row[j] for row in q_low], '--', label=f"Q_low y{j}")
+    plt.plot(times[0], [row[j] for row in q_up], '--', label=f"Q_up y{j}")
 
     plt.legend()
     plt.grid(True)
