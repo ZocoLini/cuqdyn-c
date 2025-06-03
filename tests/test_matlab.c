@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <matlab.h>
-#include <nvector_old/nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <stdio.h>
-#include <sundials_old/sundials_nvector.h>
+#include <sunmatrix/sunmatrix_dense.h>
 #include <tgmath.h>
 
 #include "cuqdyn.h"

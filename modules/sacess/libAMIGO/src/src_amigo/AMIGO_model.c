@@ -217,6 +217,11 @@ void free_AMIGO_model(AMIGO_model* amigo_model){
 	free(amigo_model);
 }
 
+int simulate_amigo_model(AMIGO_model* amigo_model, int verbose)
+{
+    return 0;
+}
+
  int simulate_AMIGO_model(AMIGO_model* amigo_model,int sens){
 
 	amigo_model->compute_sens=sens;

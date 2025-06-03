@@ -4,10 +4,10 @@
         <id>0</id>
         <log_scale>5</log_scale>
         <output>0</output>
-        <verbose>1</verbose>
+        <verbose>0</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>6e3</maxevaluation>
+            <maxevaluation>15e3</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>

@@ -3,6 +3,7 @@
 #include <cvodes/cvodes.h>
 #include <ode_solver.h>
 #include <string.h>
+#include <sunlinsol/sunlinsol_dense.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
 #include "cuqdyn.h"
@@ -30,6 +31,11 @@ SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0
 
     retval = CVodeSetUserData(cvode_mem, parameters);
     if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
+
+    SUNMatrix A = SUNDenseMatrix(cuqdyn_conf->ode_expr.y_count, cuqdyn_conf->ode_expr.y_count, get_sundials_ctx());
+    SUNLinearSolver LS = SUNLinSol_Dense(initial_values, A, get_sundials_ctx());
+    retval = CVodeSetLinearSolver(cvode_mem, LS, A);
+    if (check_retval(&retval, "CVodeSetLinearSolver", 1)) { return NULL; }
 
     retval = CVodeSetMaxNumSteps(cvode_mem, 10000000);
     if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) { return NULL; }

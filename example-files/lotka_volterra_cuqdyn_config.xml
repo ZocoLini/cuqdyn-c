@@ -2,8 +2,8 @@
 
 <cuqdyn-config>
     <tolerances>
-        <rtol>1e-8</rtol>
-        <atol>1e-9, 1e-10</atol>
+        <rtol>1e-9</rtol>
+        <atol>1e-9, 1e-9</atol>
     </tolerances>
     <ode_expr y_count="2" p_count="4">
         lotka-volterra

@@ -2,8 +2,9 @@
 #include <config.h>
 #include <cuqdyn.h>
 #include <math.h>
-#include <nvector_old/nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <stdio.h>
+#include <sunmatrix/sunmatrix_dense.h>
 #include <time.h>
 
 #include "../modules/cuqdyn-c/include/functions.h"

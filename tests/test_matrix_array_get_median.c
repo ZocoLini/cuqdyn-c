@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <sunmatrix/sunmatrix_dense.h>
 
 #include "cuqdyn.h"
 void test_even_matrices();

@@ -1,9 +1,8 @@
 #define LOTKA_VOLTERRA_MAT "data/lotka_volterra_data_homoc_noise_0.10_size_30_data_1.mat"
 #define DATA_TXT "data/test_data.txt"
 
-#include <nvector_old/nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <stdio.h>
-#include <sundials_old/sundials_nvector.h>
 #include <assert.h>
 
 

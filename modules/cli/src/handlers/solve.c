@@ -1,4 +1,4 @@
-#include <nvector_old/nvector_serial.h>
+#include <nvector//nvector_serial.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -8,6 +8,7 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sunmatrix/sunmatrix_dense.h>
 
 #include "../../../cuqdyn-c/include/functions.h"
 #include "cuqdyn.h"
