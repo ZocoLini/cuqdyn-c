@@ -9,6 +9,7 @@
 #include <config.h>
 #include <cuqdyn.h>
 #include <stdio.h>
+#include <sunmatrix/sunmatrix_dense.h>
 
 #include "ess_solver.h"
 

@@ -14,6 +14,6 @@
  *   - Columns 1-n: Solution components (y1, y2, ..., yn)
  *
  */
-SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunsunrealtype t0, N_Vector times);
+SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times);
 
 #endif //EDO_SOLVER_H

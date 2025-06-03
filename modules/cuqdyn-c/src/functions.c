@@ -2,13 +2,10 @@
 #include <method_module/structure_paralleltestbed.h>
 #include <nvector/nvector_serial.h>
 #include <string.h>
-#include <sundials_old/sundials_direct.h>
-#include <sundials_old/sundials_nvector.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
 #include "config.h"
 #include "cuqdyn.h"
-#include "sundials_old/sundials_types.h"
 
 extern void mexpreval_init(OdeExpr ode_expr);
 
@@ -17,14 +14,14 @@ void mexpreval_init_wrapper(OdeExpr ode_expr)
     mexpreval_init(ode_expr);
 }
 
-extern void eval_f_exprs(sunsunrealtype t, sunsunrealtype *y, sunsunrealtype *ydot, sunsunrealtype *params);
+extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params);
 
-int ode_model_fun(sunsunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     N_Vector params_vec = user_data;
-    sunsunrealtype *params = NV_DATA_S(params_vec);
-    sunsunrealtype *ydot_pointer = NV_DATA_S(ydot);
-    sunsunrealtype *y_pointer = NV_DATA_S(y);
+    sunrealtype *params = NV_DATA_S(params_vec);
+    sunrealtype *ydot_pointer = NV_DATA_S(ydot);
+    sunrealtype *y_pointer = NV_DATA_S(y);
 
     eval_f_exprs(t, y_pointer, ydot_pointer, params);
 
@@ -48,12 +45,12 @@ void *ode_model_obj_func(double *x, void *data)
     output_function *res = calloc(1, sizeof(output_function));
 
     N_Vector parameters = New_Serial(conf->ode_expr.p_count);
-    memcpy(NV_DATA_S(parameters), x, NV_LENGTH_S(parameters) * sizeof(sunsunrealtype));
+    memcpy(NV_DATA_S(parameters), x, NV_LENGTH_S(parameters) * sizeof(sunrealtype));
 
     N_Vector texp = New_Serial(NV_LENGTH_S(exptotal->texp));
-    memcpy(NV_DATA_S(texp), NV_DATA_S(exptotal->texp), NV_LENGTH_S(exptotal->texp) * sizeof(sunsunrealtype));
+    memcpy(NV_DATA_S(texp), NV_DATA_S(exptotal->texp), NV_LENGTH_S(exptotal->texp) * sizeof(sunrealtype));
 
-    const sunsunrealtype t0 = NV_Ith_S(texp, 0);
+    const sunrealtype t0 = NV_Ith_S(texp, 0);
 
     SUNMatrix result = solve_ode(parameters, exptotal->initial_values, t0, texp);
 
@@ -61,8 +58,8 @@ void *ode_model_obj_func(double *x, void *data)
     const int rows = SM_ROWS_D(result);
     const int cols = SM_COLUMNS_D(result);
 
-    // sunsunrealtype R[(cols - 1) * rows];
-    sunsunrealtype J = 0.0;
+    // sunrealtype R[(cols - 1) * rows];
+    sunrealtype J = 0.0;
 
     long index = 0;
 
@@ -71,7 +68,7 @@ void *ode_model_obj_func(double *x, void *data)
         // Note that the first col of the result matrix is t
         for (long j = 1; j < cols; ++j)
         {
-            const sunsunrealtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, i, j - 1);
+            const sunrealtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, i, j - 1);
             J += diff * diff;
             // R[index++] = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, i, j - 1);
         }

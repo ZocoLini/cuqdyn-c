@@ -225,7 +225,7 @@ void free_AMIGO_model(AMIGO_model* amigo_model){
 }
 
 int simulate_AMIGO_model_observables(AMIGO_model* amigo_model,int sens){
-	
+
 	int i,j,flag;
 	amigo_model->compute_sens=sens;
 
@@ -239,7 +239,7 @@ int simulate_AMIGO_model_observables(AMIGO_model* amigo_model,int sens){
                             //printf("amigo_model->index_observables[i] %d\n", amigo_model->index_observables[i]);
                             //printf("amigo_model->w_obs[i] %lf\n", amigo_model->w_obs[i]);
                             //printf("amigo_model->sim_results[amigo_model->index_observables[i]][j] %lf\n", amigo_model->sim_results[amigo_model->index_observables[i]][j]);
-                            
+
 				amigo_model->obs_results[i][j]=
 					amigo_model->sim_results[amigo_model->index_observables[i]][j]*amigo_model->w_obs[i];
 			}

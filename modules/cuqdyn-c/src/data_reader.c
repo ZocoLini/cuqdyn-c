@@ -45,10 +45,10 @@ int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
     fscanf(f, "%ld", &cols);
 
     *t = New_Serial(rows);
-    sunsunrealtype *data_t = N_VGetArrayPointer(*t);
+    sunrealtype *data_t = N_VGetArrayPointer(*t);
 
     *y = NewDenseMatrix(rows, cols - 1);
-    sunsunrealtype *data_y = ((SUNMatrixContent_Dense)(*y)->content)->data;
+    sunrealtype *data_y = ((SUNMatrixContent_Dense)(*y)->content)->data;
 
     double tmp;
 
@@ -107,10 +107,10 @@ int read_mat_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
     // The first row of the matrix are the initial values [t0 y10 y20 ...]
 
     *t = New_Serial((long) rows);
-    sunsunrealtype *data_t = N_VGetArrayPointer(*t);
+    sunrealtype *data_t = N_VGetArrayPointer(*t);
 
     *y = NewDenseMatrix((long) rows, (long) cols - 1);
-    sunsunrealtype *data_y = ((SUNMatrixContent_Dense)(*y)->content)->data;
+    sunrealtype *data_y = ((SUNMatrixContent_Dense)(*y)->content)->data;
 
     const double *file_data = matvar->data;
 

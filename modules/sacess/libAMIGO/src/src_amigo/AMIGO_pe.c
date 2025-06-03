@@ -1,7 +1,6 @@
 #include "include_amigo/AMIGO_pe.h"
 #include <time.h>
 #include <method_module/structure_paralleltestbed.h>
-#include "include_amigo/simulate_amigo_model.h"
 #include <method_module/eSS/parallel_functions_cooperative_eSS.h>
 #include <string.h>
 #ifdef MPI2

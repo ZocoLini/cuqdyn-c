@@ -53,5 +53,5 @@ SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b);
  * For the quantiles corresponding to the probabilities outside that range,
  * quantile assigns the minimum or maximum values of the elements in A.
  */
-sunsunrealtype quantile(N_Vector, sunsunrealtype);
+sunrealtype quantile(N_Vector, sunrealtype);
 #endif //MATLAB_H

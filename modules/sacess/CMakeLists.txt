@@ -27,9 +27,6 @@ file(GLOB SRC_C CONFIGURE_DEPENDS
         src/method_module/eSS/*.c
         src/*.c
 
-        benchmarks/bbob/*.c
-        benchmarks/customized/*.c
-
         libAMIGO/src/src_amigo/*.c
         libAMIGO/src/src_de/*.c
         libAMIGO/src/src_fullC/*.c

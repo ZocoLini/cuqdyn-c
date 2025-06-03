@@ -12,11 +12,13 @@
 extern "C" {
 #endif
 
-#include <bbob/bbobStructures.h>
-#include <include_amigo/AMIGO_problem.h>
-#include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <sundials/sundials_matrix.h>
+#include <sundials/sundials_nvector.h>
 #include <time.h>
+
+#include "include_amigo/AMIGO_problem.h"
 
 #ifdef	MPI2
     #include <structure_data/dynamic_list.h>
@@ -395,8 +397,6 @@ void saveinittime_(void *, double *);
 double returninittime_(void *);
 
 int chargelsevalmax_( void *, long *);
-
-int destroybenchmark(experiment_total *);
 
 void setparallelsacessfieldsmaster_(void *, double *);
 

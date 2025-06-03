@@ -5,12 +5,12 @@
 
 typedef struct
 {
-    sunsunrealtype rtol;
+    sunrealtype rtol;
     N_Vector atol;
 
 } Tolerances;
 
-Tolerances create_tolerances(sunsunrealtype rtol, N_Vector atol);
+Tolerances create_tolerances(sunrealtype rtol, N_Vector atol);
 void destroy_tolerances(Tolerances);
 
 typedef struct

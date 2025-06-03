@@ -8,6 +8,8 @@
 #include "ess_solver.h"
 
 #include <../include/functions.h>
+
+#include "cuqdyn.h"
 #if defined(MPI2) && !defined(MPI)
 #include <mpi.h>
 #endif
@@ -78,7 +80,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 
     destroyexp(exptotal);
 
-    N_Vector predicted_params = N_VNew_Serial(exptotal->test.bench.dim);
+    N_Vector predicted_params = New_Serial(exptotal->test.bench.dim);
     N_VSetArrayPointer(result.bestx_value, predicted_params);
     return predicted_params;
 }

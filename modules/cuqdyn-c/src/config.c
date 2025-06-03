@@ -69,7 +69,7 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
     xmlNodePtr root = xmlDocGetRootElement(doc);
     xmlNodePtr cur = root->children;
 
-    sunsunrealtype rtol = 1e-6;
+    sunrealtype rtol = 1e-6;
     N_Vector atol = NULL;
     int y_count = 0;
     char **odes = NULL;
@@ -213,7 +213,7 @@ CuqdynConf *get_cuqdyn_conf()
     return config;
 }
 
-Tolerances create_tolerances(sunsunrealtype scalar_rtol, N_Vector atol)
+Tolerances create_tolerances(sunrealtype scalar_rtol, N_Vector atol)
 {
     Tolerances tolerances;
     tolerances.rtol = scalar_rtol;

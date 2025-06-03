@@ -6,21 +6,18 @@
  */
 
 
+#include <include_amigo/AMIGO_problem.h>
+#include <limits.h>
+#include <method_module/common_solver_operations.h>
+#include <method_module/eSS/parallel_functions_cooperative_eSS.h>
+#include <method_module/structure_paralleltestbed.h>
+#include <output/output.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <method_module/structure_paralleltestbed.h>
-#include <limits.h>
-#include <include_amigo/AMIGO_problem.h>
-#include <method_module/common_solver_operations.h>
-#include <output/output.h>
-#include <method_module/benchmark_functions_SystemBiology.h>
 #include <string.h>
-#include "include_amigo/AMIGO_pe.h"
 #include <time.h>
-#include "include_amigo/simulate_amigo_model.h"
-#include <method_module/eSS/parallel_functions_cooperative_eSS.h>
-#include <string.h>
 #include "include_amigo/AMIGO_pe.h"
+#include "method_module/evaluationinterface.h"
 #ifdef MPI2
 #include <mpi.h>
 #endif

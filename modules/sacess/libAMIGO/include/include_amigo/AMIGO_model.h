@@ -6,7 +6,6 @@
 #include <sundials/sundials_types.h> /* definition of type sunrealtype */
 #include <nvector/nvector_serial.h>/* serial N_Vector types, fcts., and macros */
 #include <sunmatrix/sunmatrix_dense.h>
-#include <include_amigo/simulate_amigo_model.h>
 #include <math.h>
 #include <stddef.h>
 #include <include_amigo/AMIGO_model_stats.h>

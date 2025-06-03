@@ -63,7 +63,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
         exit(1);
     }
 
-    const sunsunrealtype t0 = NV_Ith_S(times, 0);
+    const sunrealtype t0 = NV_Ith_S(times, 0);
     N_Vector initial_values = copy_matrix_row(observed_data, 0, 0, SM_COLUMNS_D(observed_data));
 
     const long m = SM_ROWS_D(observed_data);
@@ -126,7 +126,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
 
         N_Vector init_vals = New_Serial(NV_LENGTH_S(initial_values));
         memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values),
-               NV_LENGTH_S(initial_values) * sizeof(sunsunrealtype));
+               NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
 
         N_Vector predicted_params =
                 execute_ess_solver(sacess_conf_file, output_file, texp, yexp, init_vals, rank, nproc);
@@ -138,8 +138,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
 
         for (int j = 0; j < n; ++j)
         {
-            sunsunrealtype observed = SM_ELEMENT_D(observed_data, i, j);
-            sunsunrealtype predicted = SM_ELEMENT_D(predicted_data, i, j);
+            sunrealtype observed = SM_ELEMENT_D(observed_data, i, j);
+            sunrealtype predicted = SM_ELEMENT_D(predicted_data, i, j);
 
             NV_Ith_S(residuals, j) = fabs(observed - predicted);
         }
@@ -343,13 +343,13 @@ void matrix_array_set_index(MatrixArray array, long i, SUNMatrix matrix)
 
     array.data[i] = NewDenseMatrix(rows, cols);
 
-    memcpy(SM_DATA_D(array.data[i]), SM_DATA_D(matrix), rows * cols * sizeof(sunsunrealtype));
+    memcpy(SM_DATA_D(array.data[i]), SM_DATA_D(matrix), rows * cols * sizeof(sunrealtype));
 }
 
-int compare_sunsunrealtype(const void *a, const void *b)
+int compare_sunrealtype(const void *a, const void *b)
 {
-    double x = *(sunsunrealtype *) a;
-    double y = *(sunsunrealtype *) b;
+    double x = *(sunrealtype *) a;
+    double y = *(sunrealtype *) b;
 
     if (x < y)
         return -1;
@@ -367,9 +367,9 @@ SUNMatrix matrix_array_get_median(MatrixArray matrix_array)
     long max_z = matrix_array.len;
 
     SUNMatrix medians_matrix = NewDenseMatrix(rows, cols);
-    sunsunrealtype *medians = SM_DATA_D(medians_matrix);
+    sunrealtype *medians = SM_DATA_D(medians_matrix);
 
-    sunsunrealtype values[max_z];
+    sunrealtype values[max_z];
 
     for (int i = 0; i < rows; ++i)
     {
@@ -382,7 +382,7 @@ SUNMatrix matrix_array_get_median(MatrixArray matrix_array)
             }
 
             // Sorting the vector to obtain the median easily
-            qsort(values, max_z, sizeof(values[0]), compare_sunsunrealtype);
+            qsort(values, max_z, sizeof(values[0]), compare_sunrealtype);
 
             SM_ELEMENT_D(medians_matrix, i, j) =
                     max_z & 0b1 ? values[(max_z - 1) / 2] : (values[max_z / 2 - 1] + values[max_z / 2]) / 2;
@@ -410,9 +410,9 @@ N_Vector get_matrix_cols_median(SUNMatrix matrix)
     long cols = SM_COLUMNS_D(matrix);
 
     N_Vector medians_vector = New_Serial(cols);
-    sunsunrealtype *medians = NV_DATA_S(medians_vector);
+    sunrealtype *medians = NV_DATA_S(medians_vector);
 
-    sunsunrealtype copied_col[rows];
+    sunrealtype copied_col[rows];
 
     for (int j = 0; j < cols; ++j)
     {
@@ -422,7 +422,7 @@ N_Vector get_matrix_cols_median(SUNMatrix matrix)
         }
 
         // Sorting the vector to obtain the median easily
-        qsort(copied_col, rows, sizeof(copied_col[0]), compare_sunsunrealtype);
+        qsort(copied_col, rows, sizeof(copied_col[0]), compare_sunrealtype);
 
         medians[j] = rows & 0b1 ? copied_col[(rows - 1) / 2] : (copied_col[rows / 2 - 1] + copied_col[rows / 2]) / 2;
     }

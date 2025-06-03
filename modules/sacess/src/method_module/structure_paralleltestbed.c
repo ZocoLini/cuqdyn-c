@@ -13,8 +13,6 @@
 #include <gsl/gsl_rng.h>
 #include <input/input_module.h>
 #include <math.h>
-#include <method_module/benchmark_functions_BBOB.h>
-#include <method_module/benchmark_functions_SystemBiology.h>
 #include <method_module/structure_paralleltestbed.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -317,7 +315,7 @@ void destroyexp(experiment_total *exp) {
 
     N_VDestroy(exp->texp);
     N_VDestroy(exp->initial_values);
-    DestroyMat(exp->yexp);
+    SUNMatDestroy(exp->yexp);
 
 #ifdef MATLAB
      if (strcmp((*exp).test.bench.type, matlabproblem) == 0) {
@@ -421,19 +419,6 @@ int destroySystemBiology(experiment_total *exp) {
 
     return 1;
 
-}
-
-int destroybenchmark(experiment_total *exp){
-    int benchmark;
-
-    benchmark = number_benchmark(exp);
-
-    if (benchmark == 0)
-    destroyBBOB(exp);
-    if (benchmark == 1)
-    destroySystemBiology(exp);
-
-    return 1;
 }
 
 int is_asynchronous(experiment_total exp) {

@@ -8,12 +8,12 @@
 
 N_Vector copy_vector_remove_indices(N_Vector original, LongArray indices)
 {
-    sunsunrealtype *original_data = N_VGetArrayPointer(original);
+    sunrealtype *original_data = N_VGetArrayPointer(original);
     long N = NV_LENGTH_S(original);
 
     N_Vector new_vector = New_Serial(N - indices.len);
 
-    sunsunrealtype *new_data = N_VGetArrayPointer(new_vector);
+    sunrealtype *new_data = N_VGetArrayPointer(new_vector);
 
     long new_index = 0; // Index to track the current index in the new vector
     long skip_index = 0; // Index to track the current index in the indices array
@@ -40,8 +40,8 @@ SUNMatrix copy_matrix_remove_rows_and_columns(SUNMatrix matrix, LongArray row_in
 
     SUNMatrix copy = NewDenseMatrix(rows - row_indices.len, cols - col_indices.len);
 
-    sunsunrealtype *original_data = SM_DATA_D(matrix);
-    sunsunrealtype *copy_data = SM_DATA_D(copy);
+    sunrealtype *original_data = SM_DATA_D(matrix);
+    sunrealtype *copy_data = SM_DATA_D(copy);
 
     // copy_index: Index to track the current index in the copy matrix
     // row_skip_index: Index to track the current index in the row_indices array
@@ -179,10 +179,10 @@ SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b)
     return result;
 }
 
-int cmp_sunsunrealtype(const void *a, const void *b)
+int cmp_sunrealtype(const void *a, const void *b)
 {
-    double x = *(sunsunrealtype *) a;
-    double y = *(sunsunrealtype *) b;
+    double x = *(sunrealtype *) a;
+    double y = *(sunrealtype *) b;
 
     if (x < y)
         return -1;
@@ -191,17 +191,17 @@ int cmp_sunsunrealtype(const void *a, const void *b)
     return 0;
 }
 
-sunsunrealtype quantile(N_Vector vec, sunsunrealtype q)
+sunrealtype quantile(N_Vector vec, sunrealtype q)
 {
     const long n = NV_LENGTH_S(vec);
-    sunsunrealtype *data = malloc(n * sizeof(sunsunrealtype));
+    sunrealtype *data = malloc(n * sizeof(sunrealtype));
 
-    memcpy(data, NV_DATA_S(vec), n * sizeof(sunsunrealtype));
+    memcpy(data, NV_DATA_S(vec), n * sizeof(sunrealtype));
 
-    qsort(data, n, sizeof(sunsunrealtype), cmp_sunsunrealtype);
+    qsort(data, n, sizeof(sunrealtype), cmp_sunrealtype);
 
-    const double min_q = 0.5 / (sunsunrealtype) n;
-    const double max_q = ((sunsunrealtype) n - 0.5) / (sunsunrealtype) n;
+    const double min_q = 0.5 / (sunrealtype) n;
+    const double max_q = ((sunrealtype) n - 0.5) / (sunrealtype) n;
 
     if (q <= min_q) {
         const double val = data[0];
@@ -215,7 +215,7 @@ sunsunrealtype quantile(N_Vector vec, sunsunrealtype q)
         return val;
     }
 
-    const double pos = q * (sunsunrealtype) n - 0.5;
+    const double pos = q * (sunrealtype) n - 0.5;
     const int i = (int) pos;
     const double delta = pos - i;
 

@@ -1,28 +1,28 @@
 #include <../include/functions.h>
 #include <config.h>
-#include <cvodes_old/cvodes.h>
+#include <cvodes/cvodes.h>
 #include <ode_solver.h>
 #include <string.h>
-#include <sundials_old/sundials_nvector.h>
+#include <sunmatrix/sunmatrix_dense.h>
 
 #include "cuqdyn.h"
 
 static int check_retval(void *, const char *, int);
 
-SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunsunrealtype t0, N_Vector times)
+SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times)
 {
     CuqdynConf *cuqdyn_conf = get_cuqdyn_conf();
     Tolerances tolerances = cuqdyn_conf->tolerances;
 
     int retval;
-    void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
+    void *cvode_mem = CVodeCreate(CV_ADAMS, get_sundials_ctx());
     if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
 
     retval = CVodeInit(cvode_mem, ode_model_fun, t0, initial_values);
     if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
 
     N_Vector cloned_abs_tol = New_Serial(NV_LENGTH_S(tolerances.atol));
-    memcpy(NV_DATA_S(cloned_abs_tol), NV_DATA_S(tolerances.atol), NV_LENGTH_S(tolerances.atol) * sizeof(sunsunrealtype));
+    memcpy(NV_DATA_S(cloned_abs_tol), NV_DATA_S(tolerances.atol), NV_LENGTH_S(tolerances.atol) * sizeof(sunrealtype));
 
     // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
     retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, cloned_abs_tol);
@@ -35,7 +35,7 @@ SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunsunrealtype
     if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) { return NULL; }
 
     /* Time points */
-    sunsunrealtype t;
+    sunrealtype t;
 
     N_Vector yout = New_Serial(NV_LENGTH_S(initial_values));
     int result_cols = cuqdyn_conf->ode_expr.y_count + 1; // We add the time col
@@ -43,7 +43,7 @@ SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunsunrealtype
 
     for (int i = 0; i < NV_LENGTH_S(times); ++i)
     {
-        const sunsunrealtype actual_time = NV_Ith_S(times, i);
+        const sunrealtype actual_time = NV_Ith_S(times, i);
 
         if (actual_time == t0)
         {
