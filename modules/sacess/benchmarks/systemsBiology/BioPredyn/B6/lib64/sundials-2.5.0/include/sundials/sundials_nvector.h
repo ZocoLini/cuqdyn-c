@@ -88,8 +88,8 @@ struct _generic_N_Vector_Ops {
   sunrealtype    (*nvwl2norm)(N_Vector, N_Vector);
   sunrealtype    (*nvl1norm)(N_Vector);
   void        (*nvcompare)(sunrealtype, N_Vector, N_Vector);
-  booleantype (*nvinvtest)(N_Vector, N_Vector);
-  booleantype (*nvconstrmask)(N_Vector, N_Vector, N_Vector);
+  sunbooleantype (*nvinvtest)(N_Vector, N_Vector);
+  sunbooleantype (*nvconstrmask)(N_Vector, N_Vector, N_Vector);
   sunrealtype    (*nvminquotient)(N_Vector, N_Vector);
 };
 
@@ -335,8 +335,8 @@ SUNDIALS_EXPORT sunrealtype N_VMin(N_Vector x);
 SUNDIALS_EXPORT sunrealtype N_VWL2Norm(N_Vector x, N_Vector w);
 SUNDIALS_EXPORT sunrealtype N_VL1Norm(N_Vector x);
 SUNDIALS_EXPORT void N_VCompare(sunrealtype c, N_Vector x, N_Vector z);
-SUNDIALS_EXPORT booleantype N_VInvTest(N_Vector x, N_Vector z);
-SUNDIALS_EXPORT booleantype N_VConstrMask(N_Vector c, N_Vector x, N_Vector m);
+SUNDIALS_EXPORT sunbooleantype N_VInvTest(N_Vector x, N_Vector z);
+SUNDIALS_EXPORT sunbooleantype N_VConstrMask(N_Vector c, N_Vector x, N_Vector m);
 SUNDIALS_EXPORT sunrealtype N_VMinQuotient(N_Vector num, N_Vector denom);
 
 /*

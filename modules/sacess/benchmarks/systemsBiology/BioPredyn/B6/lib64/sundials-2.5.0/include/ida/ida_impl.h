@@ -62,15 +62,15 @@ typedef struct IDAMemRec {
   sunrealtype       ida_rtol;           /* relative tolerance                    */
   sunrealtype       ida_Satol;          /* scalar absolute tolerance             */
   N_Vector       ida_Vatol;          /* vector absolute tolerance             */  
-  booleantype    ida_user_efun;      /* TRUE if user provides efun            */
+  sunbooleantype    ida_user_efun;      /* TRUE if user provides efun            */
   IDAEwtFn       ida_efun;           /* function to set ewt                   */
   void          *ida_edata;          /* user pointer passed to efun           */
   
 
-  booleantype    ida_setupNonNull;   /* Does setup do something?              */
-  booleantype    ida_constraintsSet; /* constraints vector present: 
+  sunbooleantype    ida_setupNonNull;   /* Does setup do something?              */
+  sunbooleantype    ida_constraintsSet; /* constraints vector present:
 					do constraints calc                   */
-  booleantype    ida_suppressalg;    /* true means suppress algebraic vars
+  sunbooleantype    ida_suppressalg;    /* true means suppress algebraic vars
 					in local error tests                  */
 
   /* Divided differences array and associated minor arrays */
@@ -110,7 +110,7 @@ typedef struct IDAMemRec {
   N_Vector ida_yp0;         /* initial y' vector (user-supplied).             */
 
   int ida_icopt;            /* IC calculation user option                     */
-  booleantype ida_lsoff;    /* IC calculation linesearch turnoff option       */
+  sunbooleantype ida_lsoff;    /* IC calculation linesearch turnoff option       */
   int ida_maxnh;            /* max. number of h tries in IC calculation       */
   int ida_maxnj;            /* max. number of J tries in IC calculation       */
   int ida_maxnit;           /* max. number of Netwon iterations in IC calc.   */
@@ -122,7 +122,7 @@ typedef struct IDAMemRec {
 
   /* Tstop information */
 
-  booleantype ida_tstopset;
+  sunbooleantype ida_tstopset;
   sunrealtype ida_tstop;
 
   /* Step Data */
@@ -186,14 +186,14 @@ typedef struct IDAMemRec {
 
   /* Flags to verify correct calling sequence */
 
-  booleantype ida_SetupDone;  /* set to FALSE by IDAMalloc and IDAReInit
+  sunbooleantype ida_SetupDone;  /* set to FALSE by IDAMalloc and IDAReInit
                                  set to TRUE by IDACalcIC or IDASolve         */
 
-  booleantype ida_VatolMallocDone;
-  booleantype ida_constraintsMallocDone;
-  booleantype ida_idMallocDone;
+  sunbooleantype ida_VatolMallocDone;
+  sunbooleantype ida_constraintsMallocDone;
+  sunbooleantype ida_idMallocDone;
 
-  booleantype ida_MallocDone; /* set to FALSE by IDACreate
+  sunbooleantype ida_MallocDone; /* set to FALSE by IDACreate
                                  set to TRUE by IDAMAlloc
                                  tested by IDAReInit and IDASolve             */
 
@@ -220,7 +220,7 @@ typedef struct IDAMemRec {
 
   /* Flag to indicate successful ida_linit call */
 
-  booleantype ida_linitOK;
+  sunbooleantype ida_linitOK;
 
   /* Rootfinding Data */
 
@@ -239,7 +239,7 @@ typedef struct IDAMemRec {
   int ida_taskc;            /* copy of parameter itask                         */
   int ida_irfnd;            /* flag showing whether last step had a root       */
   long int ida_nge;         /* counter for g evaluations                       */
-  booleantype *ida_gactive; /* array with active/inactive event functions      */
+  sunbooleantype *ida_gactive; /* array with active/inactive event functions      */
   int ida_mxgnull;          /* number of warning messages about possible g==0  */
 
 

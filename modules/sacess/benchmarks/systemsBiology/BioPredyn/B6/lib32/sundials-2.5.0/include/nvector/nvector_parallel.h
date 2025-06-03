@@ -34,7 +34,7 @@
  *     header file sundials_types.h, and it may be changed (at the 
  *     configuration stage) according to the user's needs. 
  *     The sundials_types.h file also contains the definition
- *     for the type booleantype.
+ *     for the type sunbooleantype.
  *
  *   - N_Vector arguments to arithmetic vector operations need not
  *     be distinct. For example, the following call:
@@ -90,7 +90,7 @@ extern "C" {
 struct _N_VectorContent_Parallel {
   long int local_length;   /* local vector length         */
   long int global_length;  /* global vector length        */
-  booleantype own_data;    /* ownership of data           */
+  sunbooleantype own_data;    /* ownership of data           */
   sunrealtype *data;          /* local data array            */
   MPI_Comm comm;           /* pointer to MPI communicator */
 };
@@ -303,8 +303,8 @@ SUNDIALS_EXPORT sunrealtype N_VMin_Parallel(N_Vector x);
 SUNDIALS_EXPORT sunrealtype N_VWL2Norm_Parallel(N_Vector x, N_Vector w);
 SUNDIALS_EXPORT sunrealtype N_VL1Norm_Parallel(N_Vector x);
 SUNDIALS_EXPORT void N_VCompare_Parallel(sunrealtype c, N_Vector x, N_Vector z);
-SUNDIALS_EXPORT booleantype N_VInvTest_Parallel(N_Vector x, N_Vector z);
-SUNDIALS_EXPORT booleantype N_VConstrMask_Parallel(N_Vector c, N_Vector x, N_Vector m);
+SUNDIALS_EXPORT sunbooleantype N_VInvTest_Parallel(N_Vector x, N_Vector z);
+SUNDIALS_EXPORT sunbooleantype N_VConstrMask_Parallel(N_Vector c, N_Vector x, N_Vector m);
 SUNDIALS_EXPORT sunrealtype N_VMinQuotient_Parallel(N_Vector num, N_Vector denom);
 
 #ifdef __cplusplus

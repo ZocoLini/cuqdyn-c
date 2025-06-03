@@ -33,7 +33,7 @@ int simulateODE
 {
 	int i,j,k,neq,counter,flag;
     int is;
-    booleantype err_con;
+    sunbooleantype err_con;
 	sunrealtype tout, ti, tf;
     
     //int plist[(*data).nPars];

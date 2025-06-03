@@ -177,7 +177,7 @@ typedef int (*KINSpilsPrecSolveFn)(N_Vector uu, N_Vector uscale,
  */
 
 typedef int (*KINSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv,
-                                     N_Vector uu, booleantype *new_uu, 
+                                     N_Vector uu, sunbooleantype *new_uu,
                                      void *J_data);
 
 

@@ -71,7 +71,7 @@ typedef struct CVodeMemRec {
   sunrealtype cv_reltol;        /* relative tolerance                            */
   sunrealtype cv_Sabstol;       /* scalar absolute tolerance                     */
   N_Vector cv_Vabstol;       /* vector absolute tolerance                     */
-  booleantype cv_user_efun;  /* TRUE if user sets efun                        */
+  sunbooleantype cv_user_efun;  /* TRUE if user sets efun                        */
   CVEwtFn cv_efun;           /* function to set ewt                           */
   void *cv_e_data;           /* user pointer passed to efun                   */
 
@@ -102,7 +102,7 @@ typedef struct CVodeMemRec {
     Tstop information
     -----------------*/
 
-  booleantype cv_tstopset;
+  sunbooleantype cv_tstopset;
   sunrealtype cv_tstop;
 
   /*---------
@@ -194,7 +194,7 @@ typedef struct CVodeMemRec {
   int (*cv_linit)(struct CVodeMemRec *cv_mem);
 
   int (*cv_lsetup)(struct CVodeMemRec *cv_mem, int convfail, N_Vector ypred,
-		   N_Vector fpred, booleantype *jcurPtr, N_Vector vtemp1,
+		   N_Vector fpred, sunbooleantype *jcurPtr, N_Vector vtemp1,
 		   N_Vector vtemp2, N_Vector vtemp3); 
 
   int (*cv_lsolve)(struct CVodeMemRec *cv_mem, N_Vector b, N_Vector weight,
@@ -215,14 +215,14 @@ typedef struct CVodeMemRec {
   sunrealtype cv_h0u;             /* actual initial stepsize                     */
   sunrealtype cv_hu;              /* last successful h value used                */
   sunrealtype cv_saved_tq5;       /* saved value of tq[5]                        */
-  booleantype cv_jcur;         /* is Jacobian info. for lin. solver current?  */
+  sunbooleantype cv_jcur;         /* is Jacobian info. for lin. solver current?  */
   sunrealtype cv_tolsf;           /* tolerance scale factor                      */
   int cv_qmax_alloc;           /* value of qmax used when allocating memory   */
   int cv_indx_acor;            /* index of the zn vector with saved acor      */
-  booleantype cv_setupNonNull; /* does setup do anything?                     */
+  sunbooleantype cv_setupNonNull; /* does setup do anything?                     */
 
-  booleantype cv_VabstolMallocDone;
-  booleantype cv_MallocDone;  
+  sunbooleantype cv_VabstolMallocDone;
+  sunbooleantype cv_MallocDone;
 
   /*-------------------------------------------
     Error handler function and error output file 
@@ -236,7 +236,7 @@ typedef struct CVodeMemRec {
     Stability Limit Detection
     -------------------------*/
 
-  booleantype cv_sldeton;     /* is Stability Limit Detection on?             */
+  sunbooleantype cv_sldeton;     /* is Stability Limit Detection on?             */
   sunrealtype cv_ssdat[6][4];    /* scaled data array for STALD                  */
   int cv_nscon;               /* counter for STALD method                     */
   long int cv_nor;            /* counter for number of order reductions       */
@@ -260,7 +260,7 @@ typedef struct CVodeMemRec {
   int cv_taskc;            /* copy of parameter itask                         */
   int cv_irfnd;            /* flag showing whether last step had a root       */
   long int cv_nge;         /* counter for g evaluations                       */
-  booleantype *cv_gactive; /* array with active/inactive event functions      */
+  sunbooleantype *cv_gactive; /* array with active/inactive event functions      */
   int cv_mxgnull;          /* number of warning messages about possible g==0  */
 
 
@@ -325,7 +325,7 @@ typedef struct CVodeMemRec {
 /*
  * -----------------------------------------------------------------
  * int (*cv_lsetup)(CVodeMem cv_mem, int convfail, N_Vector ypred,
- *                 N_Vector fpred, booleantype *jcurPtr,
+ *                 N_Vector fpred, sunbooleantype *jcurPtr,
  *                 N_Vector vtemp1, N_Vector vtemp2,
  *                 N_Vector vtemp3);
  * -----------------------------------------------------------------

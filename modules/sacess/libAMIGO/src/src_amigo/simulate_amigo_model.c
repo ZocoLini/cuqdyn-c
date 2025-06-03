@@ -52,7 +52,7 @@ int set_simulation_stats(void* cvode_mem, AMIGO_model* amigo_model){
 
 int simulate_amigo_model(AMIGO_model* amigo_model,int verbose){
 	int i,j,k,neq,NS,flag,stop_ti,temp,TS_index;
-	booleantype err_con;
+	sunbooleantype err_con;
 	sunrealtype tout, tstop, ti, tf, t,previous_tstop;
 	
 	int* plist;

@@ -11,7 +11,7 @@
  * All rights reserved.
  * For details, see the LICENSE file.
  *------------------------------------------------------------------
- * This header file exports two types: sunrealtype and booleantype,
+ * This header file exports two types: sunrealtype and sunbooleantype,
  * as well as the constants TRUE and FALSE.
  *
  * Users should include the header file sundials_types.h in every
@@ -88,23 +88,23 @@ typedef long double sunrealtype;
 
 /*
  *------------------------------------------------------------------
- * Type : booleantype
+ * Type : sunbooleantype
  *------------------------------------------------------------------
  * Constants : FALSE and TRUE
  *------------------------------------------------------------------
  * ANSI C does not have a built-in boolean data type. Below is the
- * definition for a new type called booleantype. The advantage of
- * using the name booleantype (instead of int) is an increase in
+ * definition for a new type called sunbooleantype. The advantage of
+ * using the name sunbooleantype (instead of int) is an increase in
  * code readability. It also allows the programmer to make a
  * distinction between int and boolean data. Variables of type
- * booleantype are intended to have only the two values FALSE and
+ * sunbooleantype are intended to have only the two values FALSE and
  * TRUE which are defined below to be equal to 0 and 1,
  * respectively.
  *------------------------------------------------------------------
  */
 
-#ifndef booleantype
-#define booleantype int
+#ifndef sunbooleantype
+#define sunbooleantype int
 #endif
 
 #ifndef FALSE

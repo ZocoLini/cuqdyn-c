@@ -1019,7 +1019,7 @@ SUNDIALS_EXPORT int CVodeSetUserData(void *cvode_mem, void *user_data);
 SUNDIALS_EXPORT int CVodeSetMaxOrd(void *cvode_mem, int maxord);
 SUNDIALS_EXPORT int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps);
 SUNDIALS_EXPORT int CVodeSetMaxHnilWarns(void *cvode_mem, int mxhnil);
-SUNDIALS_EXPORT int CVodeSetStabLimDet(void *cvode_mem, booleantype stldet);
+SUNDIALS_EXPORT int CVodeSetStabLimDet(void *cvode_mem, sunbooleantype stldet);
 SUNDIALS_EXPORT int CVodeSetInitStep(void *cvode_mem, sunrealtype hin);
 SUNDIALS_EXPORT int CVodeSetMinStep(void *cvode_mem, sunrealtype hmin);
 SUNDIALS_EXPORT int CVodeSetMaxStep(void *cvode_mem, sunrealtype hmax);
@@ -1058,7 +1058,7 @@ SUNDIALS_EXPORT int CVodeSetNoInactiveRootWarn(void *cvode_mem);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int CVodeSetQuadErrCon(void *cvode_mem, booleantype errconQ); 
+SUNDIALS_EXPORT int CVodeSetQuadErrCon(void *cvode_mem, sunbooleantype errconQ);
 
 /*
  * -----------------------------------------------------------------
@@ -1104,7 +1104,7 @@ SUNDIALS_EXPORT int CVodeSetQuadErrCon(void *cvode_mem, booleantype errconQ);
  */
 
 SUNDIALS_EXPORT int CVodeSetSensDQMethod(void *cvode_mem, int DQtype, sunrealtype DQrhomax);
-SUNDIALS_EXPORT int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS);
+SUNDIALS_EXPORT int CVodeSetSensErrCon(void *cvode_mem, sunbooleantype errconS);
 SUNDIALS_EXPORT int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS);
 SUNDIALS_EXPORT int CVodeSetSensParams(void *cvode_mem, sunrealtype *p, sunrealtype *pbar, int *plist);
 
@@ -1131,7 +1131,7 @@ SUNDIALS_EXPORT int CVodeSetSensParams(void *cvode_mem, sunrealtype *p, sunrealt
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int CVodeSetQuadSensErrCon(void *cvode_mem, booleantype errconQS); 
+SUNDIALS_EXPORT int CVodeSetQuadSensErrCon(void *cvode_mem, sunbooleantype errconQS);
 
 /*
  * -----------------------------------------------------------------
@@ -1838,12 +1838,12 @@ SUNDIALS_EXPORT int CVodeSetIterTypeB(void *cvode_mem, int which, int iterB);
 SUNDIALS_EXPORT int CVodeSetUserDataB(void *cvode_mem, int which, void *user_dataB);
 SUNDIALS_EXPORT int CVodeSetMaxOrdB(void *cvode_mem, int which, int maxordB);
 SUNDIALS_EXPORT int CVodeSetMaxNumStepsB(void *cvode_mem, int which, long int mxstepsB);
-SUNDIALS_EXPORT int CVodeSetStabLimDetB(void *cvode_mem, int which, booleantype stldetB);
+SUNDIALS_EXPORT int CVodeSetStabLimDetB(void *cvode_mem, int which, sunbooleantype stldetB);
 SUNDIALS_EXPORT int CVodeSetInitStepB(void *cvode_mem, int which, sunrealtype hinB);
 SUNDIALS_EXPORT int CVodeSetMinStepB(void *cvode_mem, int which, sunrealtype hminB);
 SUNDIALS_EXPORT int CVodeSetMaxStepB(void *cvode_mem, int which, sunrealtype hmaxB);
       
-SUNDIALS_EXPORT int CVodeSetQuadErrConB(void *cvode_mem, int which, booleantype errconQB);
+SUNDIALS_EXPORT int CVodeSetQuadErrConB(void *cvode_mem, int which, sunbooleantype errconQB);
 
 /*
  * =================================================================

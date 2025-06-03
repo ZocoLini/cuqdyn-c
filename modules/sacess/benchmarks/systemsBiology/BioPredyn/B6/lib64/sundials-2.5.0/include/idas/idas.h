@@ -531,7 +531,7 @@ SUNDIALS_EXPORT int IDASetNonlinConvCoef(void *ida_mem, sunrealtype epcon);
 SUNDIALS_EXPORT int IDASetMaxErrTestFails(void *ida_mem, int maxnef);
 SUNDIALS_EXPORT int IDASetMaxNonlinIters(void *ida_mem, int maxcor);
 SUNDIALS_EXPORT int IDASetMaxConvFails(void *ida_mem, int maxncf);
-SUNDIALS_EXPORT int IDASetSuppressAlg(void *ida_mem, booleantype suppressalg);
+SUNDIALS_EXPORT int IDASetSuppressAlg(void *ida_mem, sunbooleantype suppressalg);
 SUNDIALS_EXPORT int IDASetId(void *ida_mem, N_Vector id);
 SUNDIALS_EXPORT int IDASetConstraints(void *ida_mem, N_Vector constraints);
 
@@ -710,7 +710,7 @@ SUNDIALS_EXPORT int IDASetNonlinConvCoefIC(void *ida_mem, sunrealtype epiccon);
 SUNDIALS_EXPORT int IDASetMaxNumStepsIC(void *ida_mem, int maxnh);
 SUNDIALS_EXPORT int IDASetMaxNumJacsIC(void *ida_mem, int maxnj);
 SUNDIALS_EXPORT int IDASetMaxNumItersIC(void *ida_mem, int maxnit);
-SUNDIALS_EXPORT int IDASetLineSearchOffIC(void *ida_mem, booleantype lsoff);
+SUNDIALS_EXPORT int IDASetLineSearchOffIC(void *ida_mem, sunbooleantype lsoff);
 SUNDIALS_EXPORT int IDASetStepToleranceIC(void *ida_mem, sunrealtype steptol);
 
 /*
@@ -768,7 +768,7 @@ SUNDIALS_EXPORT int IDARootInit(void *ida_mem, int nrtfn, IDARootFn g);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int IDASetQuadErrCon(void *ida_mem, booleantype errconQ);
+SUNDIALS_EXPORT int IDASetQuadErrCon(void *ida_mem, sunbooleantype errconQ);
 
 /*
  * ----------------------------------------------------------------
@@ -872,7 +872,7 @@ SUNDIALS_EXPORT int IDAQuadSVtolerances(void *ida_mem, sunrealtype reltolQ, N_Ve
 
 SUNDIALS_EXPORT int IDASetSensDQMethod(void *ida_mem, int DQtype, sunrealtype DQrhomax);
 SUNDIALS_EXPORT int IDASetSensParams(void *ida_mem, sunrealtype *p, sunrealtype *pbar, int *plist);
-SUNDIALS_EXPORT int IDASetSensErrCon(void *ida_mem, booleantype errconS);
+SUNDIALS_EXPORT int IDASetSensErrCon(void *ida_mem, sunbooleantype errconS);
 SUNDIALS_EXPORT int IDASetSensMaxNonlinIters(void *ida_mem, int maxcorS);
   
 /*
@@ -1054,7 +1054,7 @@ SUNDIALS_EXPORT int IDAQuadSensEEtolerances(void *ida_mem);
  * -----------------------------------------------------------------
  */
 
-SUNDIALS_EXPORT int IDASetQuadSensErrCon(void *ida_mem, booleantype errconQS);
+SUNDIALS_EXPORT int IDASetQuadSensErrCon(void *ida_mem, sunbooleantype errconQS);
 
 
 /*
@@ -1942,7 +1942,7 @@ SUNDIALS_EXPORT int IDASetInitStepB(void *ida_mem, int which, sunrealtype hinB);
 SUNDIALS_EXPORT int IDASetMaxStepB(void *ida_mem, int which, sunrealtype hmaxB);
 
 SUNDIALS_EXPORT int IDASetSuppressAlgB(void *ida_mem, int which, 
-                                       booleantype suppressalgB);
+                                       sunbooleantype suppressalgB);
 SUNDIALS_EXPORT int IDASetIdB(void *ida_mem, int which, N_Vector idB);
 
 SUNDIALS_EXPORT int IDASetConstraintsB(void *ida_mem, int which, 

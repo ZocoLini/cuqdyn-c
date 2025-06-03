@@ -76,23 +76,23 @@ typedef struct KINMemRec {
   long int kin_mxnbcf;         /* maximum number of beta condition failures    */
   int kin_etaflag;             /* choices are KIN_ETACONSTANT, KIN_ETACHOICE1
 				  and KIN_ETACHOICE2                           */
-  booleantype kin_noMinEps;    /* flag controlling whether or not the value
+  sunbooleantype kin_noMinEps;    /* flag controlling whether or not the value
 				  of eps is bounded below                      */
-  booleantype kin_setupNonNull;   /* flag indicating if linear solver setup
+  sunbooleantype kin_setupNonNull;   /* flag indicating if linear solver setup
 				     routine is non-null and if setup is used  */
-  booleantype kin_constraintsSet; /* flag indicating if constraints are being
+  sunbooleantype kin_constraintsSet; /* flag indicating if constraints are being
 				     used                                      */
-  booleantype kin_jacCurrent;     /* flag indicating if the Jacobian info. 
+  sunbooleantype kin_jacCurrent;     /* flag indicating if the Jacobian info.
 				     used by the linear solver is current      */
-  booleantype kin_callForcingTerm; /* flag set if using either KIN_ETACHOICE1
+  sunbooleantype kin_callForcingTerm; /* flag set if using either KIN_ETACHOICE1
 				      or KIN_ETACHOICE2                        */
-  booleantype kin_noResMon;         /* flag indicating if the nonlinear
+  sunbooleantype kin_noResMon;         /* flag indicating if the nonlinear
 				       residual monitoring scheme should be
 				       used                                    */
-  booleantype kin_retry_nni;        /* flag indicating if nonlinear iteration
+  sunbooleantype kin_retry_nni;        /* flag indicating if nonlinear iteration
 				       should be retried (set by residual
 				       monitoring algorithm)                   */
-  booleantype kin_update_fnorm_sub; /* flag indicating if the fnorm associated
+  sunbooleantype kin_update_fnorm_sub; /* flag indicating if the fnorm associated
 				       with the subinterval needs to be
 				       updated (set by residual monitoring
 				       algorithm)                              */
@@ -107,7 +107,7 @@ typedef struct KINMemRec {
 				  (choice #2)                                  */
   sunrealtype kin_eta_alpha;      /* alpha value used in eta calculation
 				  (choice #2)                                  */
-  booleantype kin_noInitSetup; /* flag controlling whether or not the KINSol
+  sunbooleantype kin_noInitSetup; /* flag controlling whether or not the KINSol
 				  routine makes an initial call to the
 				  linear solver setup routine (lsetup)         */
   sunrealtype kin_sthrsh;         /* threshold value for calling the linear
@@ -168,7 +168,7 @@ typedef struct KINMemRec {
 
   void (*kin_lfree)(struct KINMemRec *kin_mem);
 
-  booleantype kin_inexact_ls; /* flag set by the linear solver module
+  sunbooleantype kin_inexact_ls; /* flag set by the linear solver module
 				 (in linit) indicating whether this is an
 				 iterative linear solver (TRUE), or a direct
 				 linear solver (FALSE)                         */
@@ -184,7 +184,7 @@ typedef struct KINMemRec {
   sunrealtype kin_sJpnorm;   /* value of L2-norm of fscale*(J(u)*pp)              */
 
   sunrealtype kin_fnorm_sub; /* value of L2-norm of fscale*fval (subinterval)     */
-  booleantype kin_eval_omega; /* flag indicating that omega must be evaluated. */
+  sunbooleantype kin_eval_omega; /* flag indicating that omega must be evaluated. */
   sunrealtype kin_omega;     /* constant value for real scalar used in test to
 			     determine if reduction of norm of nonlinear
 			     residual is sufficient. Unless a valid constant 
@@ -210,7 +210,7 @@ typedef struct KINMemRec {
    * -----------------------------------------------------------------
    */
 
-  booleantype kin_MallocDone; /* flag indicating if KINMalloc has been
+  sunbooleantype kin_MallocDone; /* flag indicating if KINMalloc has been
 				 called yet                                    */
 
   /* message files */
@@ -243,7 +243,7 @@ typedef struct KINMemRec {
  * but system memory allocation should be done by the subroutine
  * that actually initializes the environment for liner solver
  * package. If the linear system is to be preconditioned, then the
- * variable setupNonNull (type booleantype) should be set to TRUE
+ * variable setupNonNull (type sunbooleantype) should be set to TRUE
  * (predefined constant) and the kin_lsetup routine should be
  * appropriately defined.
  *

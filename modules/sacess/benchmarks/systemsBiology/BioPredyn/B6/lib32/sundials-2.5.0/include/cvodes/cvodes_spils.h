@@ -171,7 +171,7 @@ extern "C" {
  */
 
 typedef int (*CVSpilsPrecSetupFn)(sunrealtype t, N_Vector y, N_Vector fy,
-				  booleantype jok, booleantype *jcurPtr,
+				  sunbooleantype jok, sunbooleantype *jcurPtr,
 				  sunrealtype gamma, void *user_data,
 				  N_Vector tmp1, N_Vector tmp2,
 				  N_Vector tmp3);
@@ -391,8 +391,8 @@ SUNDIALS_EXPORT char *CVSpilsGetReturnFlagName(long int flag);
 
 typedef int (*CVSpilsPrecSetupFnB)(sunrealtype t, N_Vector y,
 				   N_Vector yB, N_Vector fyB,
-				   booleantype jokB,
-				   booleantype *jcurPtrB, sunrealtype gammaB,
+				   sunbooleantype jokB,
+				   sunbooleantype *jcurPtrB, sunrealtype gammaB,
 				   void *user_dataB,
 				   N_Vector tmp1B, N_Vector tmp2B,
 				   N_Vector tmp3B);

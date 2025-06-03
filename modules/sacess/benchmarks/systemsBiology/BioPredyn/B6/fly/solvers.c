@@ -4069,8 +4069,8 @@ int my_f(sunrealtype t, N_Vector y, N_Vector ydot, void *extra_data) { //to call
     return 0;
 }
 
-int Precond(sunrealtype tn, N_Vector c, N_Vector fc, booleantype jok,
-        booleantype *jcurPtr, sunrealtype gamma, void *extra_data, N_Vector vtemp1,
+int Precond(sunrealtype tn, N_Vector c, N_Vector fc, sunbooleantype jok,
+        sunbooleantype *jcurPtr, sunrealtype gamma, void *extra_data, N_Vector vtemp1,
         N_Vector vtemp2, N_Vector vtemp3) {                                      //needed by the old Krylov solver
 
     const int NRNUC = GetNNucs(&(inp->zyg.defs), inp->zyg.nnucs, tn, &(inp->zyg.times));
