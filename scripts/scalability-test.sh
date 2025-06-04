@@ -8,10 +8,6 @@
 
 # $TMPDIR
 
-if [ -d "/home/cesga" ]; then
-    module load gcc openmpi/4.1.1_ft3
-fi
-
 bash build.sh
 
 # === CONFIGURATION ===

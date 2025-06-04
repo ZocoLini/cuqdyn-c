@@ -16,6 +16,10 @@ build-proyect() {
     )
 }
 
+if [ -d "/home/cesga" ]; then
+    module load cesga/2025 gcc/system openmpi/5.0.7
+fi
+
 variants=(
   "serial"
   "mpi"
