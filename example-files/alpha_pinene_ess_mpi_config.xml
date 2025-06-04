@@ -7,7 +7,7 @@
         <verbose>0</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>1e6</maxevaluation>
+            <maxevaluation>3e5</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>
@@ -53,7 +53,7 @@
         <int_var> 0 </int_var>
         <bin_var> 0 </bin_var>
         <lb>
-            0, 0, 0, 0, 0
+            0, 0, 0, 0, 0.000001
         </lb>
         <ub>
             0.001, 0.001, 0.001, 0.0001, 0.001
