@@ -111,7 +111,7 @@ int handle_solve(int argc, char *argv[])
     int nproc = 1;
 #endif
 
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_dir, rank, nproc);
+    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_dir);
 
     if (rank == 0)
     {

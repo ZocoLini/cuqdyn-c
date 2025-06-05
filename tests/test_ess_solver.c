@@ -80,7 +80,7 @@ void lotka_volterra_ess(char *conf_file)
         }
     }
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, 0, 1);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -138,7 +138,7 @@ void alpha_pinene_ess(char *conf_file)
         }
     }
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, 0, 1);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
 
     for (int i = 0; i < 5; ++i)
     {
@@ -187,7 +187,7 @@ void logistic_model_ess(char *conf_file)
         }
     }
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, 0, 1);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
 
     for (int i = 0; i < 2; ++i)
     {

@@ -27,7 +27,7 @@ void test_lotka_volterra()
 
     init_cuqdyn_conf_from_file(cuqdyn_config_file);
 
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file, 0, 1);
+    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
 
     assert(cuqdyn_result != NULL);
 }

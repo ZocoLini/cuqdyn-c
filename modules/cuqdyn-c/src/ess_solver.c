@@ -10,7 +10,7 @@
 #include <../include/functions.h>
 
 #include "cuqdyn.h"
-#if defined(MPI2) && !defined(MPI)
+#if defined(MPI2) || defined(MPI)
 #include <mpi.h>
 #endif
 
@@ -18,18 +18,23 @@
 #include <omp.h>
 #endif
 
-N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, SUNMatrix yexp, N_Vector initial_values,
-    int rank, int nproc
-    )
+N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, SUNMatrix yexp,
+    N_Vector initial_condition, N_Vector initial_params)
 {
-    int error, i, NPROC_OPENMP;
+    int error, NPROC_OPENMP;
     experiment_total *exptotal;
     result_solver result;
     int first, init;
 
-#if defined(MPI2) && !defined(MPI)
+    int nproc;
+    int rank;
+
+#if defined(MPI2) || defined(MPI)
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#else
+    nproc = 1;
+    rank = 0;
 #endif
 
 #ifdef OPENMP
@@ -40,10 +45,17 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 
     exptotal = (experiment_total *) malloc(NPROC_OPENMP * sizeof(experiment_total));
     init = 1;
-    for (i = 0; i < NPROC_OPENMP; i++)
+    for (int i = 0; i < NPROC_OPENMP; i++)
     {
         // PARSE THE OPTIONS OF THE SOLVER
-        create_expetiment_struct(file, &(exptotal[i]), nproc, rank, path, init, texp, yexp, initial_values);
+        create_expetiment_struct(file, &(exptotal[i]), nproc, rank, path, init, texp, yexp, initial_condition);
+        if (initial_params != NULL)
+        {
+            for (int i = 0; i < NV_LENGTH_S(initial_params); i++)
+            {
+                exptotal[0].test.bench.X0[0][i] = NV_Ith_S(initial_params, i);
+            }
+        }
         init = 0;
     }
 
@@ -64,12 +76,17 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 #else
     exptotal = (experiment_total *) malloc(sizeof(experiment_total));
     init = 1;
-    create_expetiment_struct(file, &exptotal[0], nproc, rank, path, init, texp, yexp, initial_values);
+    create_expetiment_struct(file, &exptotal[0], nproc, rank, path, init, texp, yexp, initial_condition);
 
-    // INIT MESSAGE
-    NPROC_OPENMP = 1;
-    // INIT BENCHMARK
-    first = 1;
+    if (initial_params != NULL)
+    {
+        for (int i = 0; i < NV_LENGTH_S(initial_params); i++)
+        {
+            printf("QASDFASDFASDFASDF\n");
+            exptotal[0].test.bench.X0[0][i] = NV_Ith_S(initial_params, i);
+            printf("%lf", exptotal[0].test.bench.X0[0][i]);
+        }
+    }
 
     // INIT RESULT STRUCT
     init_result_data(&result, exptotal->test.bench.dim);

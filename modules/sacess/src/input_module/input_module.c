@@ -1025,7 +1025,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     }
 
 // INIT POINT
-    printf("asdfasdf");
     if (extract_element_uniq(doc, cur, name_sol) != NULL){
 	test->bench.number_init_sol = count_element_multi(doc, cur, name_sol);
 	
