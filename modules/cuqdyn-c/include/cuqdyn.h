@@ -23,7 +23,7 @@ typedef struct
 CuqdynResult* create_cuqdyn_result(SUNMatrix predicted_data_median, N_Vector predicted_params_median,
     SUNMatrix q_low, SUNMatrix q_up, N_Vector times);
 void destroy_cuqdyn_result(CuqdynResult* result);
-CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file, int rank, int nproc);
+CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file);
 
 typedef struct
 {

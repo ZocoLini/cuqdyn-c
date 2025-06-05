@@ -58,9 +58,9 @@
         <ub>
             1, 200
         </ub>
-        <initial_point>
+        <point>
             1, 150
-        </initial_point>
+        </point>
     </problem>
 
 </xml>

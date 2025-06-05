@@ -7,7 +7,7 @@
         <verbose>0</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>6e3</maxevaluation>
+            <maxevaluation>3e3</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>
@@ -58,9 +58,9 @@
         <ub>
             1.000, 1.000, 1.000, 1.000
         </ub>
-        <initial_point>
+        <point>
             0.3, 0.3, 0.3, 0.3
-        </initial_point>
+        </point>
     </problem>
 
 </xml>

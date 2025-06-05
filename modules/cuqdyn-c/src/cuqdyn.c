@@ -49,9 +49,18 @@ void destroy_cuqdyn_result(CuqdynResult *result)
     free(result);
 }
 
-CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
-                          const char *output_file, int rank, int nproc)
+CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file)
 {
+    int nproc;
+    int rank;
+
+#if defined(MPI2) || defined(MPI)
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#else
+    nproc = 1;
+    rank = 0;
+#endif
     CuqdynConf *config = get_cuqdyn_conf();
 
     N_Vector times = NULL;
@@ -64,7 +73,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     }
 
     const sunrealtype t0 = NV_Ith_S(times, 0);
-    N_Vector initial_values = copy_matrix_row(observed_data, 0, 0, SM_COLUMNS_D(observed_data));
+    N_Vector initial_condition = copy_matrix_row(observed_data, 0, 0, SM_COLUMNS_D(observed_data));
 
     const long m = SM_ROWS_D(observed_data);
     const long n = SM_COLUMNS_D(observed_data);
@@ -72,14 +81,28 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     SUNMatrix resid_loo = NULL;
     MatrixArray media_matrix = create_matrix_array(m - 1);
     SUNMatrix predicted_params_matrix = NULL;
+    N_Vector initial_params = New_Serial(get_cuqdyn_conf()->ode_expr.p_count);
 
     if (rank == 0)
     {
         resid_loo = NewDenseMatrix(m, n);
         predicted_params_matrix = NewDenseMatrix(m, config->ode_expr.p_count);
+
+        N_Vector texp = copy_vector_remove_indices(times, create_array((long[]) {}, 0));
+        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]) {}, 0));
+
+        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
+
+        N_Vector predicted_params =
+            execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, NULL);
+
+        memcpy(NV_DATA_S(initial_params), NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params) * sizeof(sunrealtype));
+        N_VDestroy(predicted_params);
     }
 
 #ifdef MPI
+    MPI_Bcast(NV_DATA_S(initial_params), NV_LENGTH_S(initial_params), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
     long iterations;
     long start_index;
 
@@ -124,15 +147,14 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         SUNMatrix yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
-        N_Vector init_vals = New_Serial(NV_LENGTH_S(initial_values));
-        memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values),
-               NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
+        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
+        N_Vector tmp_initial_params = copy_vector_remove_indices(initial_params, create_array((long[]) {}, 0));
 
         N_Vector predicted_params =
-                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, init_vals, rank, nproc);
+                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, tmp_initial_params);
 
         // Saving the ode solution data obtained with the predicted params
-        SUNMatrix ode_solution = solve_ode(predicted_params, initial_values, t0, times);
+        SUNMatrix ode_solution = solve_ode(predicted_params, initial_condition, t0, times);
         SUNMatrix predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1L}, 1));
         SUNMatDestroy(ode_solution);
 
@@ -203,7 +225,7 @@ N_VDestroy(residuals);
 
     if (rank != 0)
     {
-        N_VDestroy(initial_values);
+        N_VDestroy(initial_condition);
         SUNMatDestroy(observed_data);
         return NULL;
     }
@@ -218,8 +240,8 @@ N_VDestroy(residuals);
 
     for (int i = 0; i < n; ++i)
     {
-        SM_ELEMENT_D(q_low, 0, i) = NV_Ith_S(initial_values, i);
-        SM_ELEMENT_D(q_up, 0, i) = NV_Ith_S(initial_values, i);
+        SM_ELEMENT_D(q_low, 0, i) = NV_Ith_S(initial_condition, i);
+        SM_ELEMENT_D(q_up, 0, i) = NV_Ith_S(initial_condition, i);
     }
 
     MatrixArray m_low = create_matrix_array(m - 1);
@@ -252,7 +274,7 @@ N_VDestroy(residuals);
     destroy_matrix_array(m_low);
     destroy_matrix_array(m_up);
     destroy_matrix_array(media_matrix);
-    N_VDestroy(initial_values);
+    N_VDestroy(initial_condition);
     SUNMatDestroy(observed_data);
     SUNMatDestroy(resid_loo);
     SUNMatDestroy(predicted_params_matrix);

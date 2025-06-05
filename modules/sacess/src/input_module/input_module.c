@@ -1036,6 +1036,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
 	     vector_char[i] = (char *) malloc(100000* sizeof(char));
 	     test->bench.X0[i] = (double *) malloc(test->bench.dim*sizeof(double));
 	}
+
 	extract_element_multi(doc,cur,name_sol,vector_char);
         for (i=0;i<test->bench.number_init_sol;i++) {
     		counter=0;
