@@ -1025,6 +1025,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     }
 
 // INIT POINT
+    printf("asdfasdf");
     if (extract_element_uniq(doc, cur, name_sol) != NULL){
 	test->bench.number_init_sol = count_element_multi(doc, cur, name_sol);
 	
@@ -1036,12 +1037,14 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
 	     vector_char[i] = (char *) malloc(100000* sizeof(char));
 	     test->bench.X0[i] = (double *) malloc(test->bench.dim*sizeof(double));
 	}
+
 	extract_element_multi(doc,cur,name_sol,vector_char);
         for (i=0;i<test->bench.number_init_sol;i++) {
     		counter=0;
     		pt = strtok (vector_char[i],",");
     		while (pt != NULL) {
        	     		test->bench.X0[i][counter] = atof(pt);
+    		    printf("%lf", test->bench.X0[i][counter]);
 	        	pt = strtok (NULL, ",");
 	        	counter++;
 	    	}

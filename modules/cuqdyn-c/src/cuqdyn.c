@@ -77,6 +77,18 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file,
     {
         resid_loo = NewDenseMatrix(m, n);
         predicted_params_matrix = NewDenseMatrix(m, config->ode_expr.p_count);
+
+        N_Vector init_vals = New_Serial(NV_LENGTH_S(initial_values));
+        memcpy(NV_DATA_S(init_vals), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
+
+        N_Vector texp = copy_vector_remove_indices(times, create_array((long[]) {}, 0));
+
+        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]) {}, 0));
+
+        N_Vector predicted_params =
+            execute_ess_solver(sacess_conf_file, output_file, texp, yexp, init_vals, rank, nproc);
+
+
     }
 
 #ifdef MPI
