@@ -82,9 +82,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     {
         for (int i = 0; i < NV_LENGTH_S(initial_params); i++)
         {
-            printf("QASDFASDFASDFASDF\n");
             exptotal[0].test.bench.X0[0][i] = NV_Ith_S(initial_params, i);
-            printf("%lf", exptotal[0].test.bench.X0[0][i]);
         }
     }
 

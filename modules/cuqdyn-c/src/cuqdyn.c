@@ -97,16 +97,11 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
             execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, NULL);
 
         memcpy(NV_DATA_S(initial_params), NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params) * sizeof(sunrealtype));
-
         N_VDestroy(predicted_params);
-
-#ifdef MPI
-        MPI_Bcast(NV_DATA_S(initial_params), NV_LENGTH_S(initial_params), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
     }
 
 #ifdef MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(NV_DATA_S(initial_params), NV_LENGTH_S(initial_params), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     long iterations;
     long start_index;

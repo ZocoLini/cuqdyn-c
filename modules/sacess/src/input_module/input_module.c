@@ -1043,7 +1043,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     		pt = strtok (vector_char[i],",");
     		while (pt != NULL) {
        	     		test->bench.X0[i][counter] = atof(pt);
-    		    printf("%lf", test->bench.X0[i][counter]);
 	        	pt = strtok (NULL, ",");
 	        	counter++;
 	    	}
