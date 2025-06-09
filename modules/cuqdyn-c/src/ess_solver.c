@@ -51,9 +51,9 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
         create_expetiment_struct(file, &(exptotal[i]), nproc, rank, path, init, texp, yexp, initial_condition);
         if (initial_params != NULL)
         {
-            for (int i = 0; i < NV_LENGTH_S(initial_params); i++)
+            for (int j = 0; j < NV_LENGTH_S(initial_params); j++)
             {
-                exptotal[0].test.bench.X0[0][i] = NV_Ith_S(initial_params, i);
+                exptotal[i].test.bench.X0[0][j] = NV_Ith_S(initial_params, j);
             }
         }
         init = 0;

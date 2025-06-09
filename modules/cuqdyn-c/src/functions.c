@@ -58,10 +58,7 @@ void *ode_model_obj_func(double *x, void *data)
     const int rows = SM_ROWS_D(result);
     const int cols = SM_COLUMNS_D(result);
 
-    // sunrealtype R[(cols - 1) * rows];
     sunrealtype J = 0.0;
-
-    long index = 0;
 
     for (long i = 0; i < rows; ++i)
     {
@@ -70,15 +67,10 @@ void *ode_model_obj_func(double *x, void *data)
         {
             const sunrealtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, i, j - 1);
             J += diff * diff;
-            // R[index++] = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, i, j - 1);
         }
     }
 
-    // TODO: I'm not sure about this. res->J is a pointer what makes no sense
     res->value = J;
-    // res->g = 0;
-    // res->R = R;
-    // res->size_r = (cols - 1) * rows;
 
     N_VDestroy(parameters);
     SUNMatDestroy(result);
