@@ -148,10 +148,9 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         SUNMatrix yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
 
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
-        N_Vector tmp_initial_params = copy_vector_remove_indices(initial_params, create_array((long[]) {}, 0));
 
         N_Vector predicted_params =
-                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, tmp_initial_params);
+                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params);
 
         // Saving the ode solution data obtained with the predicted params
         SUNMatrix ode_solution = solve_ode(predicted_params, initial_condition, t0, times);
