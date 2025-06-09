@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-8</rtol>
+        <atol>1e-12, 1e-12, 1e-12, 1e-12 1e-12</atol>
+    </tolerances>
+    <ode_expr y_count="5" p_count="5">
+        alpha-pinene
+    </ode_expr>
+</cuqdyn-config>

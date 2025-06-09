@@ -8,6 +8,7 @@ foreach(test_name
         test_data_reader
         test_ess_solver
         test_parse_cuqdyn_conf
+        test_ess_obj_function
         test_cuqdyn_algo
 )
     add_executable(${test_name} ${test_name}.c)
