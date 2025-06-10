@@ -2,7 +2,7 @@
     <run>
         <typebench>customized</typebench>
         <id>0</id>
-        <log_scale>2</log_scale>
+        <log_scale>1</log_scale>
         <output>0</output>
         <verbose>0</verbose>
         <local_search>1</local_search>

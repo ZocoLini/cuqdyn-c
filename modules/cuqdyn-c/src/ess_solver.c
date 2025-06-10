@@ -10,6 +10,7 @@
 #include <../include/functions.h>
 
 #include "cuqdyn.h"
+#include "method_module/common_solver_operations.h"
 #if defined(MPI2) || defined(MPI)
 #include <mpi.h>
 #endif
@@ -49,6 +50,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     {
         // PARSE THE OPTIONS OF THE SOLVER
         create_expetiment_struct(file, &(exptotal[i]), nproc, rank, path, init, texp, yexp, initial_condition);
+        logandtranslation_(&exptotal[i]);
         if (initial_params != NULL)
         {
             for (int j = 0; j < NV_LENGTH_S(initial_params); j++)
@@ -77,6 +79,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     exptotal = (experiment_total *) malloc(sizeof(experiment_total));
     init = 1;
     create_expetiment_struct(file, &exptotal[0], nproc, rank, path, init, texp, yexp, initial_condition);
+    logandtranslation_(&exptotal[0]);
 
     if (initial_params != NULL)
     {

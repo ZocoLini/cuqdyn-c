@@ -2,12 +2,12 @@
     <run>
         <typebench>customized</typebench>
         <id>0</id>
-        <log_scale>4</log_scale>
+        <log_scale>1</log_scale>
         <output>0</output>
-        <verbose>0</verbose>
+        <verbose>1</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>3e3</maxevaluation>
+            <maxevaluation>4e3</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>
@@ -56,10 +56,10 @@
             0, 0, 0, 0, 0
         </lb>
         <ub>
-            0.001, 0.001, 0.001, 0.0001, 0.001
+            1, 1, 1, 1, 1
         </ub>
         <point>
-            0, 0, 0, 0, 0
+            1, 1, 1, 1, 1
         </point>
     </problem>
 
