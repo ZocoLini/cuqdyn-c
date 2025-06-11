@@ -40,7 +40,7 @@ pub unsafe extern "C" fn eval_f_exprs(t: f64, y: *mut f64, ydot: *mut f64, param
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub unsafe extern "C" fn eval_obs_expr(input_state_vec: *mut f64, output_state_vec: *mut f64) {
+pub unsafe extern "C" fn eval_states_transformer_expr(input_state_vec: *mut f64, output_state_vec: *mut f64) {
     let cuqdyn_conf = CUQDYN_CONF.as_ref().unwrap();
     
     let input_state_slice = slice::from_raw_parts(input_state_vec, cuqdyn_conf.ode_expr().len());

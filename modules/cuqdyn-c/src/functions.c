@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "cuqdyn.h"
+#include "matlab.h"
 
 extern void mexpreval_init(CuqdynConf cuqdyn_conf);
 
@@ -27,6 +28,8 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 
     return 0;
 }
+
+extern void eval_states_transformer_expr(sunrealtype *input, sunrealtype *output);
 
 /*
  * function [J,g,R]=prob_mod_lv(x,texp,yexp)
@@ -54,9 +57,34 @@ void *ode_model_obj_func(double *x, void *data)
 
     SUNMatrix result = solve_ode(parameters, exptotal->initial_values, t0, texp);
 
-    // Objective function code:
     const int rows = SM_ROWS_D(result);
     const int cols = SM_COLUMNS_D(result);
+
+    // TODO: Optimize using transposed matrix
+    if (conf->states_transformer.count > 0)
+    {
+        SUNMatrix transformed_result = NewDenseMatrix(rows, conf->states_transformer.count + 1); // + 1 adds the time column
+
+        for (int i = 0; i < rows; ++i)
+        {
+            N_Vector input = copy_matrix_row(result, i, 1, cols);
+            sunrealtype *output = malloc(conf->states_transformer.count * sizeof(sunrealtype));
+
+            eval_states_transformer_expr(NV_DATA_S(input), output);
+
+            SM_ELEMENT_D(transformed_result, i, 0) = SM_ELEMENT_D(result, i, 0);
+            for (int j = 0; j < conf->states_transformer.count; ++j)
+            {
+                SM_ELEMENT_D(transformed_result, i, j + 1) = NV_Ith_S(input, j);
+            }
+
+            N_VDestroy(input);
+            free(output);
+        }
+
+        SUNMatDestroy(result);
+        result = transformed_result;
+    }
 
     sunrealtype J = 0.0;
 
