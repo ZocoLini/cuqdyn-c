@@ -22,4 +22,12 @@
         p1 * y11 * y7 - p24 * p22 * y14
         p28 + p27 * y7 - p29 * y15
     </ode_expr>
+    <states_transformer count="6">
+        y7
+        y10 + y13
+        y9
+        y1 + y2 + y3
+        y2
+        y12
+    </states_transformer>
 </cuqdyn-config>

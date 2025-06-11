@@ -13,11 +13,12 @@
 
 static CuqdynConf *config = NULL;
 
-CuqdynConf *create_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr)
+CuqdynConf *create_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr, StatesTransformer states_transformer)
 {
     CuqdynConf *cuqdyn_conf = malloc(sizeof(CuqdynConf));
     cuqdyn_conf->tolerances = tolerances;
     cuqdyn_conf->ode_expr = ode_expr;
+    cuqdyn_conf->states_transformer = states_transformer;
     return cuqdyn_conf;
 }
 
@@ -30,6 +31,7 @@ void destroy_cuqdyn_conf()
 
     destroy_tolerances(config->tolerances);
     destroy_ode_expr(config->ode_expr);
+    destroy_states_transformer(config->states_transformer);
     free(config);
     config = NULL;
 }
@@ -39,8 +41,7 @@ CuqdynConf *init_cuqdyn_conf_from_file(const char *filename)
     CuqdynConf *tmp_config = malloc(sizeof(CuqdynConf));
     if (tmp_config == NULL)
     {
-        fprintf(stderr, "ERROR: Memory allocation failed in function "
-                        "init_cuqdyn_conf_from_file()\n");
+        fprintf(stderr, "ERROR: Memory allocation failed in function init_cuqdyn_conf_from_file()\n");
         exit(1);
     }
 
@@ -53,7 +54,7 @@ CuqdynConf *init_cuqdyn_conf_from_file(const char *filename)
     }
 
     config = tmp_config;
-    mexpreval_init_wrapper(config->ode_expr);
+    mexpreval_init_wrapper(*config);
     return config;
 }
 
@@ -71,9 +72,13 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
 
     sunrealtype rtol = 1e-6;
     N_Vector atol = NULL;
+
     int y_count = 0;
     char **odes = NULL;
     int p_count = 0;
+
+    int obs_count = 0;
+    char **obs_tranformations = NULL;
 
     for (; cur; cur = cur->next)
     {
@@ -185,19 +190,61 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
                 token = strtok(NULL, "\n");
             }
         }
+        else if (!xmlStrcmp(cur->name, "states_transformer"))
+        {
+            xmlChar *count_attr = xmlGetProp(cur, "count");
+            if (count_attr == NULL)
+            {
+                fprintf(stderr, "Error: <states_transformer> node does not have a 'count' attribute\n");
+                xmlFreeDoc(doc);
+                return 1;
+            }
+
+            obs_count = atoi((char *) count_attr);
+            xmlFree(count_attr);
+
+            xmlChar *content = xmlNodeGetContent(cur);
+            if (content == NULL)
+            {
+                fprintf(stderr, "Error: no content in <states_transformer> node\n");
+                xmlFreeDoc(doc);
+                return 1;
+            }
+
+            char *str = (char *) content;
+
+            char *token = strtok(str, "\n");
+
+            obs_tranformations = calloc(y_count, sizeof(char *));
+
+            int index = 0;
+            while (token != NULL)
+            {
+                while (*token == ' ')
+                    token++;
+
+                if (*token != '\0')
+                {
+                    obs_tranformations[index] = token;
+                    index++;
+                }
+                token = strtok(NULL, "\n");
+            }
+        }
     }
 
     config->tolerances = create_tolerances(rtol, atol);
     config->ode_expr = create_ode_expr(y_count, p_count, odes);
+    config->states_transformer = create_states_transformer(obs_count, obs_tranformations);
     xmlFreeDoc(doc);
     return 0;
 }
 
-CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr)
+CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr, StatesTransformer states_transformer)
 {
     destroy_cuqdyn_conf();
 
-    config = create_cuqdyn_conf(tolerances, ode_expr);
+    config = create_cuqdyn_conf(tolerances, ode_expr, states_transformer);
     return config;
 }
 
@@ -217,11 +264,13 @@ Tolerances create_tolerances(sunrealtype scalar_rtol, N_Vector atol)
 {
     Tolerances tolerances;
     tolerances.rtol = scalar_rtol;
-    tolerances.atol = atol;
+    tolerances.atol_len = NV_LENGTH_S(atol);
+    tolerances.atol = malloc(tolerances.atol_len * sizeof(double));
+    memcpy(tolerances.atol, NV_DATA_S(atol), tolerances.atol_len * sizeof(double));
     return tolerances;
 }
 
-void destroy_tolerances(Tolerances tolerances) { N_VDestroy(tolerances.atol); }
+void destroy_tolerances(Tolerances tolerances) { free(tolerances.atol); }
 
 OdeExpr create_ode_expr(int y_count, int p_count, char **exprs)
 {
@@ -233,3 +282,16 @@ OdeExpr create_ode_expr(int y_count, int p_count, char **exprs)
 }
 
 void destroy_ode_expr(OdeExpr ode_expr) {}
+
+StatesTransformer create_states_transformer(int count, char** exprs)
+{
+    StatesTransformer states_transformer;
+    states_transformer.count = count;
+    states_transformer.exprs = exprs;
+    return states_transformer;
+}
+
+void destroy_states_transformer(StatesTransformer states_transformer)
+{
+
+}

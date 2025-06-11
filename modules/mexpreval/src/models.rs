@@ -1,9 +1,7 @@
-use std::ffi::CStr;
-use std::os::raw::c_char;
-use std::{env, slice};
-use std::str::FromStr;
+use crate::config::CuqdynConfig;
 use meval::{Context, Expr};
-use crate::{OdeExpr};
+use std::str::FromStr;
+use std::env;
 
 pub trait Model {
     fn eval(&self, t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]);
@@ -17,52 +15,46 @@ struct GenericModel<'a> {
 }
 
 impl GenericModel<'_> {
-    fn new(ode_expr: &OdeExpr) -> Self {
-        unsafe {
-            let exprs_slice: &[*const c_char] = slice::from_raw_parts(ode_expr.exprs, ode_expr.y_count as usize);
+    fn new(cuqdyn_conf: &CuqdynConfig) -> Self {
+        let mut exprs: Vec<Expr> = Vec::new();
 
-            let mut exprs: Vec<Expr> = Vec::new();
+        for s in cuqdyn_conf.ode_expr().iter() {
+            let expr =
+                Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
 
-            for ptr in exprs_slice.iter() {
-                let c_str = CStr::from_ptr(*ptr);
-                let s = c_str.to_str().unwrap();
-                let expr =
-                    Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
+            exprs.push(expr);
+        }
 
-                exprs.push(expr);
-            }
+        let mut ctx = Context::new();
 
-            let mut ctx = Context::new();
+        for i in 0..*cuqdyn_conf.p_count() {
+            let var_key = format!("p{}", i + 1);
+            ctx.var(&var_key, 0.0);
+        }
 
-            for i in 0..ode_expr.p_count {
-                let var_key = format!("p{}", i + 1);
-                ctx.var(&var_key, 0.0);
-            }
+        for i in 0..cuqdyn_conf.ode_expr().len() {
+            let var_key = format!("y{}", i + 1);
+            ctx.var(&var_key, 0.0);
 
-            for i in 0..ode_expr.y_count {
-                let var_key = format!("y{}", i + 1);
-                ctx.var(&var_key, 0.0);
+        }
 
-            }
+        let mut p: Vec<*mut f64> = Vec::new();
+        for i in 0..*cuqdyn_conf.p_count() {
+            let var_key = format!("p{}", i + 1);
+            p.push(ctx.get_var_ptr(&var_key).unwrap())
+        }
 
-            let mut p: Vec<*mut f64> = Vec::new();
-            for i in 0..ode_expr.p_count {
-                let var_key = format!("p{}", i + 1);
-                p.push(ctx.get_var_ptr(&var_key).unwrap())
-            }
+        let mut y: Vec<*mut f64> = Vec::new();
+        for i in 0..cuqdyn_conf.ode_expr().len() {
+            let var_key = format!("y{}", i + 1);
+            y.push(ctx.get_var_ptr(&var_key).unwrap())
+        }
 
-            let mut y: Vec<*mut f64> = Vec::new();
-            for i in 0..ode_expr.y_count {
-                let var_key = format!("y{}", i + 1);
-                y.push(ctx.get_var_ptr(&var_key).unwrap())
-            }
-
-            Self {
-                exprs,
-                ctx,
-                y,
-                p
-            }
+        Self {
+            exprs,
+            ctx,
+            y,
+            p
         }
     }
 }
@@ -135,10 +127,10 @@ impl Model for AlphaPinene {
     }
 }
 
-pub fn eval_model_fun(model: &str, ode_expr: &OdeExpr) -> Box<dyn Model> {
+pub fn build_model(model: &str, cuqdyn_conf: &CuqdynConfig) -> Box<dyn Model> {
     match model {
         "lotka-volterra" => Box::new(LotkaVolterra),
         "alpha-pinene" | "α-pinene" => Box::new(AlphaPinene),
-        _ => Box::new(GenericModel::new(ode_expr))
+        _ => Box::new(GenericModel::new(cuqdyn_conf))
     }
 }

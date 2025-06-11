@@ -7,11 +7,11 @@
 #include "config.h"
 #include "cuqdyn.h"
 
-extern void mexpreval_init(OdeExpr ode_expr);
+extern void mexpreval_init(CuqdynConf cuqdyn_conf);
 
-void mexpreval_init_wrapper(OdeExpr ode_expr)
+void mexpreval_init_wrapper(CuqdynConf cuqdyn_conf)
 {
-    mexpreval_init(ode_expr);
+    mexpreval_init(cuqdyn_conf);
 }
 
 extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params);
@@ -59,6 +59,18 @@ void *ode_model_obj_func(double *x, void *data)
     const int cols = SM_COLUMNS_D(result);
 
     sunrealtype J = 0.0;
+
+    if (SM_ROWS_D(exptotal->yexp) != rows)
+    {
+        fprintf(stderr, "ERROR: The yexp rows don't match the ode result rows");
+        exit(-1);
+    }
+
+    if (SM_COLUMNS_D(exptotal->yexp) != cols - 1)
+    {
+        fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols");
+        exit(-1);
+    }
 
     for (long i = 0; i < rows; ++i)
     {
