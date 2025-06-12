@@ -22,7 +22,7 @@ int main()
 
     double x[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
 
-    output_function *out = ode_model_obj_func(x, exp_total);
+    output_function *out = obj_func(x, exp_total);
 
     printf("VAlue %lf", out->value);
 

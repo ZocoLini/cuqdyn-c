@@ -202,7 +202,7 @@ impl From<CuqdynConfigC> for CuqdynConfig {
                     .map(|&a| CStr::from_ptr(a).to_str().unwrap().to_string())
                     .collect::<Vec<String>>()
             } else { 
-                vec!["identity".to_string()]
+                vec![]
             };
 
             CuqdynConfig {

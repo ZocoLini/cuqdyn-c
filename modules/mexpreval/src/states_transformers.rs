@@ -59,19 +59,8 @@ impl StatesTransformer for GenericStatesTransformer<'_> {
     }
 }
 
-struct IdentityStatesTransformer;
-
-impl StatesTransformer for IdentityStatesTransformer {
-    fn transform(&self, input: &[f64], output: &mut [f64]) {
-        for (i, y) in input.iter().enumerate() {
-            output[i] = *y;
-        }
-    }
-}
-
 pub fn build_states_transformer(transformer: &str, cuqdyn_conf: &CuqdynConfig) -> Box<dyn StatesTransformer> {
     match transformer {
-        "identity" => Box::new(IdentityStatesTransformer),
         _ => Box::new(GenericStatesTransformer::new(cuqdyn_conf))
     }
 }

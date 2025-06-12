@@ -6,7 +6,7 @@
 
 #include "config.h"
 #include "cuqdyn.h"
-#include "matlab.h"
+#include "states_transformer.h"
 
 extern void mexpreval_init(CuqdynConf cuqdyn_conf);
 
@@ -29,8 +29,6 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     return 0;
 }
 
-extern void eval_states_transformer_expr(sunrealtype *input, sunrealtype *output);
-
 /*
  * function [J,g,R]=prob_mod_lv(x,texp,yexp)
  * [tout,yout] =
@@ -41,7 +39,7 @@ extern void eval_states_transformer_expr(sunrealtype *input, sunrealtype *output
  * g=0;
  * return
  */
-void *ode_model_obj_func(double *x, void *data)
+void *obj_func(double *x, void *data)
 {
     CuqdynConf *conf = get_cuqdyn_conf();
     experiment_total *exptotal = data;
@@ -56,47 +54,21 @@ void *ode_model_obj_func(double *x, void *data)
     const sunrealtype t0 = NV_Ith_S(texp, 0);
 
     SUNMatrix result = solve_ode(parameters, exptotal->initial_values, t0, texp);
+    result = transform_states(result);
 
-    const int rows = SM_ROWS_D(result);
-    const int cols = SM_COLUMNS_D(result);
-
-    // TODO: Optimize using transposed matrix
-    if (conf->states_transformer.count > 0)
-    {
-        SUNMatrix transformed_result = NewDenseMatrix(rows, conf->states_transformer.count + 1); // + 1 adds the time column
-
-        for (int i = 0; i < rows; ++i)
-        {
-            N_Vector input = copy_matrix_row(result, i, 1, cols);
-            sunrealtype *output = malloc(conf->states_transformer.count * sizeof(sunrealtype));
-
-            eval_states_transformer_expr(NV_DATA_S(input), output);
-
-            SM_ELEMENT_D(transformed_result, i, 0) = SM_ELEMENT_D(result, i, 0);
-            for (int j = 0; j < conf->states_transformer.count; ++j)
-            {
-                SM_ELEMENT_D(transformed_result, i, j + 1) = NV_Ith_S(input, j);
-            }
-
-            N_VDestroy(input);
-            free(output);
-        }
-
-        SUNMatDestroy(result);
-        result = transformed_result;
-    }
-
+    const long rows = SM_ROWS_D(result);
+    const long cols = SM_COLUMNS_D(result);
     sunrealtype J = 0.0;
 
     if (SM_ROWS_D(exptotal->yexp) != rows)
     {
-        fprintf(stderr, "ERROR: The yexp rows don't match the ode result rows");
+        fprintf(stderr, "ERROR: The yexp rows don't match the ode result rows: %ld vs %ld\n", SM_ROWS_D(exptotal->yexp), rows);
         exit(-1);
     }
 
     if (SM_COLUMNS_D(exptotal->yexp) != cols - 1)
     {
-        fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols");
+        fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols: %ld vs %ld\n", SM_COLUMNS_D(exptotal->yexp), cols - 1);
         exit(-1);
     }
 

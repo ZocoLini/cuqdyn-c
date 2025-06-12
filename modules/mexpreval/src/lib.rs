@@ -18,8 +18,8 @@ pub unsafe extern "C" fn mexpreval_init(cuqdyn_config: CuqdynConfigC) {
     let cuqdyn_config: CuqdynConfig = CuqdynConfig::from(cuqdyn_config);
 
     let model_name = &cuqdyn_config.ode_expr()[0];
-    let transformer = &cuqdyn_config.states_transformer()[0];
-    
+    let transformer: &str = cuqdyn_config.states_transformer().first().map_or("", |v| v);
+
     MODEL = Some(models::build_model(model_name, &cuqdyn_config));
     STATES_TRANSFORMER = Some(states_transformers::build_states_transformer(transformer, &cuqdyn_config)); 
     CUQDYN_CONF = Some(cuqdyn_config);
