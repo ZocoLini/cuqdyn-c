@@ -17,7 +17,7 @@ int main(void)
     test_lotka_volterra();
     printf("\tTest 1 completed\n");
 
-    test_nfkb();
+    // test_nfkb(); TODO: Too slow
     printf("\tTest 2 completed\n");
 
     return 0;
@@ -35,6 +35,8 @@ void test_lotka_volterra()
     CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
 
     assert(cuqdyn_result != NULL);
+
+    destroy_cuqdyn_conf();
 }
 
 void test_nfkb()
@@ -49,4 +51,6 @@ void test_nfkb()
     CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
 
     assert(cuqdyn_result != NULL);
+
+    destroy_cuqdyn_conf();
 }

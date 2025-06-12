@@ -11,6 +11,7 @@
 #include "config.h"
 #include "matlab.h"
 #include "ode_solver.h"
+#include "states_transformer.h"
 #ifdef MPI
 #include <mpi.h>
 #endif
@@ -73,7 +74,17 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     }
 
     const sunrealtype t0 = NV_Ith_S(times, 0);
-    N_Vector initial_condition = copy_matrix_row(observed_data, 0, 0, SM_COLUMNS_D(observed_data));
+    N_Vector initial_condition = NULL;
+
+    if (config->y0.len == 0)
+    {
+        initial_condition = copy_matrix_row(observed_data, 0, 0, SM_COLUMNS_D(observed_data));
+    }
+    else
+    {
+        initial_condition = New_Serial(config->y0.len);
+        memcpy(NV_DATA_S(initial_condition), config->y0.array, config->y0.len * sizeof(sunrealtype));
+    }
 
     const long m = SM_ROWS_D(observed_data);
     const long n = SM_COLUMNS_D(observed_data);
@@ -154,6 +165,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
         // Saving the ode solution data obtained with the predicted params
         SUNMatrix ode_solution = solve_ode(predicted_params, initial_condition, t0, times);
+        ode_solution = transform_states(ode_solution);
         SUNMatrix predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1L}, 1));
         SUNMatDestroy(ode_solution);
 

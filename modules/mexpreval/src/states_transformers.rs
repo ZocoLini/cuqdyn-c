@@ -59,8 +59,28 @@ impl StatesTransformer for GenericStatesTransformer<'_> {
     }
 }
 
+struct NFKBExampleStatesTransformer;
+
+impl StatesTransformer for NFKBExampleStatesTransformer {
+    /// y7
+    /// y10 + y13
+    /// y9
+    /// y1 + y2 + y3
+    /// y2
+    /// y12
+    fn transform(&self, input: &[f64], output: &mut [f64]) {
+        output[0] = input[6]; // y7
+        output[1] = input[9] + input[12]; // y10 + y13
+        output[2] = input[8]; // y9
+        output[3] = input[0] + input[1] + input[2]; // y1 + y2 + y3
+        output[4] = input[1]; // y2
+        output[5] = input[11]; // y12
+    }
+}
+
 pub fn build_states_transformer(transformer: &str, cuqdyn_conf: &CuqdynConfig) -> Box<dyn StatesTransformer> {
     match transformer {
+        "nfkb-example" => Box::new(NFKBExampleStatesTransformer),
         _ => Box::new(GenericStatesTransformer::new(cuqdyn_conf))
     }
 }
