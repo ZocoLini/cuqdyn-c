@@ -196,13 +196,13 @@ impl From<CuqdynConfigC> for CuqdynConfig {
                     .map(|&a| CStr::from_ptr(a).to_str().unwrap().to_string())
                     .collect::<Vec<String>>();
 
-            let states_transformer = if value.states_transformer.count == 0 {
+            let states_transformer = if value.states_transformer.count != 0 {
                 slice::from_raw_parts(value.states_transformer.exprs, value.states_transformer.count as usize)
                     .iter()
                     .map(|&a| CStr::from_ptr(a).to_str().unwrap().to_string())
                     .collect::<Vec<String>>()
             } else { 
-                Vec::new()
+                vec!["identity".to_string()]
             };
 
             CuqdynConfig {

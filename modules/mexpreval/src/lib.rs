@@ -15,7 +15,7 @@ static mut CUQDYN_CONF: Option<CuqdynConfig> = None;
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn mexpreval_init(cuqdyn_config: CuqdynConfigC) {
-    let cuqdyn_config: CuqdynConfig = cuqdyn_config.into();
+    let cuqdyn_config: CuqdynConfig = CuqdynConfig::from(cuqdyn_config);
 
     let model_name = &cuqdyn_config.ode_expr()[0];
     let transformer = &cuqdyn_config.states_transformer()[0];
