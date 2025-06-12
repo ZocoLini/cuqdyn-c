@@ -21,6 +21,13 @@ pub struct TolerancesC {
 
 #[repr(C)]
 #[derive(Debug)]
+pub struct Y0C {
+    len: i32,
+    array: *const f64,
+}
+
+#[repr(C)]
+#[derive(Debug)]
 pub struct StatesTransformerC {
     count: i32,
     exprs: *const *const c_char,
@@ -31,6 +38,7 @@ pub struct StatesTransformerC {
 pub struct CuqdynConfigC {
     tolerances: TolerancesC,
     ode_expr: OdeExprC,
+    y0: Y0C,
     states_transformer: StatesTransformerC,
 }
 
@@ -55,6 +63,11 @@ impl From<CuqdynConfig> for CuqdynConfigC {
                 .as_ptr(),
         };
 
+        let y0 = Y0C {
+            len: value.y0.len() as i32,
+            array: value.y0.as_ptr(),
+        };
+        
         let obs_exprs = value
             .states_transformer
             .iter()
@@ -70,6 +83,7 @@ impl From<CuqdynConfig> for CuqdynConfigC {
         Self {
             tolerances,
             ode_expr,
+            y0,
             states_transformer: observables,
         }
     }
@@ -86,6 +100,8 @@ pub struct CuqdynConfig {
     #[get = "pub"]
     ode_expr: Vec<String>,
     #[get = "pub"]
+    y0: Vec<f64>,
+    #[get = "pub"]
     states_transformer: Vec<String>,
 }
 
@@ -96,6 +112,7 @@ impl CuqdynConfig {
             atol: vec![1e-8, 1e-8],
             p_count: 4,
             ode_expr: vec!["lotka-volterra".to_string()],
+            y0: vec![],
             states_transformer: vec![],
         }
     }
@@ -109,6 +126,7 @@ impl CuqdynConfig {
                 "y1 * (p1 - p2 * y2)".to_string(),
                 "-y2 * (p3 - p4 * y1)".to_string(),
             ],
+            y0: vec![],
             states_transformer: vec![],
         }
     }
@@ -119,6 +137,7 @@ impl CuqdynConfig {
             atol: vec![1e-8, 1e-8, 1e-8, 1e-8, 1e-8],
             p_count: 5,
             ode_expr: vec!["alpha-pinene".to_string()],
+            y0: vec![],
             states_transformer: vec![],
         }
     }
@@ -135,6 +154,7 @@ impl CuqdynConfig {
                 "p3 * y3".to_string(),
                 "p4 * y3 - p5 * y5".to_string(),
             ],
+            y0: vec![],
             states_transformer: vec![],
         }
     }
@@ -145,6 +165,7 @@ impl CuqdynConfig {
             atol: vec![1e-8],
             p_count: 2,
             ode_expr: vec!["p1 * y1 * (1 - y1 / p2)".to_string()],
+            y0: vec![],
             states_transformer: vec![],
         }
     }
@@ -171,6 +192,7 @@ impl CuqdynConfig {
                 "p1 * y11 * y7 - p24 * p22 * y14".to_string(),
                 "p28 + p27 * y7 - p29 * y15".to_string(),
             ],
+            y0: vec![],
             states_transformer: vec![
                 "y7".to_string(),
                 "y10 + y13".to_string(),
@@ -196,6 +218,10 @@ impl From<CuqdynConfigC> for CuqdynConfig {
                     .map(|&a| CStr::from_ptr(a).to_str().unwrap().to_string())
                     .collect::<Vec<String>>();
 
+            let y0 =
+                slice::from_raw_parts(value.y0.array, value.y0.len as usize)
+                    .to_vec();
+            
             let states_transformer = if value.states_transformer.count != 0 {
                 slice::from_raw_parts(value.states_transformer.exprs, value.states_transformer.count as usize)
                     .iter()
@@ -210,6 +236,7 @@ impl From<CuqdynConfigC> for CuqdynConfig {
                 atol,
                 p_count: value.ode_expr.p_count as usize,
                 ode_expr,
+                y0,
                 states_transformer,
             }
         }

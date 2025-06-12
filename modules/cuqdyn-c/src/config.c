@@ -13,11 +13,12 @@
 
 static CuqdynConf *config = NULL;
 
-CuqdynConf *create_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr, StatesTransformer states_transformer)
+CuqdynConf *create_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr, Y0 y0, StatesTransformer states_transformer)
 {
     CuqdynConf *cuqdyn_conf = malloc(sizeof(CuqdynConf));
     cuqdyn_conf->tolerances = tolerances;
     cuqdyn_conf->ode_expr = ode_expr;
+    cuqdyn_conf->y0 = y0;
     cuqdyn_conf->states_transformer = states_transformer;
     return cuqdyn_conf;
 }
@@ -31,6 +32,7 @@ void destroy_cuqdyn_conf()
 
     destroy_tolerances(config->tolerances);
     destroy_ode_expr(config->ode_expr);
+    destroy_y0(config->y0);
     destroy_states_transformer(config->states_transformer);
     free(config);
     config = NULL;
@@ -79,6 +81,9 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
 
     int obs_count = 0;
     char **obs_tranformations = NULL;
+
+    int y0_len = 0;
+    double *y0_array = NULL;
 
     for (; cur; cur = cur->next)
     {
@@ -231,20 +236,50 @@ int parse_cuqdyn_conf(const char *filename, CuqdynConf *config)
                 token = strtok(NULL, "\n");
             }
         }
+        else if (!xmlStrcmp(cur->name, "y0"))
+        {
+            xmlChar *key = xmlNodeGetContent(cur);
+            char *key_str = (char *) key;
+
+            // Primera pasada: contar elementos
+            char *tmp1 = strdup(key_str);
+            char *token = strtok(tmp1, ",");
+            while (token)
+            {
+                y0_len++;
+                token = strtok(NULL, ",");
+            }
+            free(tmp1);
+
+            y0_array = calloc(y0_len, sizeof(double));
+
+            // Segunda pasada: parsear los valores
+            size_t i = 0;
+            char *tmp2 = strdup(key_str);
+            token = strtok(tmp2, ",");
+            while (token && i < y0_len)
+            {
+                y0_array[i++] = atof(token);
+                token = strtok(NULL, ",");
+            }
+            free(tmp2);
+            xmlFree(key);
+        }
     }
 
     config->tolerances = create_tolerances(rtol, atol);
     config->ode_expr = create_ode_expr(y_count, p_count, odes);
+    config->y0 = create_y0(y0_len, y0_array);
     config->states_transformer = create_states_transformer(obs_count, obs_tranformations);
     xmlFreeDoc(doc);
     return 0;
 }
 
-CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr, StatesTransformer states_transformer)
+CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr, Y0 y0, StatesTransformer states_transformer)
 {
     destroy_cuqdyn_conf();
 
-    config = create_cuqdyn_conf(tolerances, ode_expr, states_transformer);
+    config = create_cuqdyn_conf(tolerances, ode_expr, y0, states_transformer);
     return config;
 }
 
@@ -282,6 +317,19 @@ OdeExpr create_ode_expr(int y_count, int p_count, char **exprs)
 }
 
 void destroy_ode_expr(OdeExpr ode_expr) {}
+
+Y0 create_y0(int len, double* array)
+{
+    Y0 y0;
+    y0.len = len;
+    y0.array = array;
+    return y0;
+}
+
+void destroy_y0(Y0 y0)
+{
+
+}
 
 StatesTransformer create_states_transformer(int count, char** exprs)
 {
