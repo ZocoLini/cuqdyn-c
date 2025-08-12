@@ -11,6 +11,7 @@ RUN apt-get update && \
     openmpi-bin \
     build-essential \
     cmake \
+    gdb \
     gfortran && \
     rm -rf /var/lib/apt/lists/*
 
