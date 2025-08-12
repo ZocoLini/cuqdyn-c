@@ -18,7 +18,7 @@ impl GenericModel<'_> {
     fn new(cuqdyn_conf: &CuqdynConfig) -> Self {
         let mut exprs: Vec<Expr> = Vec::new();
 
-        for s in cuqdyn_conf.ode_expr().iter() {
+        for s in cuqdyn_conf.ode_expr().expr().iter() {
             let expr =
                 Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
 
@@ -27,25 +27,25 @@ impl GenericModel<'_> {
 
         let mut ctx = Context::new();
 
-        for i in 0..*cuqdyn_conf.p_count() {
+        for i in 0..*cuqdyn_conf.ode_expr().p_count() {
             let var_key = format!("p{}", i + 1);
             ctx.var(&var_key, 0.0);
         }
 
-        for i in 0..cuqdyn_conf.ode_expr().len() {
+        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
             let var_key = format!("y{}", i + 1);
             ctx.var(&var_key, 0.0);
 
         }
 
         let mut p: Vec<*mut f64> = Vec::new();
-        for i in 0..*cuqdyn_conf.p_count() {
+        for i in 0..*cuqdyn_conf.ode_expr().p_count() {
             let var_key = format!("p{}", i + 1);
             p.push(ctx.get_var_ptr(&var_key).unwrap())
         }
 
         let mut y: Vec<*mut f64> = Vec::new();
-        for i in 0..cuqdyn_conf.ode_expr().len() {
+        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
             let var_key = format!("y{}", i + 1);
             y.push(ctx.get_var_ptr(&var_key).unwrap())
         }

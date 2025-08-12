@@ -1,4 +1,4 @@
-use crate::config::CuqdynConfig;
+use crate::{config::CuqdynConfig};
 use meval::{Context, Expr};
 use std::str::FromStr;
 
@@ -16,32 +16,34 @@ impl GenericStatesTransformer<'_> {
     fn new(cuqdyn_conf: &CuqdynConfig) -> Self {
         let mut exprs: Vec<Expr> = Vec::new();
 
-        for s in cuqdyn_conf.states_transformer().iter() {
-            let expr =
-                Expr::from_str(s).unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
+        let states_transformer = if let Some(states_transformers) = cuqdyn_conf.states_transformer()
+        {
+            states_transformers
+        } else {
+            &crate::config::StatesTransformer::default()
+        };
+
+        for s in states_transformer.expr().iter() {
+            let expr = Expr::from_str(s)
+                .unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
 
             exprs.push(expr);
         }
 
         let mut ctx = Context::new();
 
-        for i in 0..cuqdyn_conf.ode_expr().len() {
+        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
             let var_key = format!("y{}", i + 1);
             ctx.var(&var_key, 0.0);
-
         }
 
         let mut y: Vec<*mut f64> = Vec::new();
-        for i in 0..cuqdyn_conf.ode_expr().len() {
+        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
             let var_key = format!("y{}", i + 1);
             y.push(ctx.get_var_ptr(&var_key).unwrap())
         }
 
-        Self {
-            exprs,
-            ctx,
-            y,
-        }
+        Self { exprs, ctx, y }
     }
 }
 
@@ -78,9 +80,12 @@ impl StatesTransformer for NFKBExampleStatesTransformer {
     }
 }
 
-pub fn build_states_transformer(transformer: &str, cuqdyn_conf: &CuqdynConfig) -> Box<dyn StatesTransformer> {
+pub fn build_states_transformer(
+    transformer: &str,
+    cuqdyn_conf: &CuqdynConfig,
+) -> Box<dyn StatesTransformer> {
     match transformer {
         "nfkb-example" => Box::new(NFKBExampleStatesTransformer),
-        _ => Box::new(GenericStatesTransformer::new(cuqdyn_conf))
+        _ => Box::new(GenericStatesTransformer::new(cuqdyn_conf)),
     }
 }

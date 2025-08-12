@@ -1,7 +1,6 @@
 use getset::Getters;
-use std::ffi::CStr;
-use std::os::raw::c_char;
-use std::slice;
+use serde::Deserialize;
+use std::{ops::Deref, os::raw::c_char};
 
 #[repr(C)]
 #[derive(Debug)]
@@ -42,42 +41,56 @@ pub struct CuqdynConfigC {
     states_transformer: StatesTransformerC,
 }
 
+// TODO: The vectors are being drop at the end of the function
 impl From<CuqdynConfig> for CuqdynConfigC {
     fn from(value: CuqdynConfig) -> Self {
         let tolerances = TolerancesC {
-            rtol: value.rtol,
-            atol_len: value.atol.len() as i32,
-            atol: value.atol.as_ptr(),
+            rtol: value.tolerances.rtol,
+            atol_len: value.tolerances.atol.len() as i32,
+            atol: value.tolerances.atol.as_ptr(),
         };
 
         let ode_exprs = value
             .ode_expr
+            .expr
             .iter()
             .map(|a| a.as_ptr() as *const i8)
             .collect::<Vec<*const c_char>>();
-        
+
         let ode_expr = OdeExprC {
-            y_count: value.ode_expr.len() as i32,
-            p_count: value.p_count as i32,
-            exprs: ode_exprs
-                .as_ptr(),
+            y_count: value.ode_expr.y_count as i32,
+            p_count: value.ode_expr.p_count as i32,
+            exprs: ode_exprs.as_ptr(),
         };
 
-        let y0 = Y0C {
-            len: value.y0.len() as i32,
-            array: value.y0.as_ptr(),
+        let y0 = if let Some(y0) = value.y0 {
+            Y0C {
+                len: y0.len() as i32,
+                array: y0.as_ptr(),
+            }
+        } else {
+            Y0C {
+                len: 0,
+                array: std::ptr::null(),
+            }
         };
-        
-        let obs_exprs = value
-            .states_transformer
-            .iter()
-            .map(|a| a.as_ptr() as *const i8)
-            .collect::<Vec<*const c_char>>();
-        
-        let observables = StatesTransformerC {
-            count: value.states_transformer.len() as i32,
-            exprs: obs_exprs
-                .as_ptr(),
+
+        let observables = if let Some(states_transformer) = value.states_transformer {
+            let obs_exprs = states_transformer
+                .expr
+                .iter()
+                .map(|a| a.as_ptr() as *const i8)
+                .collect::<Vec<*const c_char>>();
+
+            StatesTransformerC {
+                count: states_transformer.count,
+                exprs: obs_exprs.as_ptr(),
+            }
+        } else {
+            StatesTransformerC {
+                count: 0,
+                exprs: std::ptr::null(),
+            }
         };
 
         Self {
@@ -89,156 +102,356 @@ impl From<CuqdynConfig> for CuqdynConfigC {
     }
 }
 
-#[derive(Debug, Getters)]
+#[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
+#[serde(rename = "cuqdyn-config")]
 pub struct CuqdynConfig {
+    #[get = "pub"]
+    tolerances: Tolerances,
+    #[get = "pub"]
+    #[serde(rename = "ode_expr")]
+    ode_expr: OdeExpr,
+    #[get = "pub"]
+    #[serde(default)]
+    y0: Option<F64Vec>,
+    #[get = "pub"]
+    #[serde(rename = "states_transformer")]
+    #[serde(default)]
+    states_transformer: Option<StatesTransformer>,
+}
+
+#[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
+pub struct Tolerances {
     #[get = "pub"]
     rtol: f64,
     #[get = "pub"]
-    atol: Vec<f64>,
+    atol: F64Vec,
+}
+
+#[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
+pub struct OdeExpr {
     #[get = "pub"]
-    p_count: usize,
+    #[serde(rename = "@y_count")]
+    y_count: i32,
     #[get = "pub"]
-    ode_expr: Vec<String>,
+    #[serde(rename = "@p_count")]
+    p_count: i32,
     #[get = "pub"]
-    y0: Vec<f64>,
+    #[serde(rename = "#text")]
+    expr: StringVec,
+}
+
+#[derive(Debug, Getters, Deserialize, Default, Clone, PartialEq)]
+pub struct StatesTransformer {
     #[get = "pub"]
-    states_transformer: Vec<String>,
+    #[serde(rename = "@count")]
+    count: i32,
+    #[get = "pub"]
+    #[serde(rename = "#text")]
+    expr: StringVec,
 }
 
 impl CuqdynConfig {
     pub fn lotka_volterra() -> Self {
         Self {
-            rtol: 1e-8,
-            atol: vec![1e-8, 1e-8],
-            p_count: 4,
-            ode_expr: vec!["lotka-volterra".to_string()],
-            y0: vec![],
-            states_transformer: vec![],
+            tolerances: Tolerances {
+                rtol: 1e-8,
+                atol: F64Vec(vec![1e-8, 1e-8]),
+            },
+            ode_expr: OdeExpr {
+                y_count: 2,
+                p_count: 4,
+                expr: StringVec(vec!["lotka-volterra".to_string()]),
+            },
+            y0: None,
+            states_transformer: None,
         }
     }
 
     pub fn lotka_volterra_expr() -> Self {
         Self {
-            rtol: 1e-8,
-            atol: vec![1e-8, 1e-8],
-            p_count: 4,
-            ode_expr: vec![
-                "y1 * (p1 - p2 * y2)".to_string(),
-                "-y2 * (p3 - p4 * y1)".to_string(),
-            ],
-            y0: vec![],
-            states_transformer: vec![],
+            tolerances: Tolerances {
+                rtol: 1e-8,
+                atol: F64Vec(vec![1e-8, 1e-8]),
+            },
+            ode_expr: OdeExpr {
+                y_count: 2,
+                p_count: 4,
+                expr: StringVec(vec![
+                    "y1 * (p1 - p2 * y2)".to_string(),
+                    "-y2 * (p3 - p4 * y1)".to_string(),
+                ]),
+            },
+            y0: None,
+            states_transformer: None,
         }
     }
 
     pub fn alpha_pinene() -> Self {
         Self {
-            rtol: 1e-8,
-            atol: vec![1e-8, 1e-8, 1e-8, 1e-8, 1e-8],
-            p_count: 5,
-            ode_expr: vec!["alpha-pinene".to_string()],
-            y0: vec![],
-            states_transformer: vec![],
+            tolerances: Tolerances {
+                rtol: 1e-8,
+                atol: F64Vec(vec![1e-8, 1e-8, 1e-8, 1e-8, 1e-8]),
+            },
+            ode_expr: OdeExpr {
+                y_count: 5,
+                p_count: 5,
+                expr: StringVec(vec!["alpha-pinene".to_string()]),
+            },
+            y0: None,
+            states_transformer: None,
         }
     }
 
     pub fn alpha_pinene_expr() -> Self {
         Self {
-            rtol: 1e-8,
-            atol: vec![1e-8, 1e-8, 1e-8, 1e-8, 1e-8],
-            p_count: 5,
-            ode_expr: vec![
-                "-(p1 + p2) * y1".to_string(),
-                "p1 * y1".to_string(),
-                "p2 * y1 - (p3 + p4) * y3 + p5 * y5".to_string(),
-                "p3 * y3".to_string(),
-                "p4 * y3 - p5 * y5".to_string(),
-            ],
-            y0: vec![],
-            states_transformer: vec![],
+            tolerances: Tolerances {
+                rtol: 1e-8,
+                atol: F64Vec(vec![1e-8, 1e-8, 1e-8, 1e-8, 1e-8]),
+            },
+            ode_expr: OdeExpr {
+                y_count: 5,
+                p_count: 5,
+                expr: StringVec(vec![
+                    "-(p1 + p2) * y1".to_string(),
+                    "p1 * y1".to_string(),
+                    "p2 * y1 - (p3 + p4) * y3 + p5 * y5".to_string(),
+                    "p3 * y3".to_string(),
+                    "p4 * y3 - p5 * y5".to_string(),
+                ]),
+            },
+            y0: None,
+            states_transformer: None,
         }
     }
 
     pub fn logistic_growth_expr() -> Self {
         Self {
-            rtol: 1e-8,
-            atol: vec![1e-8],
-            p_count: 2,
-            ode_expr: vec!["p1 * y1 * (1 - y1 / p2)".to_string()],
-            y0: vec![],
-            states_transformer: vec![],
+            tolerances: Tolerances {
+                rtol: 1e-8,
+                atol: F64Vec(vec![1e-8]),
+            },
+            ode_expr: OdeExpr {
+                y_count: 1,
+                p_count: 2,
+                expr: StringVec(vec!["p1 * y1 * (1 - y1 / p2)".to_string()]),
+            },
+            y0: None,
+            states_transformer: None,
         }
     }
 
-    pub fn nfkb() -> Self {
+    pub fn nfkb_expr() -> Self {
         Self {
-            rtol: 1e-8,
-            atol: vec![1e-8, 1e-8],
-            p_count: 29,
-            ode_expr: vec![
-                "p20 - p21 * y1 - p17 * y1".to_string(),
-                "p17 * y1 - p19 * y2 - p18 * y2 * y8 - p21 * y2 - p2 * y2 * y10 + p3 * y4 - p4 * y2 * y13 + p5 * y5".to_string(),
-                "p19 * y2 + p18 * y2 * y8 - p21 * y3".to_string(),
-                "p2 * y2 * y10 - p3 * y4".to_string(),
-                "p4 * y2 * y13 - p5 * y5".to_string(),
-                "p11 * y13 - p1 * y6 * y10 + p5 * y5 - p23 * y6".to_string(),
-                "p23 * p22 * y6 - p1 * y11 * y7".to_string(),
-                "p15 * y9 - p16 * y8".to_string(),
-                "p13 + p12 * y7 - p14 * y9".to_string(),
-                "-p2 * y2 * y10 - p1 * y10 * y6 + p9 * y12 - p10 * y10 - p25 * y10 + p26 * y11".to_string(),
-                "-p1 * y11 * y7 + p25 * p22 * y10 - p26 * p22 * y11".to_string(),
-                "p7 + p6 * y7 - p8 * y12".to_string(),
-                "p1 * y10 * y6 - p11 * y13 - p4 * y2 * y13 + p24 * y14".to_string(),
-                "p1 * y11 * y7 - p24 * p22 * y14".to_string(),
-                "p28 + p27 * y7 - p29 * y15".to_string(),
-            ],
-            y0: vec![],
-            states_transformer: vec![
+            tolerances: Tolerances {
+                rtol: 1e-8,
+                atol: F64Vec(vec![1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8]),
+            },
+            ode_expr: OdeExpr {
+                y_count: 15,
+                p_count: 29,
+                expr: StringVec(vec![
+                    "p20 - p21 * y1 - p17 * y1".to_string(),
+                    "p17 * y1 - p19 * y2 - p18 * y2 * y8 - p21 * y2 - p2 * y2 * y10 + p3 * y4 - p4 * y2 * y13 + p5 * y5".to_string(),
+                    "p19 * y2 + p18 * y2 * y8 - p21 * y3".to_string(),
+                    "p2 * y2 * y10 - p3 * y4".to_string(),
+                    "p4 * y2 * y13 - p5 * y5".to_string(),
+                    "p11 * y13 - p1 * y6 * y10 + p5 * y5 - p23 * y6".to_string(),
+                    "p23 * p22 * y6 - p1 * y11 * y7".to_string(),
+                    "p15 * y9 - p16 * y8".to_string(),
+                    "p13 + p12 * y7 - p14 * y9".to_string(),
+                    "-p2 * y2 * y10 - p1 * y10 * y6 + p9 * y12 - p10 * y10 - p25 * y10 + p26 * y11".to_string(),
+                    "-p1 * y11 * y7 + p25 * p22 * y10 - p26 * p22 * y11".to_string(),
+                    "p7 + p6 * y7 - p8 * y12".to_string(),
+                    "p1 * y10 * y6 - p11 * y13 - p4 * y2 * y13 + p24 * y14".to_string(),
+                    "p1 * y11 * y7 - p24 * p22 * y14".to_string(),
+                    "p28 + p27 * y7 - p29 * y15".to_string(),
+                ]),
+            },
+            y0: Some(F64Vec(vec![0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003])),
+            states_transformer: Some(StatesTransformer {count: 6, expr: StringVec(vec![
                 "y7".to_string(),
                 "y10 + y13".to_string(),
                 "y9".to_string(),
                 "y1 + y2 + y3".to_string(),
                 "y2".to_string(),
                 "y12".to_string(),
-            ]
+            ])}),
+        }
+    }
+
+    pub fn nfkb() -> Self {
+        Self {
+            tolerances: Tolerances {
+                rtol: 1e-8,
+                atol: F64Vec(vec![
+                    1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8,
+                    1e-8, 1e-8,
+                ]),
+            },
+            ode_expr: OdeExpr {
+                y_count: 15,
+                p_count: 29,
+                expr: StringVec(vec!["nfkb".to_string()]),
+            },
+            y0: Some(F64Vec(vec![
+                0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783,
+                0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003,
+            ])),
+            states_transformer: Some(StatesTransformer {
+                count: 6,
+                expr: StringVec(vec!["nfkb-example".to_string()]),
+            }),
         }
     }
 }
 
-impl From<CuqdynConfigC> for CuqdynConfig {
-    fn from(value: CuqdynConfigC) -> Self {
+#[derive(Debug, Default, Clone, PartialEq)]
+pub struct F64Vec(Vec<f64>);
+
+impl Deref for F64Vec {
+    type Target = Vec<f64>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'de> Deserialize<'de> for F64Vec {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let s = s.replace("\n", "");
+
+        let nums = s
+            .split(",")
+            .map(|x| x.trim().parse::<f64>())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(serde::de::Error::custom)?;
+
+        Ok(F64Vec(nums))
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq)]
+pub struct StringVec(Vec<String>);
+
+impl Deref for StringVec {
+    type Target = Vec<String>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'de> Deserialize<'de> for StringVec {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let items = s.split("\n").map(|x| x.trim().to_string()).collect();
+
+        Ok(StringVec(items))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{ffi::CStr, slice};
+
+    use super::*;
+
+    #[test]
+    fn alpha_pinene_config_file_test() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-8</rtol>
+        <atol>1e-8, 1e-8, 1e-8, 1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="5" p_count="5">
+        alpha-pinene
+    </ode_expr>
+</cuqdyn-config>
+        "#;
+
+        let xml_config: CuqdynConfig = serde_xml_rs::from_str(xml).unwrap();
+        let expected_config = CuqdynConfig::alpha_pinene();
+
+        assert_eq!(xml_config, expected_config);
+    }
+
+    #[test]
+    fn logistic_growth_config_file_test() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-8</rtol>
+        <atol>1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="1" p_count="2">
+        p1 * y1 * (1 - y1 / p2)
+    </ode_expr>
+</cuqdyn-config>
+        "#;
+
+        let xml_config: CuqdynConfig = serde_xml_rs::from_str(xml).unwrap();
+        let expected_config = CuqdynConfig::logistic_growth_expr();
+
+        assert_eq!(xml_config, expected_config);
+    }
+
+    #[test]
+    fn nfkb_config_file_test() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-8</rtol>
+        <atol>1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="15" p_count="29">
+        nfkb
+    </ode_expr>
+    <y0>
+        0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
+    </y0>
+    <states_transformer count="6">
+        nfkb-example
+    </states_transformer>
+</cuqdyn-config>
+        "#;
+
+        let xml_config: CuqdynConfig = serde_xml_rs::from_str(xml).unwrap();
+        let expected_config = CuqdynConfig::nfkb();
+
+        assert_eq!(xml_config, expected_config);
+    }
+
+    #[test]
+    fn config_rs_struct_to_c_test() {
+        let c_config: CuqdynConfigC = CuqdynConfig::nfkb_expr().into();
+        let rs_config: CuqdynConfig = CuqdynConfig::nfkb_expr();
+
+        assert_eq!(c_config.ode_expr.y_count, rs_config.ode_expr.y_count);
+        assert_eq!(c_config.ode_expr.p_count, rs_config.ode_expr().p_count);
+
         unsafe {
-            let atol =
-                slice::from_raw_parts(value.tolerances.atol, value.tolerances.atol_len as usize)
-                    .to_vec();
-
-            let ode_expr =
-                slice::from_raw_parts(value.ode_expr.exprs, value.ode_expr.y_count as usize)
+            for (i, e) in
+                slice::from_raw_parts(c_config.ode_expr.exprs, c_config.ode_expr.y_count as usize)
                     .iter()
-                    .map(|&a| CStr::from_ptr(a).to_str().unwrap().to_string())
-                    .collect::<Vec<String>>();
-
-            let y0 =
-                slice::from_raw_parts(value.y0.array, value.y0.len as usize)
-                    .to_vec();
-            
-            let states_transformer = if value.states_transformer.count != 0 {
-                slice::from_raw_parts(value.states_transformer.exprs, value.states_transformer.count as usize)
-                    .iter()
-                    .map(|&a| CStr::from_ptr(a).to_str().unwrap().to_string())
-                    .collect::<Vec<String>>()
-            } else { 
-                vec![]
-            };
-
-            CuqdynConfig {
-                rtol: value.tolerances.rtol,
-                atol,
-                p_count: value.ode_expr.p_count as usize,
-                ode_expr,
-                y0,
-                states_transformer,
+                    .map(|p| CStr::from_ptr(*p).to_str().unwrap().to_string())
+                    .enumerate()
+            {
+                assert_eq!(e, rs_config.ode_expr.expr[i])
             }
         }
+        
+        assert_eq!(c_config.tolerances.atol_len, rs_config.tolerances.atol.len() as i32);
+        assert_eq!(c_config.tolerances.rtol, rs_config.tolerances.rtol);
+        
     }
 }

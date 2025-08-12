@@ -1,4 +1,4 @@
-#include <../include/functions.h>
+#include <functions.h>
 #include <method_module/structure_paralleltestbed.h>
 #include <nvector/nvector_serial.h>
 #include <string.h>
@@ -7,13 +7,6 @@
 #include "config.h"
 #include "cuqdyn.h"
 #include "states_transformer.h"
-
-extern void mexpreval_init(CuqdynConf cuqdyn_conf);
-
-void mexpreval_init_wrapper(CuqdynConf cuqdyn_conf)
-{
-    mexpreval_init(cuqdyn_conf);
-}
 
 extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params);
 

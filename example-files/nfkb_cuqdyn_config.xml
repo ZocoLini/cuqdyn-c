@@ -7,30 +7,11 @@
     </tolerances>
     <ode_expr y_count="15" p_count="29">
         nfkb
-        a
-        a
-        a
-        a
-        a
-        a
-        a
-        a
-        a
-        a
-        a
-        a
-        a
-        a
     </ode_expr>
     <y0>
         0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
     </y0>
     <states_transformer count="6">
         nfkb-example
-        a
-        a
-        a
-        a
-        a
     </states_transformer>
 </cuqdyn-config>
