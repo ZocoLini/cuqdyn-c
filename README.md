@@ -62,7 +62,7 @@ generating a random one.
 
 **GCC and GFortran v14 aren't supported by the project, so you need to use GCC v13 or lower.**
 
-The project has a `build.sh` script.
+The project has a `scripts/build.sh` script.
 `build-[variant]/` directories will be created, each one representing a variant
 off the project builded. If you call the script without arguments, it will build
 all the variants, but you can also specify the variant you want, passing it as the
@@ -72,11 +72,11 @@ first argument. The available variants are:
 - `mpi`: Builds the project to execute the sequential solver in parallel using MPI.
 - `mpi2`: Builds the project to only include the MPI and OpenMP defined in sacess-library.
   
-After this, running `test.sh` is a good way to know if the cuqdyn library works as expected.
+After this, running `scripts/test.sh` is a good way to know if the cuqdyn library works as expected.
 
 ## Using the CLI
 
-After building using the `build.sh` script, you can execute this command to run the CLI
+After building using the `scripts/build.sh` script, you can execute this command to run the CLI
 with example config and data files like this:
 
 ```bash
