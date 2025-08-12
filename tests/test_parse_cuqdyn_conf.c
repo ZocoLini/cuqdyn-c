@@ -20,11 +20,10 @@ int main(void)
 
     assert(1e-8 == conf->tolerances.rtol);
 
-    fprintf(stdout, "%d\n", conf->ode_expr.y_count);
-    fprintf(stdout, "%s\n", conf->ode_expr.exprs[0]);
-    fprintf(stdout, "%s\n", conf->ode_expr.exprs[1]);
     assert(2 == conf->ode_expr.y_count);
     assert(4 == conf->ode_expr.p_count);
+
+    printf("\tTest lotka_volterra_cuqdyn_config.xml passed\n");
 
     return 0;
 }

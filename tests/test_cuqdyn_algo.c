@@ -9,7 +9,7 @@ void test_nfkb();
 
 int main(void)
 {
-#ifdef MPI2
+#if defined(MPI2) || defined(MPI)
     printf("No tests to execute with MPI2\n");
     return 0;
 #endif

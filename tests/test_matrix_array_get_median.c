@@ -12,7 +12,7 @@ int main(void)
     printf("\tTest 1 passed\n");
 
     test_odd_matrices();
-    printf("\tTest 2 passed");
+    printf("\tTest 2 passed\n");
 
     return 0;
 }
