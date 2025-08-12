@@ -11,7 +11,7 @@ build-proyect() {
 
     (
       cd "build-$VARIANT" || exit 1
-      cmake -DCMAKE_TOOLCHAIN_FILE=../"$VARIANT"_toolchain.cmake ..
+      cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/"$VARIANT"_toolchain.cmake ..
       make -j "$(nproc)"
     )
 }
