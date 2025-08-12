@@ -58,7 +58,7 @@ if [ ! -d ".venv" ]; then
     pip install --upgrade pip
 fi
 
-.venv/bin/pip install matplotlib
+pip install matplotlib
 
 variants=(
   "serial"

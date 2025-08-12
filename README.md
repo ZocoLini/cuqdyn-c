@@ -32,9 +32,8 @@ The project is structured as follows:
 
 - xml2-2.9.1
 - cvodes-7.3.0 (Built by CMake)
-- matio-2.9.1 (Built by CMake)
 - hdf5-1.8.12 (Built by CMake)
-- gsl-1.14 (Built by CMake if not present)
+- gsl-2.7 (Built by CMake if not present)
 
 ## ENV Vars
 
@@ -164,9 +163,7 @@ There are three types of input files that must be provided:
   ```
 - **Data file:**
   The data file containing a mtrix of observed data and the initial value
-  needed to solve the ODE. The data file can be a .mat file where the first matrix
-  found will be used (`test/data/lotka_volterra_data_homoc_noise_0.10_size_30_data_1.mat`)
-  or a txt file written with the following format:
+  needed to solve the ODE. The data file should be a txt file written with the following format:
   ```
   # The first row is gonna be used as the initial condition
   31 3 # Matrix dimensions so the parsing is easier

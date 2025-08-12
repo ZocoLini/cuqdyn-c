@@ -30,7 +30,6 @@ target_include_directories(cuqdyn-c
         include
         generated
         ${cvodes_BINARY_DIR}/include
-        ${matio_SOURCE_DIR}/src
         ${muparser_SOURCE_DIR}/include
         ${RUST_LIB_DIR}/include
 )
@@ -40,7 +39,6 @@ target_link_directories(cuqdyn-c PUBLIC ${RUST_TARGET_DIR})
 target_link_libraries(cuqdyn-c
         PUBLIC
         sacess
-        matio
         mexpreval
         SUNDIALS::core
 )

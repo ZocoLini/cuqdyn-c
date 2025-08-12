@@ -3,8 +3,6 @@ FROM ubuntu:24.04
 LABEL author="Borja Castellano" \
     version="0.1.0"
 
-ENV PATH="/root/.cargo/bin:${PATH}"
-
 RUN apt-get update && \
     apt-get install -y \
     curl \
@@ -13,8 +11,12 @@ RUN apt-get update && \
     openmpi-bin \
     build-essential \
     cmake \
-    libxml2 \
     gfortran && \
-    curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-    echo 'export PATH=/root/.cargo/bin:$PATH' >> /root/.bashrc && \
     rm -rf /var/lib/apt/lists/*
+
+USER ubuntu
+WORKDIR /home/ubuntu
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+ENV PATH="/home/ubuntu/.cargo/bin:${PATH}"
