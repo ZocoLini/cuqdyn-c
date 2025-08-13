@@ -372,14 +372,14 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             }
         };
 
-        let obs_exprs = if let Some(states_transformer) = value.states_transformer.as_ref() {
-            states_transformer
+        let (obs_exprs, obs_exprs_count) = if let Some(states_transformer) = value.states_transformer.as_ref() {
+            (states_transformer
                 .expr
                 .iter()
                 .map(|a| CString::new(a.as_bytes()).unwrap())
-                .collect::<Vec<CString>>()
+                .collect::<Vec<CString>>(), states_transformer.count)
         } else {
-            vec![]
+            (vec![], 0)
         };
 
         let obs_exprs_c = obs_exprs
@@ -388,8 +388,8 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             .collect::<Vec<*const c_char>>();
 
         let observables = StatesTransformerC {
-            count: obs_exprs.len() as i32,
-            exprs: if obs_exprs.len() >= 1 { obs_exprs_c.as_ptr() } else { std::ptr::null() },
+            count: obs_exprs_count,
+            exprs: if obs_exprs_count >= 1 { obs_exprs_c.as_ptr() } else { std::ptr::null() },
         };
 
         let c_config = CuqdynConfigC {
