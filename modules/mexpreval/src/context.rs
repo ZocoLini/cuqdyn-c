@@ -389,7 +389,7 @@ impl From<CuqdynConfigRs> for CuqdynContext {
 
         let observables = StatesTransformerC {
             count: obs_exprs.len() as i32,
-            exprs: obs_exprs_c.as_ptr(),
+            exprs: if obs_exprs.len() >= 1 { obs_exprs_c.as_ptr() } else { std::ptr::null() },
         };
 
         let c_config = CuqdynConfigC {
@@ -579,5 +579,52 @@ mod tests {
                 }
             }
         }
+    }
+    
+    #[test]
+    fn lotka_volterra_test() {
+        let num_exprs = 2;
+
+        let y = vec![1.0, 1.0];
+        let mut ydot = vec![0.0; num_exprs];
+        let params = vec![1.0, 2.0, 3.0, 4.0];
+
+        let mut context = CuqdynContext::new_from_config(CuqdynConfigRs::lotka_volterra());
+
+        for _ in 0..10_000 {
+            context.eval_f_exprs(0.0, &y, &mut ydot, &params);
+
+            assert_eq!(ydot[0], -1.0);
+            assert_eq!(ydot[1], 1.0);
+        }
+    }
+
+    #[test]
+    fn logistic_model_test() {
+        let num_exprs = 1;
+
+        let y = vec![1.0];
+        let mut ydot = vec![0.0; num_exprs];
+        let params = vec![1.0, 100.0];
+
+        let mut context = CuqdynContext::new_from_config(CuqdynConfigRs::logistic_growth_expr());
+
+        context.eval_f_exprs(0.0, &y, &mut ydot, &params);
+        assert_eq!(ydot[0], 0.99)
+    }
+
+    #[test]
+    fn div_by_cero() {
+        let num_exprs = 1;
+
+        let y = vec![1.0];
+        let mut ydot = vec![0.0; num_exprs];
+        let params = vec![0.484077, 0.000000]; // p2 is zero to cause division by zero
+
+        let mut context = CuqdynContext::new_from_config(CuqdynConfigRs::logistic_growth_expr());
+
+        context.eval_f_exprs(0.0, &y, &mut ydot, &params);
+
+        assert_eq!(ydot[0], 0.0)
     }
 }
