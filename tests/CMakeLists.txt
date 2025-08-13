@@ -10,6 +10,7 @@ foreach(test_name
         test_ess_obj_function
         test_cuqdyn_algo
         test_context_and_config
+        test_transform_states
 )
     add_executable(${test_name} ${test_name}.c)
     target_link_libraries(${test_name} cuqdyn-c)

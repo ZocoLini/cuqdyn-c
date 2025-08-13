@@ -4,7 +4,6 @@
 #include <nvector/nvector_serial.h>
 #include <stdio.h>
 #include <sunmatrix/sunmatrix_dense.h>
-#include <unistd.h>
 
 #include "config.h"
 #include "matlab.h"
@@ -40,7 +39,7 @@ SUNMatrix transform_states(SUNMatrix states)
 
         N_VDestroy(input);
     }
-
+    
     free(output);
     SUNMatDestroy(states);
     return transformed_result;
