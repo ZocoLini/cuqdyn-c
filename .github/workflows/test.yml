@@ -20,8 +20,8 @@ jobs:
 
       - name: Make test.sh executable
         run: |
-          chmod +x ./test.sh
-          chmod +x ./build.sh
+          chmod +x ./scripts/test.sh
+          chmod +x ./scripts/build.sh
 
       - name: Run test script
-        run: ./build.sh && ./test.sh
+        run: ./scripts/build.sh && ./scripts/test.sh
