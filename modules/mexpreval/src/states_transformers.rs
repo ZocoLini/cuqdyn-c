@@ -1,4 +1,4 @@
-use crate::config::CuqdynConfigRs;
+use crate::context::CuqdynConfigRs;
 use meval::{Context, Expr};
 use std::str::FromStr;
 
@@ -20,7 +20,7 @@ impl GenericStatesTransformer<'_> {
         {
             states_transformers
         } else {
-            &crate::config::StatesTransformer::default()
+            &crate::context::StatesTransformer::default()
         };
 
         for s in states_transformer.expr().iter() {

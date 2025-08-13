@@ -1,6 +1,8 @@
-use getset::Getters;
+use getset::{Getters};
 use serde::Deserialize;
-use std::{ops::Deref, os::raw::c_char};
+use std::{fs, ops::Deref, os::raw::c_char, path::Path};
+
+use crate::models::Model;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -295,18 +297,42 @@ impl<'de> Deserialize<'de> for StringVec {
     }
 }
 
-#[derive(Debug, Getters)]
-pub struct CuqdynConfig {
+#[derive(Getters)]
+pub struct CuqdynContext {
     #[get = "pub"]
     rs_config: CuqdynConfigRs,
     #[get = "pub"]
     c_config: CuqdynConfigC,
+    model: Box<dyn Model>,
+    states_transformer: Box<dyn crate::states_transformers::StatesTransformer>,
+
     _ode_exprs_vec: Vec<*const c_char>,
     _obs_exprs_vec: Vec<*const c_char>,
 }
 
-// TODO: The vectors are being drop at the end of the function
-impl From<CuqdynConfigRs> for CuqdynConfig {
+impl CuqdynContext {
+    pub fn new_from_file(filename: impl AsRef<Path>) -> Self {
+        let config_xml = fs::read_to_string(filename).expect("Unable to read the config file");
+        let cuqdyn_config: CuqdynConfigRs =
+            serde_xml_rs::from_str(&config_xml).expect("Unable to parse config xml");
+
+        Self::new_from_config(cuqdyn_config)
+    }
+
+    pub fn new_from_config(rs_config: CuqdynConfigRs) -> Self {
+        rs_config.into()
+    }
+
+    pub fn eval_f_exprs(&mut self, t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]) {
+        self.model.eval(t, y, ydot, p)
+    }
+
+    pub fn eval_states_transformer_expr(&mut self, input_state: &[f64], output_state: &mut [f64]) {
+        self.states_transformer.transform(input_state, output_state);
+    }
+}
+
+impl From<CuqdynConfigRs> for CuqdynContext {
     fn from(value: CuqdynConfigRs) -> Self {
         let tolerances = TolerancesC {
             rtol: value.tolerances.rtol,
@@ -361,9 +387,24 @@ impl From<CuqdynConfigRs> for CuqdynConfig {
             states_transformer: observables,
         };
 
+        let model_name = &value.ode_expr().expr().first().map_or("", |v| v);
+        let transformer_name = if let Some(states_transformer) = value.states_transformer().as_ref()
+        {
+            states_transformer
+        } else {
+            &StatesTransformer::default()
+        };
+        let transformer = transformer_name.expr().deref().first().map_or("", |v| v);
+
+        let model = crate::models::build_model(model_name, &value);
+        let states_transformer =
+            crate::states_transformers::build_states_transformer(transformer, &value);
+
         Self {
             rs_config: value,
             c_config,
+            model,
+            states_transformer,
             _ode_exprs_vec: ode_exprs,
             _obs_exprs_vec: obs_exprs,
         }
@@ -446,8 +487,8 @@ mod tests {
     }
 
     #[test]
-    fn config_rs_struct_to_c_test() {
-        let config: CuqdynConfig = CuqdynConfigRs::nfkb_expr().into();
+    fn comparing_rs_struct_to_c_struct_test() {
+        let config: CuqdynContext = CuqdynConfigRs::nfkb_expr().into();
 
         let rs_config = config.rs_config();
         let c_config = config.c_config();

@@ -1,4 +1,4 @@
-use crate::config::CuqdynConfigRs;
+use crate::context::CuqdynConfigRs;
 use meval::{Context, Expr};
 use std::env;
 use std::str::FromStr;
