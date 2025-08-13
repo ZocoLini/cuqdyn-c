@@ -1,15 +1,15 @@
-use crate::{config::CuqdynConfigRs};
+use crate::config::CuqdynConfigRs;
 use meval::{Context, Expr};
 use std::str::FromStr;
 
 pub trait StatesTransformer {
-    fn transform(&self, input: &[f64], output: &mut [f64]);
+    fn transform(&mut self, input: &[f64], output: &mut [f64]);
 }
 
 struct GenericStatesTransformer<'a> {
     exprs: Vec<Expr>,
     ctx: Context<'a>,
-    y: Vec<*mut f64>,
+    y: Vec<&'a mut f64>,
 }
 
 impl GenericStatesTransformer<'_> {
@@ -37,10 +37,10 @@ impl GenericStatesTransformer<'_> {
             ctx.var(&var_key, 0.0);
         }
 
-        let mut y: Vec<*mut f64> = Vec::new();
+        let mut y: Vec<&mut f64> = Vec::new();
         for i in 0..*cuqdyn_conf.ode_expr().y_count() {
             let var_key = format!("y{}", i + 1);
-            y.push(ctx.get_var_ptr(&var_key).unwrap())
+            unsafe { y.push(ctx.get_var_ptr(&var_key).unwrap().as_mut().unwrap()) }
         }
 
         Self { exprs, ctx, y }
@@ -48,11 +48,9 @@ impl GenericStatesTransformer<'_> {
 }
 
 impl StatesTransformer for GenericStatesTransformer<'_> {
-    fn transform(&self, input: &[f64], output: &mut [f64]) {
-        unsafe {
-            for i in 0..self.y.len() {
-                *(self.y[i] as *mut f64) = input[i]
-            }
+    fn transform(&mut self, input: &[f64], output: &mut [f64]) {
+        for i in 0..self.y.len() {
+            *self.y[i] = input[i]
         }
 
         for (i, expr) in self.exprs.iter().enumerate() {
@@ -70,7 +68,7 @@ impl StatesTransformer for NFKBExampleStatesTransformer {
     /// y1 + y2 + y3
     /// y2
     /// y12
-    fn transform(&self, input: &[f64], output: &mut [f64]) {
+    fn transform(&mut self, input: &[f64], output: &mut [f64]) {
         output[0] = input[6]; // y7
         output[1] = input[9] + input[12]; // y10 + y13
         output[2] = input[8]; // y9

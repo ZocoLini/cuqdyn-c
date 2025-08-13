@@ -3,20 +3,24 @@ pub mod config;
 mod models;
 mod states_transformers;
 
-use crate::config::{CuqdynConfigRs, CuqdynConfigC, CuqdynConfig};
+use crate::config::{CuqdynConfig, CuqdynConfigC, CuqdynConfigRs};
 use crate::models::Model;
 use crate::states_transformers::StatesTransformer;
 use std::ffi::{c_char, CStr};
 use std::ops::Deref;
+use std::sync::{LazyLock, Mutex};
 use std::{fs, slice};
 
-static mut MODEL: Option<Box<dyn Model>> = None;
-static mut STATES_TRANSFORMER: Option<Box<dyn StatesTransformer>> = None;
-static mut CUQDYN_CONF: Option<CuqdynConfig> = None;
+static mut MODEL: LazyLock<Mutex<Option<Box<dyn Model>>>> = LazyLock::new(|| Mutex::new(None));
+static mut STATES_TRANSFORMER: LazyLock<Mutex<Option<Box<dyn StatesTransformer>>>> =
+    LazyLock::new(|| Mutex::new(None));
+static mut CUQDYN_CONF: LazyLock<Mutex<Option<CuqdynConfig>>> = LazyLock::new(|| Mutex::new(None));
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub unsafe extern "C" fn load_cuqdyn_conf_from_file(filename: *const c_char) -> *const CuqdynConfigC {
+pub unsafe extern "C" fn load_cuqdyn_conf_from_file(
+    filename: *const c_char,
+) -> *const CuqdynConfigC {
     let filename = CStr::from_ptr(filename)
         .to_str()
         .expect("config filename has no valid UTF-8 chars");
@@ -32,45 +36,56 @@ pub unsafe extern "C" fn load_cuqdyn_conf_from_file(filename: *const c_char) -> 
 
 pub unsafe fn set_cuqdyn_conf(rs_cuqdyn_config: CuqdynConfigRs) {
     let model_name = &rs_cuqdyn_config.ode_expr().expr()[0];
-    let transformer = if let Some(states_transformer) = rs_cuqdyn_config.states_transformer().as_ref()
-    {
-        states_transformer
-    } else {
-        &config::StatesTransformer::default()
-    };
+    let transformer =
+        if let Some(states_transformer) = rs_cuqdyn_config.states_transformer().as_ref() {
+            states_transformer
+        } else {
+            &config::StatesTransformer::default()
+        };
     let transformer = transformer.expr().deref().first().map_or("", |v| v);
 
-    MODEL = Some(models::build_model(model_name, &rs_cuqdyn_config));
-    STATES_TRANSFORMER = Some(states_transformers::build_states_transformer(
-        transformer,
-        &rs_cuqdyn_config,
-    ));
-    
-    let cuqdyn_config: CuqdynConfig = rs_cuqdyn_config.into();
-    
-    CUQDYN_CONF = Some(cuqdyn_config);
+    {
+        let mut lock = MODEL.lock().unwrap();
+        lock.replace(models::build_model(model_name, &rs_cuqdyn_config));
+    }
+
+    {
+        let mut lock = STATES_TRANSFORMER.lock().unwrap();
+        lock.replace(states_transformers::build_states_transformer(
+            transformer,
+            &rs_cuqdyn_config,
+        ));
+    }
+
+    {
+        let cuqdyn_config: CuqdynConfig = rs_cuqdyn_config.into();
+        let mut lock = CUQDYN_CONF.lock().unwrap();
+        lock.replace(cuqdyn_config);
+    }
 }
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn get_cuqdyn_conf() -> *const CuqdynConfigC {
-    CUQDYN_CONF
-        .as_ref()
-        .expect("The configurtion hasn't been initialized")
+    let lock = CUQDYN_CONF.lock().unwrap();
+    lock.as_ref()
+        .expect("Config hasn't been initialized")
         .c_config()
 }
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn eval_f_exprs(t: f64, y: *mut f64, ydot: *mut f64, params: *mut f64) {
-    let cuqdyn_conf = CUQDYN_CONF.as_ref().unwrap().rs_config();
+    let lock = CUQDYN_CONF.lock().unwrap();
+    let cuqdyn_conf = lock.as_ref().unwrap().rs_config();
 
     let y: &[f64] = slice::from_raw_parts(y, *cuqdyn_conf.ode_expr().y_count() as usize);
     let ydot: &mut [f64] =
         slice::from_raw_parts_mut(ydot, *cuqdyn_conf.ode_expr().y_count() as usize);
     let p: &[f64] = slice::from_raw_parts_mut(params, *cuqdyn_conf.ode_expr().p_count() as usize);
 
-    MODEL.as_ref().unwrap().eval(t, y, ydot, p)
+    let mut lock = MODEL.lock().unwrap();
+    lock.as_mut().unwrap().eval(t, y, ydot, p)
 }
 
 #[allow(clippy::missing_safety_doc)]
@@ -79,7 +94,8 @@ pub unsafe extern "C" fn eval_states_transformer_expr(
     input_state_vec: *mut f64,
     output_state_vec: *mut f64,
 ) {
-    let cuqdyn_conf = CUQDYN_CONF.as_ref().unwrap().rs_config();
+    let lock = CUQDYN_CONF.lock().unwrap();
+    let cuqdyn_conf = lock.as_ref().unwrap().rs_config();
 
     let input_state_slice =
         slice::from_raw_parts(input_state_vec, *cuqdyn_conf.ode_expr().y_count() as usize);
@@ -92,8 +108,8 @@ pub unsafe extern "C" fn eval_states_transformer_expr(
             .count() as usize,
     );
 
-    STATES_TRANSFORMER
-        .as_ref()
+    let mut lock = STATES_TRANSFORMER.lock().unwrap();
+    lock.as_mut()
         .unwrap()
         .transform(input_state_slice, output_state_slice);
 }
