@@ -1,6 +1,6 @@
-use getset::{Getters};
+use getset::Getters;
 use serde::Deserialize;
-use std::{fs, ops::Deref, os::raw::c_char, path::Path};
+use std::{ffi::CString, fs, ops::Deref, os::raw::c_char, path::Path};
 
 use crate::models::Model;
 
@@ -306,8 +306,10 @@ pub struct CuqdynContext {
     model: Box<dyn Model>,
     states_transformer: Box<dyn crate::states_transformers::StatesTransformer>,
 
-    _ode_exprs_vec: Vec<*const c_char>,
-    _obs_exprs_vec: Vec<*const c_char>,
+    _ode_exprs_vec: Vec<CString>,
+    _ode_exprs_pointers: Vec<*const c_char>,
+    _obs_exprs_vec: Vec<CString>,
+    _obs_exprs_pointers: Vec<*const c_char>,
 }
 
 impl CuqdynContext {
@@ -344,13 +346,18 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             .ode_expr
             .expr
             .iter()
-            .map(|a| a.as_ptr() as *const i8)
+            .map(|a| CString::new(a.as_bytes()).unwrap())
+            .collect::<Vec<CString>>();
+
+        let ode_exprs_c = ode_exprs
+            .iter()
+            .map(|s| s.as_ptr())
             .collect::<Vec<*const c_char>>();
 
         let ode_expr = OdeExprC {
             y_count: value.ode_expr.y_count as i32,
             p_count: value.ode_expr.p_count as i32,
-            exprs: ode_exprs.as_ptr(),
+            exprs: ode_exprs_c.as_ptr(),
         };
 
         let y0 = if let Some(y0) = value.y0.as_ref() {
@@ -369,15 +376,20 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             states_transformer
                 .expr
                 .iter()
-                .map(|a| a.as_ptr() as *const i8)
-                .collect::<Vec<*const c_char>>()
+                .map(|a| CString::new(a.as_bytes()).unwrap())
+                .collect::<Vec<CString>>()
         } else {
             vec![]
         };
 
+        let obs_exprs_c = obs_exprs
+            .iter()
+            .map(|s| s.as_ptr())
+            .collect::<Vec<*const c_char>>();
+
         let observables = StatesTransformerC {
             count: obs_exprs.len() as i32,
-            exprs: obs_exprs.as_ptr(),
+            exprs: obs_exprs_c.as_ptr(),
         };
 
         let c_config = CuqdynConfigC {
@@ -406,7 +418,9 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             model,
             states_transformer,
             _ode_exprs_vec: ode_exprs,
+            _ode_exprs_pointers: ode_exprs_c,
             _obs_exprs_vec: obs_exprs,
+            _obs_exprs_pointers: obs_exprs_c,
         }
     }
 }
@@ -488,75 +502,80 @@ mod tests {
 
     #[test]
     fn comparing_rs_struct_to_c_struct_test() {
-        let config: CuqdynContext = CuqdynConfigRs::nfkb_expr().into();
+        for _ in 0..1_000 {
+            let config: CuqdynContext = CuqdynConfigRs::nfkb_expr().into();
 
-        let rs_config = config.rs_config();
-        let c_config = config.c_config();
+            let rs_config = config.rs_config();
+            let c_config = config.c_config();
 
-        // ODE Expr
+            // ODE Expr
 
-        assert_eq!(c_config.ode_expr.y_count, rs_config.ode_expr.y_count);
-        assert_eq!(c_config.ode_expr.p_count, rs_config.ode_expr().p_count);
-        unsafe {
-            for (i, e) in
-                slice::from_raw_parts(c_config.ode_expr.exprs, c_config.ode_expr.y_count as usize)
-                    .iter()
-                    .map(|p| CStr::from_ptr(*p).to_str().unwrap().to_string())
-                    .enumerate()
-            {
-                assert_eq!(e, rs_config.ode_expr.expr[i])
-            }
-        }
-
-        // Tolerances
-
-        assert_eq!(
-            c_config.tolerances.atol_len,
-            rs_config.tolerances.atol.len() as i32
-        );
-        assert_eq!(c_config.tolerances.rtol, rs_config.tolerances.rtol);
-        unsafe {
-            for (i, tol) in slice::from_raw_parts(
-                c_config.tolerances.atol,
-                c_config.tolerances.atol_len as usize,
-            )
-            .iter()
-            .enumerate()
-            {
-                assert_eq!(*tol, rs_config.tolerances.atol[i]);
-            }
-        }
-
-        // Y0
-
-        if c_config.y0.len == 0 {
-            assert!(rs_config.y0().is_none())
-        } else {
-            unsafe {
-                for (i, y0) in slice::from_raw_parts(c_config.y0.array, c_config.y0.len as usize)
-                    .iter()
-                    .enumerate()
-                {
-                    assert_eq!(*y0, rs_config.y0.as_ref().unwrap()[i]);
-                }
-            }
-        }
-
-        // States transformer
-
-        if c_config.states_transformer.count == 0 {
-            assert!(rs_config.states_transformer().is_none())
-        } else {
+            assert_eq!(c_config.ode_expr.y_count, rs_config.ode_expr.y_count);
+            assert_eq!(c_config.ode_expr.p_count, rs_config.ode_expr().p_count);
             unsafe {
                 for (i, e) in slice::from_raw_parts(
-                    c_config.states_transformer.exprs,
-                    c_config.states_transformer.count as usize,
+                    c_config.ode_expr.exprs,
+                    c_config.ode_expr.y_count as usize,
                 )
                 .iter()
                 .map(|p| CStr::from_ptr(*p).to_str().unwrap().to_string())
                 .enumerate()
                 {
-                    assert_eq!(e, rs_config.states_transformer().as_ref().unwrap().expr[i])
+                    assert_eq!(e, rs_config.ode_expr.expr[i])
+                }
+            }
+
+            // Tolerances
+
+            assert_eq!(
+                c_config.tolerances.atol_len,
+                rs_config.tolerances.atol.len() as i32
+            );
+            assert_eq!(c_config.tolerances.rtol, rs_config.tolerances.rtol);
+            unsafe {
+                for (i, tol) in slice::from_raw_parts(
+                    c_config.tolerances.atol,
+                    c_config.tolerances.atol_len as usize,
+                )
+                .iter()
+                .enumerate()
+                {
+                    assert_eq!(*tol, rs_config.tolerances.atol[i]);
+                }
+            }
+
+            // Y0
+
+            if c_config.y0.len == 0 {
+                assert!(rs_config.y0().is_none())
+            } else {
+                unsafe {
+                    for (i, y0) in
+                        slice::from_raw_parts(c_config.y0.array, c_config.y0.len as usize)
+                            .iter()
+                            .enumerate()
+                    {
+                        assert_eq!(*y0, rs_config.y0.as_ref().unwrap()[i]);
+                    }
+                }
+            }
+
+            // States transformer
+
+            if c_config.states_transformer.count == 0 {
+                assert!(rs_config.states_transformer().is_none())
+            } else {
+                unsafe {
+                    for (i, e) in slice::from_raw_parts(
+                        c_config.states_transformer.exprs,
+                        c_config.states_transformer.count as usize,
+                    )
+                    .iter()
+                    .map(|p| CStr::from_ptr(*p).to_str().unwrap().to_string())
+                    .enumerate()
+                    {
+                        assert_eq!(e, rs_config.states_transformer().as_ref().unwrap().expr[i])
+                    }
                 }
             }
         }
