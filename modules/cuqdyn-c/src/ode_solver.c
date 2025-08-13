@@ -12,7 +12,7 @@ static int check_retval(void *, const char *, int);
 
 SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times)
 {
-    CuqdynConf *cuqdyn_conf = get_cuqdyn_conf();
+    CuqdynConf *cuqdyn_conf = get_cuqdyn_conf(get_cuqdyn_context());
     Tolerances tolerances = cuqdyn_conf->tolerances;
 
     int retval;

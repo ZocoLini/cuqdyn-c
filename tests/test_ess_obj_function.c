@@ -1,6 +1,7 @@
 #include "data_reader.h"
 #include "functions.h"
 #include "matlab.h"
+#include "config.h"
 #include "method_module/structure_paralleltestbed.h"
 
 #define CUQDYN_CONF "data/obj_function_cuqdyn_config.xml"
@@ -9,7 +10,7 @@
 
 int main()
 {
-    init_cuqdyn_conf_from_file(CUQDYN_CONF);
+    CuqDynContext context = init_cuqdyn_context_from_file(CUQDYN_CONF);
 
     N_Vector texp = NULL;
     SUNMatrix yexp = NULL;
@@ -24,8 +25,10 @@ int main()
 
     output_function *out = obj_func(x, exp_total);
 
-    printf("VAlue %lf", out->value);
+    printf("Value %lf", out->value);
 
     destroyexp(exp_total);
+    destroy_cuqdyn_context(context);
+
     return 0;
 }

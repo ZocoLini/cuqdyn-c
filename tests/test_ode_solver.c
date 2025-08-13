@@ -30,7 +30,7 @@ int main(void)
 
 void test_lotka_volterra()
 {
-    init_cuqdyn_conf_from_file("data/lotka_volterra_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file("data/lotka_volterra_cuqdyn_config.xml");
 
     N_Vector times = New_Serial(9);
     NV_Ith_S(times, 0) = 1.0;
@@ -71,14 +71,14 @@ void test_lotka_volterra()
     assert(fabs(SM_ELEMENT_D(result, 6, 1) - 53.79) < 0.01);
     assert(fabs(SM_ELEMENT_D(result, 6, 2) - 5.456) < 0.001);
 
-    destroy_cuqdyn_conf();
+    destroy_cuqdyn_context(context);
     SUNMatDestroy(result);
     N_VDestroy(parameters);
 }
 
 void test_alpha_pienene()
 {
-    init_cuqdyn_conf_from_file("data/alpha_pinene_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file("data/alpha_pinene_cuqdyn_config.xml");
 
     N_Vector times = New_Serial(9);
     NV_Ith_S(times, 0) = 0;
@@ -123,14 +123,14 @@ void test_alpha_pienene()
     assert(fabs(SM_ELEMENT_D(result, 6, 1) - 2.510e+01) < 2);
     assert(fabs(SM_ELEMENT_D(result, 6, 2) - 4.814e+01) < 2);
 
-    destroy_cuqdyn_conf();
+    destroy_cuqdyn_context(context);
     SUNMatDestroy(result);
     N_VDestroy(parameters);
 }
 
 void test_logistic_model()
 {
-    init_cuqdyn_conf_from_file("data/logistic_model_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file("data/logistic_model_cuqdyn_config.xml");
 
     N_Vector times = New_Serial(11);
     NV_Ith_S(times, 0) = 0;
@@ -169,7 +169,7 @@ void test_logistic_model()
     assert(fabs(SM_ELEMENT_D(result, 5, 1) - 9.428e+01) < 0.01);
     assert(fabs(SM_ELEMENT_D(result, 6, 1) - 9.782e+01) < 0.01);
 
-    destroy_cuqdyn_conf();
+    destroy_cuqdyn_context(context);
     SUNMatDestroy(result);
     N_VDestroy(parameters);
 }

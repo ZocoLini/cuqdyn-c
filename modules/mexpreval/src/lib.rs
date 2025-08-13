@@ -30,7 +30,7 @@ pub unsafe extern "C" fn destroy_cuqdyn_context(context: *mut c_void) {
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub unsafe extern "C" fn get_cuqdyn_config(
+pub unsafe extern "C" fn get_cuqdyn_conf(
     context: *mut c_void,
 ) -> *const CuqdynConfigC {
     if context.is_null() {

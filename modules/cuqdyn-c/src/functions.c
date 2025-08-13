@@ -34,7 +34,7 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
  */
 void *obj_func(double *x, void *data)
 {
-    CuqdynConf *conf = get_cuqdyn_conf();
+    CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
     experiment_total *exptotal = data;
     output_function *res = calloc(1, sizeof(output_function));
 

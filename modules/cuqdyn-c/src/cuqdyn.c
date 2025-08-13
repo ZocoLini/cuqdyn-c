@@ -62,7 +62,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     nproc = 1;
     rank = 0;
 #endif
-    CuqdynConf *config = get_cuqdyn_conf();
+    CuqdynConf *config = get_cuqdyn_conf(get_cuqdyn_context());
 
     N_Vector times = NULL;
     SUNMatrix observed_data = NULL;
@@ -92,7 +92,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     SUNMatrix resid_loo = NULL;
     MatrixArray media_matrix = create_matrix_array(m - 1);
     SUNMatrix predicted_params_matrix = NULL;
-    N_Vector initial_params = New_Serial(get_cuqdyn_conf()->ode_expr.p_count);
+    N_Vector initial_params = New_Serial(config->ode_expr.p_count);
 
     if (rank == 0)
     {

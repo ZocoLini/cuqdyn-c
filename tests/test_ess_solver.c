@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
 void lotka_volterra_ess(char *conf_file)
 {
-    init_cuqdyn_conf_from_file("data/lotka_volterra_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file("data/lotka_volterra_cuqdyn_config.xml");
 
     sunrealtype expected_values[4] = {0.5, 0.02, 0.5, 0.02};
 
@@ -76,12 +76,12 @@ void lotka_volterra_ess(char *conf_file)
         // assert(fabs(result - expected) < 0.1);
     }
 
-    destroy_cuqdyn_conf();
+    destroy_cuqdyn_context(context);
 }
 
 void alpha_pinene_ess(char *conf_file)
 {
-    init_cuqdyn_conf_from_file("data/alpha_pinene_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file("data/alpha_pinene_cuqdyn_config.xml");
 
     sunrealtype expected_values[5] = {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5};
 
@@ -103,12 +103,12 @@ void alpha_pinene_ess(char *conf_file)
         // assert(fabs(result - expected) < 0.1);
     }
 
-    destroy_cuqdyn_conf();
+    destroy_cuqdyn_context(context);
 }
 
 void logistic_model_ess(char *conf_file)
 {
-    init_cuqdyn_conf_from_file("data/logistic_model_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file("data/logistic_model_cuqdyn_config.xml");
 
     sunrealtype expected_values[2] = {0.1, 100};
 
@@ -130,5 +130,5 @@ void logistic_model_ess(char *conf_file)
         // assert(fabs(result - expected) < 0.1);
     }
 
-    destroy_cuqdyn_conf();
+    destroy_cuqdyn_context(context);
 }

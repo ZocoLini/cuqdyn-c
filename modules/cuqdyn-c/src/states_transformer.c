@@ -11,7 +11,7 @@ extern void eval_states_transformer_expr(sunrealtype *input, sunrealtype *output
 
 SUNMatrix transform_states(SUNMatrix states)
 {
-    CuqdynConf *conf = get_cuqdyn_conf();
+    CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
 
     if (conf->states_transformer.count == 0)
     {
