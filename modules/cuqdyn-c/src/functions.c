@@ -8,7 +8,7 @@
 #include "cuqdyn.h"
 #include "states_transformer.h"
 
-extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params);
+extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params, CuqDynContext context);
 
 int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -17,7 +17,7 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     sunrealtype *ydot_pointer = NV_DATA_S(ydot);
     sunrealtype *y_pointer = NV_DATA_S(y);
 
-    eval_f_exprs(t, y_pointer, ydot_pointer, params);
+    eval_f_exprs(t, y_pointer, ydot_pointer, params, get_cuqdyn_context());
 
     return 0;
 }

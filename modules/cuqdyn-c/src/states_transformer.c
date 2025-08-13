@@ -7,7 +7,7 @@
 #include "config.h"
 #include "matlab.h"
 
-extern void eval_states_transformer_expr(sunrealtype *input, sunrealtype *output);
+extern void eval_states_transformer_expr(sunrealtype *input, sunrealtype *output, CuqDynContext context);
 
 SUNMatrix transform_states(SUNMatrix states)
 {
@@ -28,7 +28,7 @@ SUNMatrix transform_states(SUNMatrix states)
         N_Vector input = copy_matrix_row(states, i, 1, cols);
         sunrealtype *output = malloc(conf->states_transformer.count * sizeof(sunrealtype));
 
-        eval_states_transformer_expr(NV_DATA_S(input), output);
+        eval_states_transformer_expr(NV_DATA_S(input), output, get_cuqdyn_context());
 
         SM_ELEMENT_D(transformed_result, i, 0) = SM_ELEMENT_D(states, i, 0);
         for (int j = 0; j < conf->states_transformer.count; ++j)
