@@ -36,7 +36,7 @@ typedef struct
     StatesTransformer states_transformer;
 } CuqdynConf;
 
-extern CuqdynConf *set_cuqdyn_conf(const char *filename);
+extern CuqdynConf *load_cuqdyn_conf_from_file(const char *filename);
 extern CuqdynConf *get_cuqdyn_conf();
 
 #endif //CONFIG_H

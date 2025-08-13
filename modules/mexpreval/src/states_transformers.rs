@@ -1,4 +1,4 @@
-use crate::{config::CuqdynConfig};
+use crate::{config::CuqdynConfigRs};
 use meval::{Context, Expr};
 use std::str::FromStr;
 
@@ -13,7 +13,7 @@ struct GenericStatesTransformer<'a> {
 }
 
 impl GenericStatesTransformer<'_> {
-    fn new(cuqdyn_conf: &CuqdynConfig) -> Self {
+    fn new(cuqdyn_conf: &CuqdynConfigRs) -> Self {
         let mut exprs: Vec<Expr> = Vec::new();
 
         let states_transformer = if let Some(states_transformers) = cuqdyn_conf.states_transformer()
@@ -82,7 +82,7 @@ impl StatesTransformer for NFKBExampleStatesTransformer {
 
 pub fn build_states_transformer(
     transformer: &str,
-    cuqdyn_conf: &CuqdynConfig,
+    cuqdyn_conf: &CuqdynConfigRs,
 ) -> Box<dyn StatesTransformer> {
     match transformer {
         "nfkb-example" => Box::new(NFKBExampleStatesTransformer),

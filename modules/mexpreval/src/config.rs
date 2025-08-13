@@ -41,70 +41,9 @@ pub struct CuqdynConfigC {
     states_transformer: StatesTransformerC,
 }
 
-// TODO: The vectors are being drop at the end of the function
-impl From<CuqdynConfig> for CuqdynConfigC {
-    fn from(value: CuqdynConfig) -> Self {
-        let tolerances = TolerancesC {
-            rtol: value.tolerances.rtol,
-            atol_len: value.tolerances.atol.len() as i32,
-            atol: value.tolerances.atol.as_ptr(),
-        };
-
-        let ode_exprs = value
-            .ode_expr
-            .expr
-            .iter()
-            .map(|a| a.as_ptr() as *const i8)
-            .collect::<Vec<*const c_char>>();
-
-        let ode_expr = OdeExprC {
-            y_count: value.ode_expr.y_count as i32,
-            p_count: value.ode_expr.p_count as i32,
-            exprs: ode_exprs.as_ptr(),
-        };
-
-        let y0 = if let Some(y0) = value.y0 {
-            Y0C {
-                len: y0.len() as i32,
-                array: y0.as_ptr(),
-            }
-        } else {
-            Y0C {
-                len: 0,
-                array: std::ptr::null(),
-            }
-        };
-
-        let observables = if let Some(states_transformer) = value.states_transformer {
-            let obs_exprs = states_transformer
-                .expr
-                .iter()
-                .map(|a| a.as_ptr() as *const i8)
-                .collect::<Vec<*const c_char>>();
-
-            StatesTransformerC {
-                count: states_transformer.count,
-                exprs: obs_exprs.as_ptr(),
-            }
-        } else {
-            StatesTransformerC {
-                count: 0,
-                exprs: std::ptr::null(),
-            }
-        };
-
-        Self {
-            tolerances,
-            ode_expr,
-            y0,
-            states_transformer: observables,
-        }
-    }
-}
-
 #[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
 #[serde(rename = "cuqdyn-config")]
-pub struct CuqdynConfig {
+pub struct CuqdynConfigRs {
     #[get = "pub"]
     tolerances: Tolerances,
     #[get = "pub"]
@@ -150,7 +89,7 @@ pub struct StatesTransformer {
     expr: StringVec,
 }
 
-impl CuqdynConfig {
+impl CuqdynConfigRs {
     pub fn lotka_volterra() -> Self {
         Self {
             tolerances: Tolerances {
@@ -356,6 +295,81 @@ impl<'de> Deserialize<'de> for StringVec {
     }
 }
 
+#[derive(Debug, Getters)]
+pub struct CuqdynConfig {
+    #[get = "pub"]
+    rs_config: CuqdynConfigRs,
+    #[get = "pub"]
+    c_config: CuqdynConfigC,
+    _ode_exprs_vec: Vec<*const c_char>,
+    _obs_exprs_vec: Vec<*const c_char>,
+}
+
+// TODO: The vectors are being drop at the end of the function
+impl From<CuqdynConfigRs> for CuqdynConfig {
+    fn from(value: CuqdynConfigRs) -> Self {
+        let tolerances = TolerancesC {
+            rtol: value.tolerances.rtol,
+            atol_len: value.tolerances.atol.len() as i32,
+            atol: value.tolerances.atol.as_ptr(),
+        };
+
+        let ode_exprs = value
+            .ode_expr
+            .expr
+            .iter()
+            .map(|a| a.as_ptr() as *const i8)
+            .collect::<Vec<*const c_char>>();
+
+        let ode_expr = OdeExprC {
+            y_count: value.ode_expr.y_count as i32,
+            p_count: value.ode_expr.p_count as i32,
+            exprs: ode_exprs.as_ptr(),
+        };
+
+        let y0 = if let Some(y0) = value.y0.as_ref() {
+            Y0C {
+                len: y0.len() as i32,
+                array: y0.as_ptr(),
+            }
+        } else {
+            Y0C {
+                len: 0,
+                array: std::ptr::null(),
+            }
+        };
+
+        let obs_exprs = if let Some(states_transformer) = value.states_transformer.as_ref() {
+            states_transformer
+                .expr
+                .iter()
+                .map(|a| a.as_ptr() as *const i8)
+                .collect::<Vec<*const c_char>>()
+        } else {
+            vec![]
+        };
+
+        let observables = StatesTransformerC {
+            count: obs_exprs.len() as i32,
+            exprs: obs_exprs.as_ptr(),
+        };
+
+        let c_config = CuqdynConfigC {
+            tolerances,
+            ode_expr,
+            y0,
+            states_transformer: observables,
+        };
+
+        Self {
+            rs_config: value,
+            c_config,
+            _ode_exprs_vec: ode_exprs,
+            _obs_exprs_vec: obs_exprs,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::{ffi::CStr, slice};
@@ -377,8 +391,8 @@ mod tests {
 </cuqdyn-config>
         "#;
 
-        let xml_config: CuqdynConfig = serde_xml_rs::from_str(xml).unwrap();
-        let expected_config = CuqdynConfig::alpha_pinene();
+        let xml_config: CuqdynConfigRs = serde_xml_rs::from_str(xml).unwrap();
+        let expected_config = CuqdynConfigRs::alpha_pinene();
 
         assert_eq!(xml_config, expected_config);
     }
@@ -398,8 +412,8 @@ mod tests {
 </cuqdyn-config>
         "#;
 
-        let xml_config: CuqdynConfig = serde_xml_rs::from_str(xml).unwrap();
-        let expected_config = CuqdynConfig::logistic_growth_expr();
+        let xml_config: CuqdynConfigRs = serde_xml_rs::from_str(xml).unwrap();
+        let expected_config = CuqdynConfigRs::logistic_growth_expr();
 
         assert_eq!(xml_config, expected_config);
     }
@@ -425,20 +439,23 @@ mod tests {
 </cuqdyn-config>
         "#;
 
-        let xml_config: CuqdynConfig = serde_xml_rs::from_str(xml).unwrap();
-        let expected_config = CuqdynConfig::nfkb();
+        let xml_config: CuqdynConfigRs = serde_xml_rs::from_str(xml).unwrap();
+        let expected_config = CuqdynConfigRs::nfkb();
 
         assert_eq!(xml_config, expected_config);
     }
 
     #[test]
     fn config_rs_struct_to_c_test() {
-        let c_config: CuqdynConfigC = CuqdynConfig::nfkb_expr().into();
-        let rs_config: CuqdynConfig = CuqdynConfig::nfkb_expr();
+        let config: CuqdynConfig = CuqdynConfigRs::nfkb_expr().into();
+
+        let rs_config = config.rs_config();
+        let c_config = config.c_config();
+
+        // ODE Expr
 
         assert_eq!(c_config.ode_expr.y_count, rs_config.ode_expr.y_count);
         assert_eq!(c_config.ode_expr.p_count, rs_config.ode_expr().p_count);
-
         unsafe {
             for (i, e) in
                 slice::from_raw_parts(c_config.ode_expr.exprs, c_config.ode_expr.y_count as usize)
@@ -449,9 +466,58 @@ mod tests {
                 assert_eq!(e, rs_config.ode_expr.expr[i])
             }
         }
-        
-        assert_eq!(c_config.tolerances.atol_len, rs_config.tolerances.atol.len() as i32);
+
+        // Tolerances
+
+        assert_eq!(
+            c_config.tolerances.atol_len,
+            rs_config.tolerances.atol.len() as i32
+        );
         assert_eq!(c_config.tolerances.rtol, rs_config.tolerances.rtol);
-        
+        unsafe {
+            for (i, tol) in slice::from_raw_parts(
+                c_config.tolerances.atol,
+                c_config.tolerances.atol_len as usize,
+            )
+            .iter()
+            .enumerate()
+            {
+                assert_eq!(*tol, rs_config.tolerances.atol[i]);
+            }
+        }
+
+        // Y0
+
+        if c_config.y0.len == 0 {
+            assert!(rs_config.y0().is_none())
+        } else {
+            unsafe {
+                for (i, y0) in slice::from_raw_parts(c_config.y0.array, c_config.y0.len as usize)
+                    .iter()
+                    .enumerate()
+                {
+                    assert_eq!(*y0, rs_config.y0.as_ref().unwrap()[i]);
+                }
+            }
+        }
+
+        // States transformer
+
+        if c_config.states_transformer.count == 0 {
+            assert!(rs_config.states_transformer().is_none())
+        } else {
+            unsafe {
+                for (i, e) in slice::from_raw_parts(
+                    c_config.states_transformer.exprs,
+                    c_config.states_transformer.count as usize,
+                )
+                .iter()
+                .map(|p| CStr::from_ptr(*p).to_str().unwrap().to_string())
+                .enumerate()
+                {
+                    assert_eq!(e, rs_config.states_transformer().as_ref().unwrap().expr[i])
+                }
+            }
+        }
     }
 }

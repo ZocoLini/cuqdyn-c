@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use mexpreval::config::CuqdynConfig;
-use mexpreval::{eval_f_exprs, mexpreval_init};
+use mexpreval::config::CuqdynConfigRs;
+use mexpreval::{eval_f_exprs, set_cuqdyn_conf};
 
 fn lotka_volterra_bench_eval(c: &mut Criterion) {
     let num_exprs = 2;
@@ -9,7 +9,7 @@ fn lotka_volterra_bench_eval(c: &mut Criterion) {
     let mut ydot = vec![0.0; num_exprs];
     let mut params = vec![0.1, 0.2, 0.3, 0.4];
 
-    unsafe { mexpreval_init(CuqdynConfig::lotka_volterra_expr().into()); }
+    unsafe { set_cuqdyn_conf(CuqdynConfigRs::lotka_volterra_expr().into()); }
     
     c.bench_function("lotka_volterra", |b| {
         b.iter(|| unsafe {
@@ -31,7 +31,7 @@ fn lotka_volterra_predefined_bench_eval(c: &mut Criterion) {
     let mut ydot = vec![0.0; num_exprs];
     let mut params = vec![0.1, 0.2, 0.3, 0.4];
 
-    unsafe { mexpreval_init(CuqdynConfig::lotka_volterra().into()); }
+    unsafe { set_cuqdyn_conf(CuqdynConfigRs::lotka_volterra().into()); }
 
     c.bench_function("lotka_volterra_predefined", |b| {
         b.iter(|| unsafe {
@@ -52,7 +52,7 @@ fn logistic_model_bench_eval(c: &mut Criterion) {
     let mut ydot = vec![0.0; num_exprs];
     let mut params = vec![0.1, 100.0];
 
-    unsafe { mexpreval_init(CuqdynConfig::logistic_growth_expr().into()); }
+    unsafe { set_cuqdyn_conf(CuqdynConfigRs::logistic_growth_expr().into()); }
     
     c.bench_function("logistic_model", |b| {
         b.iter(|| unsafe {
@@ -73,7 +73,7 @@ fn alpha_pinene_bench_eval(c: &mut Criterion) {
     let mut ydot = vec![0.0; num_exprs];
     let mut params = vec![0.1, 0.2, 0.2, 0.2, 0.2];
 
-    unsafe { mexpreval_init(CuqdynConfig::alpha_pinene_expr().into()); }
+    unsafe { set_cuqdyn_conf(CuqdynConfigRs::alpha_pinene_expr().into()); }
 
     c.bench_function("alpha_pinene", |b| {
         b.iter(|| unsafe {

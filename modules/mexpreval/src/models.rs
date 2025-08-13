@@ -1,4 +1,4 @@
-use crate::config::CuqdynConfig;
+use crate::config::CuqdynConfigRs;
 use meval::{Context, Expr};
 use std::str::FromStr;
 use std::env;
@@ -15,7 +15,7 @@ struct GenericModel<'a> {
 }
 
 impl GenericModel<'_> {
-    fn new(cuqdyn_conf: &CuqdynConfig) -> Self {
+    fn new(cuqdyn_conf: &CuqdynConfigRs) -> Self {
         let mut exprs: Vec<Expr> = Vec::new();
 
         for s in cuqdyn_conf.ode_expr().expr().iter() {
@@ -165,7 +165,7 @@ impl Model for Nfkb {
     }
 }
 
-pub fn build_model(model: &str, cuqdyn_conf: &CuqdynConfig) -> Box<dyn Model> {
+pub fn build_model(model: &str, cuqdyn_conf: &CuqdynConfigRs) -> Box<dyn Model> {
     match model {
         "nfkb" => Box::new(Nfkb),
         "lotka-volterra" => Box::new(LotkaVolterra),

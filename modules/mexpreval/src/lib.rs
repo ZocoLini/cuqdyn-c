@@ -3,7 +3,7 @@ pub mod config;
 mod models;
 mod states_transformers;
 
-use crate::config::{CuqdynConfig, CuqdynConfigC};
+use crate::config::{CuqdynConfigRs, CuqdynConfigC, CuqdynConfig};
 use crate::models::Model;
 use crate::states_transformers::StatesTransformer;
 use std::ffi::{c_char, CStr};
@@ -12,27 +12,27 @@ use std::{fs, slice};
 
 static mut MODEL: Option<Box<dyn Model>> = None;
 static mut STATES_TRANSFORMER: Option<Box<dyn StatesTransformer>> = None;
-static mut CUQDYN_CONF: Option<(CuqdynConfig, CuqdynConfigC)> = None;
+static mut CUQDYN_CONF: Option<CuqdynConfig> = None;
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub unsafe extern "C" fn set_cuqdyn_conf(filename: *const c_char) -> *const CuqdynConfigC {
+pub unsafe extern "C" fn load_cuqdyn_conf_from_file(filename: *const c_char) -> *const CuqdynConfigC {
     let filename = CStr::from_ptr(filename)
         .to_str()
         .expect("config filename has no valid UTF-8 chars");
 
     let config_xml = fs::read_to_string(filename).expect("Unable to read the config file");
-    let cuqdyn_config: CuqdynConfig =
+    let cuqdyn_config: CuqdynConfigRs =
         serde_xml_rs::from_str(&config_xml).expect("Unable to parse config xml");
 
-    mexpreval_init(cuqdyn_config);
+    set_cuqdyn_conf(cuqdyn_config);
 
     get_cuqdyn_conf()
 }
 
-pub unsafe fn mexpreval_init(cuqdyn_config: CuqdynConfig) {
-    let model_name = &cuqdyn_config.ode_expr().expr()[0];
-    let transformer = if let Some(states_transformer) = cuqdyn_config.states_transformer().as_ref()
+pub unsafe fn set_cuqdyn_conf(rs_cuqdyn_config: CuqdynConfigRs) {
+    let model_name = &rs_cuqdyn_config.ode_expr().expr()[0];
+    let transformer = if let Some(states_transformer) = rs_cuqdyn_config.states_transformer().as_ref()
     {
         states_transformer
     } else {
@@ -40,27 +40,30 @@ pub unsafe fn mexpreval_init(cuqdyn_config: CuqdynConfig) {
     };
     let transformer = transformer.expr().deref().first().map_or("", |v| v);
 
-    MODEL = Some(models::build_model(model_name, &cuqdyn_config));
+    MODEL = Some(models::build_model(model_name, &rs_cuqdyn_config));
     STATES_TRANSFORMER = Some(states_transformers::build_states_transformer(
         transformer,
-        &cuqdyn_config,
+        &rs_cuqdyn_config,
     ));
-    CUQDYN_CONF = Some((cuqdyn_config.clone(), cuqdyn_config.into()));
+    
+    let cuqdyn_config: CuqdynConfig = rs_cuqdyn_config.into();
+    
+    CUQDYN_CONF = Some(cuqdyn_config);
 }
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn get_cuqdyn_conf() -> *const CuqdynConfigC {
-    &CUQDYN_CONF
+    CUQDYN_CONF
         .as_ref()
         .expect("The configurtion hasn't been initialized")
-        .1
+        .c_config()
 }
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn eval_f_exprs(t: f64, y: *mut f64, ydot: *mut f64, params: *mut f64) {
-    let cuqdyn_conf = &CUQDYN_CONF.as_ref().unwrap().0;
+    let cuqdyn_conf = CUQDYN_CONF.as_ref().unwrap().rs_config();
 
     let y: &[f64] = slice::from_raw_parts(y, *cuqdyn_conf.ode_expr().y_count() as usize);
     let ydot: &mut [f64] =
@@ -76,7 +79,7 @@ pub unsafe extern "C" fn eval_states_transformer_expr(
     input_state_vec: *mut f64,
     output_state_vec: *mut f64,
 ) {
-    let cuqdyn_conf = &CUQDYN_CONF.as_ref().unwrap().0;
+    let cuqdyn_conf = CUQDYN_CONF.as_ref().unwrap().rs_config();
 
     let input_state_slice =
         slice::from_raw_parts(input_state_vec, *cuqdyn_conf.ode_expr().y_count() as usize);
@@ -97,8 +100,8 @@ pub unsafe extern "C" fn eval_states_transformer_expr(
 
 #[cfg(test)]
 mod test {
-    use crate::config::CuqdynConfig;
-    use crate::{eval_f_exprs, mexpreval_init};
+    use crate::config::CuqdynConfigRs;
+    use crate::{eval_f_exprs, set_cuqdyn_conf};
 
     #[test]
     fn lotka_volterra_test() {
@@ -109,7 +112,7 @@ mod test {
         let mut params = vec![1.0, 2.0, 3.0, 4.0];
 
         unsafe {
-            mexpreval_init(CuqdynConfig::lotka_volterra());
+            set_cuqdyn_conf(CuqdynConfigRs::lotka_volterra());
         }
 
         for _ in 0..10_000 {
@@ -129,7 +132,7 @@ mod test {
         let mut params = vec![1.0, 100.0];
 
         unsafe {
-            mexpreval_init(CuqdynConfig::logistic_growth_expr());
+            set_cuqdyn_conf(CuqdynConfigRs::logistic_growth_expr());
         }
 
         unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
@@ -145,7 +148,7 @@ mod test {
         let mut params = vec![0.484077, 0.000000]; // p2 is zero to cause division by zero
 
         unsafe {
-            mexpreval_init(CuqdynConfig::logistic_growth_expr());
+            set_cuqdyn_conf(CuqdynConfigRs::logistic_growth_expr());
         }
 
         unsafe { eval_f_exprs(0.0, y.as_mut_ptr(), ydot.as_mut_ptr(), params.as_mut_ptr()) }
