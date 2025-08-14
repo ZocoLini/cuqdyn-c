@@ -18,7 +18,7 @@ int main()
         bench_transform_states
     };
 
-    BenchOptions *options = create_bench_options("", funcs, sizeof(funcs) / sizeof(funcs[0]));
+    BenchOptions *options = create_bench_options("Transform States", funcs, sizeof(funcs) / sizeof(funcs[0]));
 
     run_benchmark(options);
 
@@ -27,10 +27,10 @@ int main()
 
 void bench_transform_states()
 {
-    #define STATES_ROWS 24
+    #define STATES_ROWS 28
     #define STATES_COLS 16
 
-    sunrealtype states_values[STATES_ROWS][STATES_COLS] = {
+    sunrealtype states_values[STATES_COLS][STATES_ROWS] = {
         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -59,9 +59,11 @@ void bench_transform_states()
 
     SUNMatrix states = NewDenseMatrix(STATES_ROWS, STATES_COLS);
 
-    for (int i = 0; i < STATES_ROWS; ++i) {
-        for (int j = 0; j < STATES_COLS; ++j) {
-            SM_ELEMENT_D(states, i, j) = states_values[i][j];
+    for (int i = 0; i < STATES_ROWS; ++i) 
+    {
+        for (int j = 0; j < STATES_COLS; ++j) 
+        {
+            SM_ELEMENT_D(states, i, j) = states_values[j][i];      
         }
     }
 
