@@ -1,14 +1,17 @@
 #include "nanobench.h"
+#include "bench_options.h"
 
-extern "C" void run_benchmark(void (*c_function)(void))
+extern "C" void run_benchmark(BenchOptions *options)
 {
     ankerl::nanobench::Bench b;
 
-    b.title("Random Number Generators")
-            .warmup(100)
-            .epochs(50);
+    b.title(options->name)
+            .warmup(options->warmup)
+            .epochs(options->epochs)
+            .relative(options->num_functions > 1);
 
-    b.performanceCounters(true);
-
-    b.run([&] { c_function(); });
+    for (int i = 0; i < options->num_functions; ++i)
+    {
+        b.run([&] { ((void (*)(void)) options->functions[i])(); });
+    }
 }

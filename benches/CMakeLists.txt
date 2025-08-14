@@ -8,8 +8,10 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(nanobench)
 
+add_library(bench_options bench_options.c)
+
 add_library(bench_wrapper bench_wrapper.cpp)
-TARGET_LINK_LIBRARIES(bench_wrapper PRIVATE nanobench)
+target_link_libraries(bench_wrapper PUBLIC bench_options PRIVATE nanobench)
 
 foreach(bench_name
     bench_transform_states
