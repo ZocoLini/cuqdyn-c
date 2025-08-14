@@ -21,7 +21,6 @@ The project is structured as follows:
 - `modules/`: Contains the different modules of the project.
     - `cli/`: CLI that enables the use of the cuqdyn-c library.
     - `cuqdyn-c/`: The main library that implements the functionality of the paper project.
-    - `dotmat-introspector/`: Console app to introspect the contents of a .mat file.
     - `sacess/`: [External proyect](https://bitbucket.org/DavidPenas/sacess-library) adapted to enable the
       use of eSS in C.
     - `mexpreval/`: Rust crate. Parses the model from the XML file to evaluate it.
@@ -112,12 +111,12 @@ After this, the file `output/cuqdyn-results.txt` contains the results of the
 algorithm but reading it as a plain text is not very useful.
 To fix this, you can run: (Needs python3 and matplotlib installed)
 
-Note: Be carefull when executing with `mpirun`, the number of precesses must be divisor
-of m - 1, where m is the number of rows in the input data matrix.
-
 ```bash
 python3 plot.py output/cuqdyn-results.txt
 ```
+
+Note: Be carefull when executing with `mpirun`, the number of precesses must be divisor
+of m - 1, where m is the number of rows in the input data matrix.
 
 This will save a graphic representation for each y(t) in different png files
 inside the directory where the results are (output folder in this example).
@@ -128,7 +127,7 @@ To get information about all the options the cli supports, you can run the follo
 ./build-{variant}/modules/cli/cli help
 ```
 
-Also, you can run
+You can also run
 
 ```bash
 ./build-{variant}/modules/cli/cli version
@@ -144,49 +143,83 @@ There are three types of input files that must be provided:
   This file contains the configuration of the eSS solver used in the sacess library.
   The specifications of this xml and how to build it are in
   this [link](https://bitbucket.org/DavidPenas/sacess-library/src/main/doc/manual/DOCUMENTATION_SACESS_SOFTWARE.pdf).
+
 - **cuqdyn config xml:**
   This file contains the configuration of the cuqdyn solver used in the cuqdyn-c library.
-  This file defines the rtol and atol used by the cvodes library inside the tolerances block
-  and the ode model inside the ode_expr block. In the following example we define the Lotka Volterra model.
-  There is an option to accelerate the process of evaluating the ODE by defining it inside the
-  mevalexpr module. We will talk about this later.
-  ```xml
-  <?xml version="1.0" encoding="UTF-8" ?>
 
-  <cuqdyn-config>
-      <tolerances>
-          <rtol>1e-8</rtol>
-          <atol>1e-9, 1e-10</atol>
-      </tolerances>
-      <ode_expr y_count="2" p_count="4">
-          y1 * (p1 - p2 * y2)
-          -y2 * (p3 - p4 * y1)
-      </ode_expr>
-  </cuqdyn-config>
-  ```
+  - The tolerances block defines the rtol and atol used by the cvodes library.
+  - The ode model is defined inside the ode_expr block.
+  - y0 is the initial conditions of the ODE (If no present, the first row of the data matrix will be used) (Optional).
+  - The states_transformer block defines the transformations applied to the different states in case of the observed data
+  being a combination of the different states.
+
+  There is an option to accelerate the process of evaluating the ODE by defining it and the states transformer inside the
+  mevalexpr module. We will talk about this later.
+
+    ```xml
+    <?xml version="1.0" encoding="UTF-8" ?>
+
+    <cuqdyn-config>
+        <tolerances>
+            <rtol>1e-8</rtol>
+            <atol>1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8</atol>
+        </tolerances>
+        <ode_expr y_count="15" p_count="29">
+            p20 - p21 * y1 - p17 * y1
+            p17 * y1 - p19 * y2 - p18 * y2 * y8 - p21 * y2 - p2 * y2 * y10 + p3 * y4 - p4 * y2 * y13 + p5 * y5
+            p19 * y2 + p18 * y2 * y8 - p21 * y3
+            2 * y2 * y10 - p3 * y4
+            4 * y2 * y13 - p5 * y5
+            p11 * y13 - p1 * y6 * y10 + p5 * y5 - p23 * y6
+            p23 * p22 * y6 - p1 * y11 * y7
+            p15 * y9 - p16 * y8
+            p13 + p12 * y7 - p14 * y9
+            -p2 * y2 * y10 - p1 * y10 * y6 + p9 * y12 - p10 * y10 - p25 * y10 + p26 * y11
+            -p1 * y11 * y7 + p25 * p22 * y10 - p26 * p22 * y11
+            p7 + p6 * y7 - p8 * y12
+            p1 * y10 * y6 - p11 * y13 - p4 * y2 * y13 + p24 * y14
+            p1 * y11 * y7 - p24 * p22 * y14
+            p28 + p27 * y7 - p29 * y15
+        </ode_expr>
+        <y0> <!-- Optional -->
+            0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
+        </y0>
+        <states_transformer count="6"> <!-- Optional -->
+            y7
+            y10 + y13
+            y9
+            y1 + y2 + y3
+            y2
+            y12
+        </states_transformer>
+    </cuqdyn-config>
+    ```
+
 - **Data file:**
   The data file containing a mtrix of observed data and the initial value
   needed to solve the ODE. The data file should be a txt file written with the following format:
-  ```
-  # The first row is gonna be used as the initial condition
-  31 3 # Matrix dimensions so the parsing is easier
-  0 10 5 # Column 1: time, Column 2: y1(t), Column 3: y2(t)
-  .
-  .
-  .
-  30 1e1 5e1
-  ```
+  
+    ```
+    # The first row is gonna be used as the initial condition if y0 is not present in the config file
+    31 3 # Matrix dimensions so the parsing is easier
+    0 10 5 # Column 1: time, Column 2: y1(t), Column 3: y2(t)
+    .
+    .
+    .
+    30 1e1 5e1
+    ```
 
 ## Defining a new model
 
 Using strings and evaluate them is slow compared to compiled instructions, so, to make this
- possible, we designed a way to define the models in Rust and compile them to machine code.
+possible, we designed a way to define the models in Rust and compile them to machine code.
 
 Let's dig into it with an example of the Lotka Volterra model:
 
 First of all, we need to write some Rust code. We will be using the following file
 `modules/mexpreval/src/models.rs`. Inside, we create a new unit struct and implement
 the Model trait like this:
+
 ```Rust
 #[derive(Default)]
 struct LotkaVolterra;
@@ -200,6 +233,7 @@ impl Model for LotkaVolterra {
 ```
 
 Once the model is defined, we should give it an identifier:
+
 ```Rust
 pub fn eval_model_fun(model: &str, ode_expr: &OdeExpr) -> Box<dyn Model> {
     match model {
@@ -213,18 +247,18 @@ pub fn eval_model_fun(model: &str, ode_expr: &OdeExpr) -> Box<dyn Model> {
 After you establish an identifier in the match at the bottom of the file, the model can be
 used indicating the identifier in the XML config file like this:
 
-  ```xml
+```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 
-  <cuqdyn-config>
-      <tolerances>
-          <rtol>1e-8</rtol>
-          <atol>1e-9, 1e-10</atol>
-      </tolerances>
-      <ode_expr y_count="2" p_count="4">
-          lotka-volterra
-      </ode_expr>
-  </cuqdyn-config>
-  ```
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-8</rtol>
+        <atol>1e-9, 1e-10</atol>
+    </tolerances>
+    <ode_expr y_count="2" p_count="4">
+        lotka-volterra
+    </ode_expr>
+</cuqdyn-config>
+```
 
 Note that y_count and p_count are still present.
