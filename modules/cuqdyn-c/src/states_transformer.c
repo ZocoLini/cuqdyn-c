@@ -2,7 +2,6 @@
 // Created by borja on 12/06/25.
 //
 #include <nvector/nvector_serial.h>
-#include <stdio.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
 #include "config.h"

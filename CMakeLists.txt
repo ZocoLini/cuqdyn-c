@@ -14,6 +14,8 @@ add_subdirectory(modules/sacess)
 add_subdirectory(modules/cuqdyn-c)
 add_subdirectory(modules/cli)
 
+add_subdirectory(benches)
+
 enable_testing()
 
 add_subdirectory(tests)
