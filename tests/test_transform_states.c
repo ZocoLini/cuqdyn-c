@@ -2,6 +2,7 @@
 #include <sunmatrix/sunmatrix_dense.h>
 #include "config.h"
 #include "cuqdyn.h"
+#include "states_transformer.h"
 
 #define CUQDYN_CONF "data/nfkb_cuqdyn_config.xml"
 
@@ -33,7 +34,6 @@ int main()
 
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 7; ++j) {
-            // TODO: This transformation works as expected but SM_ELEMENT_D thrown seg fault
             assert(expected_transformation_values[7 * i + j] == SM_ELEMENT_D(transformation, i, j));
         }
     }
