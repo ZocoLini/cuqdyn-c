@@ -1,17 +1,13 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <sundials/sundials_nvector.h>
-
 typedef struct
 {
-    sunrealtype rtol;
-    N_Vector atol;
+    double rtol;
+    int atol_len;
+    double *atol;
 
 } Tolerances;
-
-Tolerances create_tolerances(sunrealtype rtol, N_Vector atol);
-void destroy_tolerances(Tolerances);
 
 typedef struct
 {
@@ -20,19 +16,32 @@ typedef struct
     char** exprs;
 } OdeExpr;
 
-OdeExpr create_ode_expr(int y_count, int p_count, char** exprs);
-void destroy_ode_expr(OdeExpr ode_expr);
+typedef struct
+{
+    int len;
+    double* array;
+} Y0;
+
+typedef struct
+{
+    int count;
+    char** exprs;
+} StatesTransformer;
 
 typedef struct
 {
     Tolerances tolerances;
     OdeExpr ode_expr;
+    Y0 y0;
+    StatesTransformer states_transformer;
 } CuqdynConf;
 
-CuqdynConf *init_cuqdyn_conf_from_file(const char *filename);
-int parse_cuqdyn_conf(const char* filename, CuqdynConf* config);
-CuqdynConf *init_cuqdyn_conf(Tolerances tolerances, OdeExpr ode_expr);
-void destroy_cuqdyn_conf();
-CuqdynConf * get_cuqdyn_conf();
+typedef void* CuqDynContext;
+
+CuqDynContext init_cuqdyn_context_from_file(const char *filename);
+CuqDynContext get_cuqdyn_context();
+
+extern CuqdynConf *get_cuqdyn_conf(CuqDynContext context);
+extern void destroy_cuqdyn_context(CuqDynContext context);
 
 #endif //CONFIG_H

@@ -1,4 +1,4 @@
-#include <../include/functions.h>
+#include <functions.h>
 #include <method_module/structure_paralleltestbed.h>
 #include <nvector/nvector_serial.h>
 #include <string.h>
@@ -6,15 +6,9 @@
 
 #include "config.h"
 #include "cuqdyn.h"
+#include "states_transformer.h"
 
-extern void mexpreval_init(OdeExpr ode_expr);
-
-void mexpreval_init_wrapper(OdeExpr ode_expr)
-{
-    mexpreval_init(ode_expr);
-}
-
-extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params);
+extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params, CuqDynContext context);
 
 int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -23,7 +17,7 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     sunrealtype *ydot_pointer = NV_DATA_S(ydot);
     sunrealtype *y_pointer = NV_DATA_S(y);
 
-    eval_f_exprs(t, y_pointer, ydot_pointer, params);
+    eval_f_exprs(t, y_pointer, ydot_pointer, params, get_cuqdyn_context());
 
     return 0;
 }
@@ -38,9 +32,9 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
  * g=0;
  * return
  */
-void *ode_model_obj_func(double *x, void *data)
+void *obj_func(double *x, void *data)
 {
-    CuqdynConf *conf = get_cuqdyn_conf();
+    CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
     experiment_total *exptotal = data;
     output_function *res = calloc(1, sizeof(output_function));
 
@@ -53,12 +47,23 @@ void *ode_model_obj_func(double *x, void *data)
     const sunrealtype t0 = NV_Ith_S(texp, 0);
 
     SUNMatrix result = solve_ode(parameters, exptotal->initial_values, t0, texp);
+    result = transform_states(result);
 
-    // Objective function code:
-    const int rows = SM_ROWS_D(result);
-    const int cols = SM_COLUMNS_D(result);
-
+    const long rows = SM_ROWS_D(result);
+    const long cols = SM_COLUMNS_D(result);
     sunrealtype J = 0.0;
+
+    if (SM_ROWS_D(exptotal->yexp) != rows)
+    {
+        fprintf(stderr, "ERROR: The yexp rows don't match the ode result rows: %ld vs %ld\n", SM_ROWS_D(exptotal->yexp), rows);
+        exit(-1);
+    }
+
+    if (SM_COLUMNS_D(exptotal->yexp) != cols - 1)
+    {
+        fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols: %ld vs %ld\n", SM_COLUMNS_D(exptotal->yexp), cols - 1);
+        exit(-1);
+    }
 
     for (long i = 0; i < rows; ++i)
     {

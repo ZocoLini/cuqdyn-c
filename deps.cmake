@@ -1,6 +1,7 @@
 include(FetchContent)
 
-# Building GSL dependency
+### Building GSL dependency ###
+
 find_package(GSL 2.7)
 
 if (NOT GSL_FOUND)
@@ -18,7 +19,7 @@ else()
     set(GSL_LIBRARY "GSL::gsl")
 endif()
 
-# HDF5 dependency
+### Building HDF5 dependency ###
 
 set(HDF5_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(HDF5_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -49,9 +50,36 @@ set(HDF5_LIBRARIES "${HDF5_LIBRARY}")
 set(HDF5_FOUND TRUE)
 
 set(HAVE_HDF5 TRUE CACHE BOOL "Pretend we have HDF5" FORCE)
-# set(MATIO_MAT73 ON CACHE BOOL "Enable MAT73 support" FORCE)
 
-# Building v7.30 of CVODES
+### Building Matio dependency ###
+
+# REMOVED SUPPORT FOR .MAT FILES
+# set(MATIO_WITH_ZLIB ON CACHE BOOL "" FORCE)
+# set(MATIO_WITH_HDF5 ON CACHE BOOL "" FORCE)
+# set(MATIO_WITH_MAT73 ON CACHE BOOL "" FORCE)
+# set(MATIO_SHARED OFF CACHE BOOL "" FORCE)
+# set(MATIO_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+# 
+# include_directories(${hdf5_SOURCE_DIR}/src ${hdf5_BINARY_DIR})
+# link_libraries(hdf5)
+# 
+# FetchContent_Declare(
+#         matio
+#         GIT_REPOSITORY https://github.com/tbeu/matio.git
+#         GIT_TAG v1.5.28
+#         GIT_SHALLOW TRUE
+# )
+# 
+# FetchContent_Populate(matio)
+# 
+# execute_process(
+#         COMMAND sed -i "s|find_package(HDF5)|find_package(HDF5 CONFIG)|" ${matio_SOURCE_DIR}/cmake/thirdParties.cmake
+# )
+# 
+# add_subdirectory(${matio_SOURCE_DIR} ${matio_BINARY_DIR})
+
+### Building v7.30 of CVODES ###
+
 FetchContent_Declare(
         cvodes
         URL https://github.com/LLNL/sundials/releases/download/v7.3.0/cvodes-7.3.0.tar.gz
@@ -60,32 +88,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cvodes)
 
-# Building Matio dependency
-set(MATIO_WITH_ZLIB ON CACHE BOOL "" FORCE)
-set(MATIO_WITH_HDF5 ON CACHE BOOL "" FORCE)
-set(MATIO_WITH_MAT73 ON CACHE BOOL "" FORCE)
-set(MATIO_SHARED OFF CACHE BOOL "" FORCE)
-set(MATIO_BUILD_TESTING OFF CACHE BOOL "" FORCE)
-
-include_directories(${hdf5_SOURCE_DIR}/src ${hdf5_BINARY_DIR})
-link_libraries(hdf5)
-
-FetchContent_Declare(
-        matio
-        GIT_REPOSITORY https://github.com/tbeu/matio.git
-        GIT_TAG v1.5.28
-        GIT_SHALLOW TRUE
-)
-
-FetchContent_Populate(matio)
-
-execute_process(
-        COMMAND sed -i "s|find_package(HDF5)|find_package(HDF5 CONFIG)|" ${matio_SOURCE_DIR}/cmake/thirdParties.cmake
-)
-
-add_subdirectory(${matio_SOURCE_DIR} ${matio_BINARY_DIR})
-
-## mexpeval
+### mexpeval ###
 
 set(RUST_LIB_DIR "${PROJECT_SOURCE_DIR}/modules/mexpreval")
 set(RUST_TARGET_DIR "${RUST_LIB_DIR}/target/release")

@@ -94,7 +94,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 
 #endif
 
-    execute_Solver(exptotal, &result, ode_model_obj_func);
+    execute_Solver(exptotal, &result, obj_func);
 
     destroyexp(exptotal);
 

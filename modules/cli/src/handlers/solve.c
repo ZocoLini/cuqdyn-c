@@ -1,4 +1,4 @@
-#include <nvector//nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -10,7 +10,7 @@
 #include <string.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
-#include "../../../cuqdyn-c/include/functions.h"
+#include "functions.h"
 #include "cuqdyn.h"
 
 #if defined(MPI) || defined(MPI2)
@@ -79,7 +79,7 @@ int handle_solve(int argc, char *argv[])
         return 1;
     }
 
-    if (init_cuqdyn_conf_from_file(cuqdyn_config_file) == NULL)
+    if (init_cuqdyn_context_from_file(cuqdyn_config_file) == NULL)
     {
         fprintf(stderr, "ERROR: Failed to read cuqdyn config file %s\n", cuqdyn_config_file);
         return 1;

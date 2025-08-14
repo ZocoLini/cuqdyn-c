@@ -7,12 +7,14 @@ foreach(test_name
         test_get_matrix_cols_median
         test_data_reader
         test_ess_solver
-        test_parse_cuqdyn_conf
         test_ess_obj_function
         test_cuqdyn_algo
+        test_context_and_config
+        test_transform_states
 )
     add_executable(${test_name} ${test_name}.c)
     target_link_libraries(${test_name} cuqdyn-c)
+    target_compile_options(${test_name} PRIVATE -O0 -g -UNDEBUG)
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
 

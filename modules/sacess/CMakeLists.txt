@@ -83,6 +83,4 @@ target_link_libraries(sacess
 
         ${GSL_LIBRARY}
         hdf5
-
-        ${LIBRARIES}
 )

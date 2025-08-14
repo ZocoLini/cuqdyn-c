@@ -1,0 +1,8 @@
+services:
+    cuqdyn_c:
+        build: .
+        container_name: cuqdyn_c
+        tty: true
+        volumes:
+            - .:/home/ubuntu/workspace
+        working_dir: /home/ubuntu/workspace

@@ -8,7 +8,7 @@
 
 # $TMPDIR
 
-bash build.sh
+bash scripts/build.sh
 
 # === CONFIGURATION ===
 VARIANTS=("mpi" "mpi2" "serial")

@@ -13,7 +13,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY .)
 add_subdirectory(modules/sacess)
 add_subdirectory(modules/cuqdyn-c)
 add_subdirectory(modules/cli)
-add_subdirectory(modules/dotmat-introspector)
 
 enable_testing()
 

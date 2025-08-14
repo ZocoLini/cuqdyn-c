@@ -1,0 +1,89 @@
+use crate::context::CuqdynConfigRs;
+use meval::{Context, Expr};
+use std::str::FromStr;
+
+pub trait StatesTransformer {
+    fn transform(&mut self, input: &[f64], output: &mut [f64]);
+}
+
+struct GenericStatesTransformer<'a> {
+    exprs: Vec<Expr>,
+    ctx: Context<'a>,
+    y: Vec<&'a mut f64>,
+}
+
+impl GenericStatesTransformer<'_> {
+    fn new(cuqdyn_conf: &CuqdynConfigRs) -> Self {
+        let mut exprs: Vec<Expr> = Vec::new();
+
+        let states_transformer = if let Some(states_transformers) = cuqdyn_conf.states_transformer()
+        {
+            states_transformers
+        } else {
+            &crate::context::StatesTransformer::default()
+        };
+
+        for s in states_transformer.expr().iter() {
+            let expr = Expr::from_str(s)
+                .unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
+
+            exprs.push(expr);
+        }
+
+        let mut ctx = Context::new();
+
+        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
+            let var_key = format!("y{}", i + 1);
+            ctx.var(&var_key, 0.0);
+        }
+
+        let mut y: Vec<&mut f64> = Vec::new();
+        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
+            let var_key = format!("y{}", i + 1);
+            unsafe { y.push(ctx.get_var_ptr(&var_key).unwrap().as_mut().unwrap()) }
+        }
+
+        Self { exprs, ctx, y }
+    }
+}
+
+impl StatesTransformer for GenericStatesTransformer<'_> {
+    fn transform(&mut self, input: &[f64], output: &mut [f64]) {
+        for i in 0..self.y.len() {
+            *self.y[i] = input[i]
+        }
+
+        for (i, expr) in self.exprs.iter().enumerate() {
+            output[i] = expr.eval_with_context(&self.ctx).unwrap();
+        }
+    }
+}
+
+struct NFKBExampleStatesTransformer;
+
+impl StatesTransformer for NFKBExampleStatesTransformer {
+    /// y7
+    /// y10 + y13
+    /// y9
+    /// y1 + y2 + y3
+    /// y2
+    /// y12
+    fn transform(&mut self, input: &[f64], output: &mut [f64]) {
+        output[0] = input[6]; // y7
+        output[1] = input[9] + input[12]; // y10 + y13
+        output[2] = input[8]; // y9
+        output[3] = input[0] + input[1] + input[2]; // y1 + y2 + y3
+        output[4] = input[1]; // y2
+        output[5] = input[11]; // y12
+    }
+}
+
+pub fn build_states_transformer(
+    transformer: &str,
+    cuqdyn_conf: &CuqdynConfigRs,
+) -> Box<dyn StatesTransformer> {
+    match transformer {
+        "nfkb-example" => Box::new(NFKBExampleStatesTransformer),
+        _ => Box::new(GenericStatesTransformer::new(cuqdyn_conf)),
+    }
+}
