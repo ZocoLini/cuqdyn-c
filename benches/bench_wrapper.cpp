@@ -45,9 +45,9 @@ extern "C" void run_benchmark(BenchOptions *options)
         PAPI_cleanup_eventset(EventSet);
         PAPI_destroy_eventset(&EventSet);
 
-        std::cout << "#### Cache analysis for " << options->name << " ###\n"
-                  << "L1 cache misses: " << values[0] << ", L2 cache misses: " << values[1] << "\n"
-                  << "L1 cache hits: " << values[2] << ", L2 cache hits: " << values[3] << "\n";
+        // std::cout << "#### Cache analysis for " << options->name << " ###\n"
+        //          << "L1 cache misses: " << values[0] << ", L2 cache misses: " << values[1] << "\n"
+        //          << "L1 cache hits: " << values[2] << ", L2 cache hits: " << values[3] << "\n";
     }
 
     PAPI_shutdown();

@@ -10,4 +10,6 @@
 /// transformation expr is defined in the config XML.
 SUNMatrix transform_states(SUNMatrix states);
 
+SUNMatrix transform_states_2(SUNMatrix states);
+
 #endif //STATES_TRANSFORMER_H
