@@ -47,19 +47,10 @@ execute_variant() {
         )
       fi
 
-      # .venv/bin/python plot.py "$CLI_TEST_DIR/data/output/cuqdyn-results.txt"
+      .venv/bin/python plot.py "$CLI_TEST_DIR/data/output/cuqdyn-results.txt"
 }
 
-# if [ ! -d ".venv" ]; then
-#     if ! python3 -m venv .venv; then
-#         echo "Error creating python virtual environment. Install python3-venv."
-#         exit 1
-#     fi
-#     source .venv/bin/activate
-#     pip install --upgrade pip
-# fi
-# 
-# pip install matplotlib
+bash scripts/init_venv.sh
 
 variants=(
   "serial"

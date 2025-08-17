@@ -12,6 +12,7 @@ RUN apt-get update && \
     build-essential \
     cmake \
     gdb \
+    libpapi-dev papi-tools \
     gfortran && \
     rm -rf /var/lib/apt/lists/*
 

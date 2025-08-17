@@ -5,6 +5,8 @@ if [ ! -d ./build-serial/benches ]; then
     exit 1
 fi
 
+bash scripts/init_venv.sh
+
 ISOLATED_CPUS_LIST="0-11"
 
 (
