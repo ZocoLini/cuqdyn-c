@@ -65,7 +65,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     CuqdynConf *config = get_cuqdyn_conf(get_cuqdyn_context());
 
     N_Vector times = NULL;
-    SUNMatrix observed_data = NULL;
+    ObservedData observed_data = NULL;
 
     if (read_data_file(data_file, &times, &observed_data) != 0)
     {
@@ -164,15 +164,15 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                 execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params);
 
         // Saving the ode solution data obtained with the predicted params
-        SUNMatrix ode_solution = solve_ode(predicted_params, initial_condition, t0, times);
-        ode_solution = transform_states(ode_solution);
-        SUNMatrix predicted_data = copy_matrix_remove_columns(ode_solution, create_array((long[]) {1L}, 1));
-        SUNMatDestroy(ode_solution);
+        TransposedStates ode_solution = solve_ode(predicted_params, initial_condition, t0, times);
+        ObservablesTransposedStates obs_states = transform_states(ode_solution);
+        ObservablesTransposedStates predicted_data = copy_matrix_remove_rows(obs_states, create_array((long[]) {1L}, 1)); // Removing the time row
+        SUNMatDestroy(obs_states);
 
         for (int j = 0; j < n; ++j)
         {
             sunrealtype observed = SM_ELEMENT_D(observed_data, i, j);
-            sunrealtype predicted = SM_ELEMENT_D(predicted_data, i, j);
+            sunrealtype predicted = SM_ELEMENT_D(predicted_data, j, i);
 
             NV_Ith_S(residuals, j) = fabs(observed - predicted);
         }

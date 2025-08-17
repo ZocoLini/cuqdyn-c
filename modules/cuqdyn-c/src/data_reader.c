@@ -8,7 +8,7 @@
 
 #include "../include/cuqdyn.h"
 
-int read_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
+int read_data_file(const char *data_file, N_Vector *t, ObservedData *y)
 {
     const char *ext = strrchr(data_file, '.');
 
@@ -25,7 +25,7 @@ int read_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
     return 1;
 }
 
-int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y)
+int read_txt_data_file(const char *data_file, N_Vector *t, ObservedData *y)
 {
     const char *ext = strrchr(data_file, '.');
     if (ext && strcmp(ext, ".txt") != 0)

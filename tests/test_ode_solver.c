@@ -7,7 +7,6 @@
 #include <sunmatrix/sunmatrix_dense.h>
 #include <time.h>
 
-#include "../modules/cuqdyn-c/include/functions.h"
 #include "ode_solver.h"
 
 void test_lotka_volterra();
@@ -55,21 +54,21 @@ void test_lotka_volterra()
 
     const sunrealtype t0 = 0.0;
 
-    SUNMatrix result = solve_ode(parameters, initial_values, t0, times);
+    TransposedStates result = solve_ode(parameters, initial_values, t0, times);
 
     assert(result != NULL);
 
     const int rows = SM_ROWS_D(result);
     const int cols = SM_COLUMNS_D(result);
 
-    assert(cols == 3);
-    assert(rows == 9);
+    assert(cols == 9);
+    assert(rows == 3);
 
     assert(fabs(SM_ELEMENT_D(result, 0, 0) - 1.0) < 0.0001);
-    assert(fabs(SM_ELEMENT_D(result, 0, 1) - 15.10) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 0, 2) - 3.883) < 0.001);
-    assert(fabs(SM_ELEMENT_D(result, 6, 1) - 53.79) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 6, 2) - 5.456) < 0.001);
+    assert(fabs(SM_ELEMENT_D(result, 1, 0) - 15.10) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 2, 0) - 3.883) < 0.001);
+    assert(fabs(SM_ELEMENT_D(result, 1, 6) - 53.79) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 2, 6) - 5.456) < 0.001);
 
     destroy_cuqdyn_context(context);
     SUNMatDestroy(result);
@@ -114,14 +113,14 @@ void test_alpha_pienene()
     const int rows = SM_ROWS_D(result);
     const int cols = SM_COLUMNS_D(result);
 
-    assert(cols == 6);
-    assert(rows == 9);
+    assert(cols == 9);
+    assert(rows == 6);
 
     assert(fabs(SM_ELEMENT_D(result, 0, 0) - 0.0) < 0.0001);
-    assert(fabs(SM_ELEMENT_D(result, 0, 1) - 100) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 0, 3) - 0) < 0.001);
-    assert(fabs(SM_ELEMENT_D(result, 6, 1) - 2.510e+01) < 2);
-    assert(fabs(SM_ELEMENT_D(result, 6, 2) - 4.814e+01) < 2);
+    assert(fabs(SM_ELEMENT_D(result, 1, 0) - 100) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 3, 0) - 0) < 0.001);
+    assert(fabs(SM_ELEMENT_D(result, 1, 6) - 2.510e+01) < 2);
+    assert(fabs(SM_ELEMENT_D(result, 2, 6) - 4.814e+01) < 2);
 
     destroy_cuqdyn_context(context);
     SUNMatDestroy(result);
@@ -161,13 +160,13 @@ void test_logistic_model()
     const int rows = SM_ROWS_D(result);
     const int cols = SM_COLUMNS_D(result);
 
-    assert(cols == 2);
-    assert(rows == 11);
+    assert(cols == 11);
+    assert(rows == 2);
 
     assert(fabs(SM_ELEMENT_D(result, 0, 0) - 0.0) < 0.0001);
-    assert(fabs(SM_ELEMENT_D(result, 0, 1) - 10) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 5, 1) - 9.428e+01) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 6, 1) - 9.782e+01) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 1, 0) - 10) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 1, 5) - 9.428e+01) < 0.01);
+    assert(fabs(SM_ELEMENT_D(result, 1, 6) - 9.782e+01) < 0.01);
 
     destroy_cuqdyn_context(context);
     SUNMatDestroy(result);

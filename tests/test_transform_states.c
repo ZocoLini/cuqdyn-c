@@ -22,19 +22,23 @@ int main()
 
     assert(6 == conf->states_transformer.count);
 
-    SUNMatrix states = NewDenseMatrix(2, 16);
+    TransposedStates states = NewDenseMatrix(16, 2);
 
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 16; ++j) {
-            SM_ELEMENT_D(states, i, j) = states_values[16 * i + j];
+            SM_ELEMENT_D(states, j, i) = states_values[16 * i + j];
         }
     }
 
-    SUNMatrix transformation = transform_states(states);
+    ObservablesTransposedStates transformation = transform_states(states);
 
+    assert(SM_ROWS_D(transformation) == 7);    
+    assert(SM_COLUMNS_D(transformation) == 2);    
+    
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 7; ++j) {
-            assert(expected_transformation_values[7 * i + j] == SM_ELEMENT_D(transformation, i, j));
+            
+            assert(expected_transformation_values[7 * i + j] == SM_ELEMENT_D(transformation, j, i));
         }
     }
 

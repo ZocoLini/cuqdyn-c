@@ -15,6 +15,7 @@
 #include <cuqdyn.h>
 #include <stdio.h>
 #include <sunmatrix/sunmatrix_dense.h>
+#include "nvector/nvector_serial.h"
 
 #include "data_reader.h"
 #include "ess_solver.h"
@@ -48,7 +49,7 @@ int main(int argc, char **argv)
 
     alpha_pinene_ess(ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB);
     printf("\tTest 6 passed Alpha-Pinene NL2SOL_DN2GB\n");
-    
+
     return 0;
 }
 

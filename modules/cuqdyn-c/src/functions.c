@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "cuqdyn.h"
+#include "ode_solver.h"
 #include "states_transformer.h"
 
 extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params, CuqDynContext context);
@@ -22,16 +23,6 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     return 0;
 }
 
-/*
- * function [J,g,R]=prob_mod_lv(x,texp,yexp)
- * [tout,yout] =
- * ode15s(@prob_mod_dynamics_lv,texp,[10,5],odeset('RelTol',1e-6,'AbsTol',1e-6*ones(1,2)),x);
- * R=(yout-yexp);
- * R=reshape(R,numel(R),1);
- * J = sum(sum((yout-yexp).^2));
- * g=0;
- * return
- */
 void *obj_func(double *x, void *data)
 {
     CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
@@ -46,31 +37,33 @@ void *obj_func(double *x, void *data)
 
     const sunrealtype t0 = NV_Ith_S(texp, 0);
 
-    SUNMatrix result = solve_ode(parameters, exptotal->initial_values, t0, texp);
-    result = transform_states(result);
+    TransposedStates ode_solution = solve_ode(parameters, exptotal->initial_values, t0, texp);
+    ObservablesTransposedStates result = transform_states(ode_solution);
 
     const long rows = SM_ROWS_D(result);
     const long cols = SM_COLUMNS_D(result);
     sunrealtype J = 0.0;
 
-    if (SM_ROWS_D(exptotal->yexp) != rows)
+    // We compare rows with cols because the result matrix is transposed
+    if (SM_ROWS_D(exptotal->yexp) != cols)
     {
         fprintf(stderr, "ERROR: The yexp rows don't match the ode result rows: %ld vs %ld\n", SM_ROWS_D(exptotal->yexp), rows);
         exit(-1);
     }
 
-    if (SM_COLUMNS_D(exptotal->yexp) != cols - 1)
+    // We compare rows with cols because the result matrix is transposed
+    if (SM_COLUMNS_D(exptotal->yexp) != rows - 1)
     {
         fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols: %ld vs %ld\n", SM_COLUMNS_D(exptotal->yexp), cols - 1);
         exit(-1);
     }
 
-    for (long i = 0; i < rows; ++i)
+     // Note that the first row of the result matrix is t
+    for (long i = 1; i < rows; ++i)
     {
-        // Note that the first col of the result matrix is t
-        for (long j = 1; j < cols; ++j)
+        for (long j = 0; j < cols; ++j)
         {
-            const sunrealtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, i, j - 1);
+            const sunrealtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, j, i - 1);
             J += diff * diff;
         }
     }

@@ -10,7 +10,7 @@
 
 static int check_retval(void *, const char *, int);
 
-SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times)
+TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times)
 {
     CuqdynConf *cuqdyn_conf = get_cuqdyn_conf(get_cuqdyn_context());
     Tolerances tolerances = cuqdyn_conf->tolerances;
@@ -32,7 +32,7 @@ SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0
     retval = CVodeSetUserData(cvode_mem, parameters);
     if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
 
-    SUNMatrix A = SUNDenseMatrix(cuqdyn_conf->ode_expr.y_count, cuqdyn_conf->ode_expr.y_count, get_sundials_ctx());
+    SUNMatrix A = NewDenseMatrix(cuqdyn_conf->ode_expr.y_count, cuqdyn_conf->ode_expr.y_count);
     SUNLinearSolver LS = SUNLinSol_Dense(initial_values, A, get_sundials_ctx());
     retval = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (check_retval(&retval, "CVodeSetLinearSolver", 1)) { return NULL; }
@@ -44,8 +44,8 @@ SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0
     sunrealtype t;
 
     N_Vector yout = New_Serial(NV_LENGTH_S(initial_values));
-    int result_cols = cuqdyn_conf->ode_expr.y_count + 1; // We add the time col
-    SUNMatrix result = NewDenseMatrix(NV_LENGTH_S(times), result_cols);
+    int result_rows = cuqdyn_conf->ode_expr.y_count + 1; // We add the time col
+    TransposedStates result = NewDenseMatrix(result_rows, NV_LENGTH_S(times));
 
     for (int i = 0; i < NV_LENGTH_S(times); ++i)
     {
@@ -53,11 +53,8 @@ SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0
 
         if (actual_time == t0)
         {
-            SM_ELEMENT_D(result, i, 0) = t0;
-            for (int j = 0; j < cuqdyn_conf->ode_expr.y_count; j++)
-            {
-                SM_ELEMENT_D(result, i, j + 1) = NV_Ith_S(initial_values, j);
-            }
+            SM_COLUMN_D(result, i)[0] = t0;
+            memcpy(&SM_COLUMN_D(result, i)[1], NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
             continue;
         }
 
@@ -67,13 +64,9 @@ SUNMatrix solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0
         {
             return NULL;
         }
-
-        SM_ELEMENT_D(result, i, 0) = t;
-
-        for (int j = 0; j < cuqdyn_conf->ode_expr.y_count; j++)
-        {
-            SM_ELEMENT_D(result, i, j + 1) = NV_Ith_S(yout, j);
-        }
+        
+        SM_COLUMN_D(result, i)[0] = t;
+        memcpy(&SM_COLUMN_D(result, i)[1], NV_DATA_S(yout), NV_LENGTH_S(yout) * sizeof(sunrealtype));
     }
 
     N_VDestroy(yout);

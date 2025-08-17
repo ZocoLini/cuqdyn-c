@@ -3,11 +3,12 @@
 
 #include <sundials/sundials_nvector.h>
 #include <sunmatrix/sunmatrix_dense.h>
+#include "cuqdyn.h"
 
 /* This function wich type of data file is being read (.txt or .mat) and
  * calls the appropriate function to read it.
  */
-int read_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
+int read_data_file(const char *data_file, N_Vector *t, ObservedData *y);
 
 /*
  * The file should be two ints, m and n, and a matrix mxn
@@ -30,6 +31,6 @@ int read_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
  *      .                .
  *      ym0 ym1 ym2 ... ymn
  */
-int read_txt_data_file(const char *data_file, N_Vector *t, SUNMatrix *y);
+int read_txt_data_file(const char *data_file, N_Vector *t, ObservedData *y);
 
 #endif //FILE_READER_H
