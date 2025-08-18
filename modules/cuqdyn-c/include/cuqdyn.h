@@ -8,14 +8,13 @@
 #define New_Serial(n) N_VNew_Serial(n, get_sundials_ctx())
 
 typedef SUNMatrix States;
-typedef SUNMatrix ObservablesStates;
 /*
 *   TransposedStates where:
 *   - Each col corresponds to a time point
-*   - Row 0: Time values (t)
-*   - Rows 1-n: Solution components (y1, y2, ..., yn)
+*   - Rows 0-n: Solution components (y1, y2, ..., yn)
 */
 typedef SUNMatrix TransposedStates;
+typedef SUNMatrix ObservablesStates;
 typedef SUNMatrix ObservablesTransposedStates;
 typedef SUNMatrix ObservedData;
 typedef SUNMatrix TransposedObservedData;

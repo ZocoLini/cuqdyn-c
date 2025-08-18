@@ -52,18 +52,17 @@ void *obj_func(double *x, void *data)
     }
 
     // We compare rows with cols because the result matrix is transposed
-    if (SM_COLUMNS_D(exptotal->yexp) != rows - 1)
+    if (SM_COLUMNS_D(exptotal->yexp) != rows)
     {
         fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols: %ld vs %ld\n", SM_COLUMNS_D(exptotal->yexp), cols - 1);
         exit(-1);
     }
 
-     // Note that the first row of the result matrix is t
-    for (long i = 1; i < rows; ++i)
+    for (long i = 0; i < rows; ++i)
     {
         for (long j = 0; j < cols; ++j)
         {
-            const sunrealtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, j, i - 1);
+            const sunrealtype diff = SM_ELEMENT_D(result, i, j) - SM_ELEMENT_D(exptotal->yexp, j, i);
             J += diff * diff;
         }
     }

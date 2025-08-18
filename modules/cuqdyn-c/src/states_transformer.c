@@ -23,16 +23,12 @@ ObservablesTransposedStates transform_states(TransposedStates transposed_states)
     const int rows = SM_ROWS_D(transposed_states);
     const int cols = SM_COLUMNS_D(transposed_states);
 
-    ObservablesTransposedStates transposed_result = NewDenseMatrix(conf->states_transformer.count + 1, cols);
+    ObservablesTransposedStates transposed_result = NewDenseMatrix(conf->states_transformer.count, cols);
 
     for (int i = 0; i < cols; ++i)
     {
-        // Copy the time point to the first element of the transformed state
-        SM_COLUMN_D(transposed_result, i)[0] = SM_COLUMN_D(transposed_states, i)[0];
-        
-        // The first element is the time point
-        sunrealtype *input = &SM_COLUMN_D(transposed_states, i)[1];
-        sunrealtype *dest = &SM_COLUMN_D(transposed_result, i)[1];
+        sunrealtype *input = SM_COLUMN_D(transposed_states, i);
+        sunrealtype *dest = SM_COLUMN_D(transposed_result, i);
 
         eval_states_transformer_expr(input, dest, get_cuqdyn_context());
     }

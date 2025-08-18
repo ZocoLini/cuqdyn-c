@@ -44,7 +44,7 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
     sunrealtype t;
 
     N_Vector yout = New_Serial(NV_LENGTH_S(initial_values));
-    int result_rows = cuqdyn_conf->ode_expr.y_count + 1; // We add the time col
+    int result_rows = cuqdyn_conf->ode_expr.y_count;
     TransposedStates result = NewDenseMatrix(result_rows, NV_LENGTH_S(times));
 
     for (int i = 0; i < NV_LENGTH_S(times); ++i)
@@ -53,8 +53,7 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
 
         if (actual_time == t0)
         {
-            SM_COLUMN_D(result, i)[0] = t0;
-            memcpy(&SM_COLUMN_D(result, i)[1], NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
+            memcpy(SM_COLUMN_D(result, i), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
             continue;
         }
 
@@ -65,8 +64,7 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
             return NULL;
         }
         
-        SM_COLUMN_D(result, i)[0] = t;
-        memcpy(&SM_COLUMN_D(result, i)[1], NV_DATA_S(yout), NV_LENGTH_S(yout) * sizeof(sunrealtype));
+        memcpy(SM_COLUMN_D(result, i), NV_DATA_S(yout), NV_LENGTH_S(yout) * sizeof(sunrealtype));
     }
 
     N_VDestroy(yout);

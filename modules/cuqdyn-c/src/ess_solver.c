@@ -3,7 +3,6 @@
 
 #include <method_module/structure_paralleltestbed.h>
 #include "method_module/solversinterface.h"
-#include "output/output.h"
 
 #include "ess_solver.h"
 

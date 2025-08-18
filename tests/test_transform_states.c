@@ -12,33 +12,39 @@ int main()
     CuqdynConf *conf = get_cuqdyn_conf(context);
 
     sunrealtype states_values[] = {
-        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
     };
     sunrealtype expected_transformation_values[] = {
-        0, 1, 2, 1, 3, 1, 1,
-        1, 2, 4, 2, 6, 2, 2
+        1, 2, 1, 3, 1, 1,
+        2, 4, 2, 6, 2, 2
     };
 
     assert(6 == conf->states_transformer.count);
 
-    TransposedStates states = NewDenseMatrix(16, 2);
+    TransposedStates states = NewDenseMatrix(15, 2);
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 16; ++j) {
+    for (int i = 0; i < 2; ++i)
+    {
+        for (int j = 0; j < 15; ++j)
+        {
             SM_ELEMENT_D(states, j, i) = states_values[16 * i + j];
         }
     }
 
     ObservablesTransposedStates transformation = transform_states(states);
 
-    assert(SM_ROWS_D(transformation) == 7);    
-    assert(SM_COLUMNS_D(transformation) == 2);    
-    
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 7; ++j) {
-            
-            assert(expected_transformation_values[7 * i + j] == SM_ELEMENT_D(transformation, j, i));
+    int rows = SM_ROWS_D(transformation);
+    int columns = SM_COLUMNS_D(transformation);
+
+    assert(rows == 6);
+    assert(columns == 2);
+
+    for (int i = 0; i < columns; ++i)
+    {
+        for (int j = 0; j < rows; ++j)
+        {
+            assert(expected_transformation_values[rows * i + j] == SM_ELEMENT_D(transformation, j, i));
         }
     }
 

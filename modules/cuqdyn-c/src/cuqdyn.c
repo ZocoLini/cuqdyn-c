@@ -164,21 +164,19 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                 execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params);
 
         // Saving the ode solution data obtained with the predicted params
-        TransposedStates ode_solution = solve_ode(predicted_params, initial_condition, t0, times);
-        ObservablesTransposedStates obs_states = transform_states(ode_solution);
-        ObservablesTransposedStates predicted_data = copy_matrix_remove_rows(obs_states, create_array((long[]) {1L}, 1)); // Removing the time row
-        SUNMatDestroy(obs_states);
+        TransposedStates ode_solution_states = solve_ode(predicted_params, initial_condition, t0, times);
+        ObservablesTransposedStates predicted_obs_states = transform_states(ode_solution_states);
 
         for (int j = 0; j < n; ++j)
         {
             sunrealtype observed = SM_ELEMENT_D(observed_data, i, j);
-            sunrealtype predicted = SM_ELEMENT_D(predicted_data, j, i);
+            sunrealtype predicted = SM_ELEMENT_D(predicted_obs_states, j, i);
 
             NV_Ith_S(residuals, j) = fabs(observed - predicted);
         }
 
 #ifdef MPI
-        long predicted_data_len = SM_COLUMNS_D(predicted_data) * SM_ROWS_D(predicted_data);
+        long predicted_data_len = SM_COLUMNS_D(predicted_obs_states) * SM_ROWS_D(predicted_obs_states);
         if (rank != 0)
         {
             // Sending
@@ -196,7 +194,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         {
 #endif
             set_matrix_row(resid_loo, residuals, i, 0, NV_LENGTH_S(residuals));
-            matrix_array_set_index(media_matrix, i - 1, predicted_data);
+            matrix_array_set_index(media_matrix, i - 1, predicted_obs_states);
             set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
 #ifdef MPI
             // Receiving
@@ -225,7 +223,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         }
 
         N_VDestroy(predicted_params);
-        SUNMatDestroy(predicted_data);
+        SUNMatDestroy(predicted_obs_states);
     }
 
 N_VDestroy(residuals);
