@@ -12,6 +12,7 @@
 #include "matlab.h"
 #include "ode_solver.h"
 #include "states_transformer.h"
+#include "sunmatrix/sunmatrix_dense.h"
 #ifdef MPI
 #include <mpi.h>
 #endif
@@ -65,7 +66,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     CuqdynConf *config = get_cuqdyn_conf(get_cuqdyn_context());
 
     N_Vector times = NULL;
-    ObservedData observed_data = NULL;
+    TransposedObservedData observed_data = NULL;
 
     if (read_data_file(data_file, &times, &observed_data) != 0)
     {
@@ -78,7 +79,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     if (config->y0.len == 0)
     {
-        initial_condition = copy_matrix_row(observed_data, 0, 0, SM_COLUMNS_D(observed_data));
+        initial_condition = copy_matrix_column(observed_data, 0, 0, SM_ROWS_D(observed_data));
     }
     else
     {
@@ -86,8 +87,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         memcpy(NV_DATA_S(initial_condition), config->y0.array, config->y0.len * sizeof(sunrealtype));
     }
 
-    const long m = SM_ROWS_D(observed_data);
-    const long n = SM_COLUMNS_D(observed_data);
+    const long n = SM_ROWS_D(observed_data);
+    const long m = SM_COLUMNS_D(observed_data);
 
     SUNMatrix resid_loo = NULL;
     MatrixArray media_matrix = create_matrix_array(m - 1);
@@ -156,7 +157,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
 
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
-        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, indices_to_remove);
+        SUNMatrix yexp = copy_matrix_remove_columns(observed_data, indices_to_remove);
 
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
 
@@ -169,7 +170,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
         for (int j = 0; j < n; ++j)
         {
-            sunrealtype observed = SM_ELEMENT_D(observed_data, i, j);
+            sunrealtype observed = SM_ELEMENT_D(observed_data, j, i);
             sunrealtype predicted = SM_ELEMENT_D(predicted_obs_states, j, i);
 
             NV_Ith_S(residuals, j) = fabs(observed - predicted);

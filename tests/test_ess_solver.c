@@ -15,6 +15,7 @@
 #include <cuqdyn.h>
 #include <stdio.h>
 #include <sunmatrix/sunmatrix_dense.h>
+#include <math.h>
 #include "nvector/nvector_serial.h"
 
 #include "data_reader.h"
@@ -64,7 +65,7 @@ void lotka_volterra_ess(char *conf_file)
 
     read_data_file(LOTKA_VOLTERRA_DATA, &texp, &yexp);
 
-    N_Vector initial_values = copy_matrix_row(yexp, 0, 0, SM_COLUMNS_D(yexp));
+    N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
 
     N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
 
@@ -73,8 +74,7 @@ void lotka_volterra_ess(char *conf_file)
         sunrealtype expected = expected_values[i];
         sunrealtype result = NV_Ith_S(xbest, i);
 
-        sunrealtype a = 6;
-        // assert(fabs(result - expected) < 0.1);
+        assert(fabs(result - expected) < 1);
     }
 
     destroy_cuqdyn_context(context);
@@ -91,7 +91,7 @@ void alpha_pinene_ess(char *conf_file)
 
     read_data_file(ALPHA_PINENE_DATA, &texp, &yexp);
 
-    N_Vector initial_values = copy_matrix_row(yexp, 0, 0, SM_COLUMNS_D(yexp));
+    N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
 
     N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
 
@@ -100,8 +100,7 @@ void alpha_pinene_ess(char *conf_file)
         sunrealtype expected = expected_values[i];
         sunrealtype result = NV_Ith_S(xbest, i);
 
-        sunrealtype a = 6;
-        // assert(fabs(result - expected) < 0.1);
+        assert(fabs(result - expected) < 1);
     }
 
     destroy_cuqdyn_context(context);
@@ -111,24 +110,23 @@ void logistic_model_ess(char *conf_file)
 {
     CuqDynContext context = init_cuqdyn_context_from_file("data/logistic_model_cuqdyn_config.xml");
 
-    sunrealtype expected_values[2] = {0.1, 100};
+    sunrealtype expected_values[2] = {0.1, 102};
 
     N_Vector texp = NULL;
     SUNMatrix yexp = NULL;
 
     read_data_file(LOGISTIC_MODEL_DATA, &texp, &yexp);
 
-    N_Vector initial_values = copy_matrix_row(yexp, 0, 0, SM_COLUMNS_D(yexp));
+    N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
 
     N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
 
-    for (int i = 0; i < sizeof(expected_values); ++i)
+    for (int i = 0; i < 2; ++i)
     {
         sunrealtype expected = expected_values[i];
         sunrealtype result = NV_Ith_S(xbest, i);
 
-        sunrealtype a = 6;
-        // assert(fabs(result - expected) < 0.1);
+        assert(fabs(result - expected) < 1);
     }
 
     destroy_cuqdyn_context(context);

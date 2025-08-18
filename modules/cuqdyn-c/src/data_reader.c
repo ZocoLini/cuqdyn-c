@@ -7,6 +7,8 @@
 #include <string.h>
 
 #include "../include/cuqdyn.h"
+#include "sundials/sundials_types.h"
+#include "sunmatrix/sunmatrix_dense.h"
 
 int read_data_file(const char *data_file, N_Vector *t, ObservedData *y)
 {
@@ -25,7 +27,7 @@ int read_data_file(const char *data_file, N_Vector *t, ObservedData *y)
     return 1;
 }
 
-int read_txt_data_file(const char *data_file, N_Vector *t, ObservedData *y)
+int read_txt_data_file(const char *data_file, N_Vector *t, TransposedObservedData *y)
 {
     const char *ext = strrchr(data_file, '.');
     if (ext && strcmp(ext, ".txt") != 0)
@@ -46,8 +48,7 @@ int read_txt_data_file(const char *data_file, N_Vector *t, ObservedData *y)
     *t = New_Serial(rows);
     sunrealtype *data_t = N_VGetArrayPointer(*t);
 
-    *y = NewDenseMatrix(rows, cols - 1);
-    sunrealtype *data_y = ((SUNMatrixContent_Dense)(*y)->content)->data;
+    *y = NewDenseMatrix(cols - 1, rows);
 
     double tmp;
 
@@ -55,10 +56,11 @@ int read_txt_data_file(const char *data_file, N_Vector *t, ObservedData *y)
     {
         fscanf(f, "%lf", &tmp);
         data_t[i] = tmp;
+        sunrealtype *data_yi = ((SUNMatrixContent_Dense)(*y)->content)->cols[i];
         for (int j = 0; j < cols - 1; ++j)
         {
             fscanf(f, "%lf", &tmp);
-            data_y[j * rows + i] = tmp;
+            data_yi[j] = tmp;
         }
     }
 

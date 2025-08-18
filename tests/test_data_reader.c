@@ -1,4 +1,3 @@
-#define LOTKA_VOLTERRA_MAT "data/lotka_volterra_data_homoc_noise_0.10_size_30_data_1.mat"
 #define DATA_TXT "data/test_data.txt"
 
 #include <nvector/nvector_serial.h>
@@ -7,7 +6,6 @@
 
 
 #include "data_reader.h"
-#include "cuqdyn.h"
 
 void test_read_data_txt();
 
@@ -26,10 +24,13 @@ void test_read_data_txt()
 
     assert(read_txt_data_file(DATA_TXT, &t, &y) == 0);
 
+    assert(y != NULL);
+    assert(t != NULL);
+    
     for (int i = 0; i < SM_ROWS_D(y); ++i)
     {
         assert(NV_Ith_S(t, i) == i);
-        assert(SM_ELEMENT_D(y, i, 0) == i);
-        assert(SM_ELEMENT_D(y, i, 1) == i);
+        assert(SM_ELEMENT_D(y, 0, i) == i);
+        assert(SM_ELEMENT_D(y, 1, i) == i);
     }
 }
