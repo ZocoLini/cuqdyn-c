@@ -1,12 +1,11 @@
 #include "data_reader.h"
 
-
 #include <nvector/nvector_serial.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "../include/cuqdyn.h"
+#include "cuqdyn.h"
 #include "sundials/sundials_types.h"
 #include "sunmatrix/sunmatrix_dense.h"
 
@@ -56,7 +55,7 @@ int read_txt_data_file(const char *data_file, N_Vector *t, TransposedObservedDat
     {
         fscanf(f, "%lf", &tmp);
         data_t[i] = tmp;
-        sunrealtype *data_yi = ((SUNMatrixContent_Dense)(*y)->content)->cols[i];
+        sunrealtype *data_yi = ((SUNMatrixContent_Dense) (*y)->content)->cols[i];
         for (int j = 0; j < cols - 1; ++j)
         {
             fscanf(f, "%lf", &tmp);

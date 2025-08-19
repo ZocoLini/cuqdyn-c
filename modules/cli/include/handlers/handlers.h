@@ -10,4 +10,4 @@ typedef struct
     int (*handle)(int argc, char *argv[]);
 } Handler;
 
-#endif //HANDLERS_H
+#endif // HANDLERS_H

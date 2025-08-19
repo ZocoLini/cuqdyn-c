@@ -54,4 +54,4 @@ SUNMatrix subtract_two_matrices(SUNMatrix a, SUNMatrix b);
  * quantile assigns the minimum or maximum values of the elements in A.
  */
 sunrealtype quantile(N_Vector, sunrealtype);
-#endif //MATLAB_H
+#endif // MATLAB_H

@@ -1,18 +1,18 @@
 #ifndef CUQDYN_H
 #define CUQDYN_H
 
-#include <sundials/sundials_nvector.h>
 #include <sundials/sundials_matrix.h>
+#include <sundials/sundials_nvector.h>
 
 #define NewDenseMatrix(m, n) SUNDenseMatrix(m, n, get_sundials_ctx())
 #define New_Serial(n) N_VNew_Serial(n, get_sundials_ctx())
 
 typedef SUNMatrix States;
 /*
-*   TransposedStates where:
-*   - Each col corresponds to a time point
-*   - Rows 0-n: Solution components (y1, y2, ..., yn)
-*/
+ *   TransposedStates where:
+ *   - Each col corresponds to a time point
+ *   - Rows 0-n: Solution components (y1, y2, ..., yn)
+ */
 typedef SUNMatrix TransposedStates;
 typedef SUNMatrix ObservablesStates;
 typedef SUNMatrix ObservablesTransposedStates;
@@ -31,9 +31,9 @@ typedef struct
     N_Vector times;
 } CuqdynResult;
 
-CuqdynResult* create_cuqdyn_result(SUNMatrix predicted_data_median, N_Vector predicted_params_median,
-    SUNMatrix q_low, SUNMatrix q_up, N_Vector times);
-void destroy_cuqdyn_result(CuqdynResult* result);
+CuqdynResult *create_cuqdyn_result(SUNMatrix predicted_data_median, N_Vector predicted_params_median, SUNMatrix q_low,
+                                   SUNMatrix q_up, N_Vector times);
+void destroy_cuqdyn_result(CuqdynResult *result);
 CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file);
 
 typedef struct
@@ -42,7 +42,7 @@ typedef struct
     long len;
 } LongArray;
 
-LongArray create_array(long * values, long len);
+LongArray create_array(long *values, long len);
 LongArray create_empty_array();
 long array_get_index(LongArray array, long index);
 

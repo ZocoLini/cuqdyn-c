@@ -4,4 +4,4 @@
 
 Handler create_version_handler();
 
-#endif //VERSION_H
+#endif // VERSION_H

@@ -1,5 +1,4 @@
 #include <nvector/nvector_serial.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sunmatrix/sunmatrix_dense.h>
@@ -97,8 +96,7 @@ SUNMatrix copy_matrix_remove_columns(SUNMatrix matrix, LongArray indices)
     return copy_matrix_remove_rows_and_columns(matrix, create_empty_array(), indices);
 }
 
-void set_matrix_row(SUNMatrix matrix, N_Vector vec, const long row_index, const long start,
-                    const long end)
+void set_matrix_row(SUNMatrix matrix, N_Vector vec, const long row_index, const long start, const long end)
 {
     for (long i = start; i < end; ++i)
     {
@@ -106,8 +104,7 @@ void set_matrix_row(SUNMatrix matrix, N_Vector vec, const long row_index, const 
     }
 }
 
-void set_matrix_column(SUNMatrix matrix, N_Vector vec, const long col_index, const long start,
-                       const long end)
+void set_matrix_column(SUNMatrix matrix, N_Vector vec, const long col_index, const long start, const long end)
 {
     for (long i = start; i < end; ++i)
     {
@@ -203,7 +200,8 @@ sunrealtype quantile(N_Vector vec, sunrealtype q)
     const double min_q = 0.5 / (sunrealtype) n;
     const double max_q = ((sunrealtype) n - 0.5) / (sunrealtype) n;
 
-    if (q <= min_q) {
+    if (q <= min_q)
+    {
         const double val = data[0];
         free(data);
         return val;

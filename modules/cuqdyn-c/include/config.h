@@ -13,19 +13,19 @@ typedef struct
 {
     int y_count;
     int p_count;
-    char** exprs;
+    char **exprs;
 } OdeExpr;
 
 typedef struct
 {
     int len;
-    double* array;
+    double *array;
 } Y0;
 
 typedef struct
 {
     int count;
-    char** exprs;
+    char **exprs;
 } StatesTransformer;
 
 typedef struct
@@ -36,7 +36,7 @@ typedef struct
     StatesTransformer states_transformer;
 } CuqdynConf;
 
-typedef void* CuqDynContext;
+typedef void *CuqDynContext;
 
 CuqDynContext init_cuqdyn_context_from_file(const char *filename);
 CuqDynContext get_cuqdyn_context();
@@ -44,4 +44,4 @@ CuqDynContext get_cuqdyn_context();
 extern CuqdynConf *get_cuqdyn_conf(CuqDynContext context);
 extern void destroy_cuqdyn_context(CuqDynContext context);
 
-#endif //CONFIG_H
+#endif // CONFIG_H

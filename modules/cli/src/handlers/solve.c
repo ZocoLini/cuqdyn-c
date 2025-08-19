@@ -1,17 +1,16 @@
-#include <nvector/nvector_serial.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include "handlers/handlers.h"
 #include "handlers/solve.h"
 
 #include <config.h>
+#include <nvector/nvector_serial.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sunmatrix/sunmatrix_dense.h>
+#include <unistd.h>
 
-#include "functions.h"
 #include "cuqdyn.h"
+#include "functions.h"
+#include "handlers/handlers.h"
 
 #if defined(MPI) || defined(MPI2)
 #include <mpi.h>

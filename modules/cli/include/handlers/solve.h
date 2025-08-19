@@ -6,4 +6,4 @@
 
 Handler create_solve_handler();
 
-#endif //SOLVE_H
+#endif // SOLVE_H

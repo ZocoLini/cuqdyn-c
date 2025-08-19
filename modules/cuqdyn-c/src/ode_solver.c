@@ -1,6 +1,6 @@
-#include <../include/functions.h>
 #include <config.h>
 #include <cvodes/cvodes.h>
+#include <functions.h>
 #include <ode_solver.h>
 #include <string.h>
 #include <sunlinsol/sunlinsol_dense.h>
@@ -17,28 +17,46 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
 
     int retval;
     void *cvode_mem = CVodeCreate(CV_ADAMS, get_sundials_ctx());
-    if (check_retval((void*)cvode_mem, "CVodeCreate", 0)) { return NULL; }
+    if (check_retval((void *) cvode_mem, "CVodeCreate", 0))
+    {
+        return NULL;
+    }
 
     retval = CVodeInit(cvode_mem, ode_model_fun, t0, initial_values);
-    if (check_retval(&retval, "CVodeInit", 1)) { return NULL; }
+    if (check_retval(&retval, "CVodeInit", 1))
+    {
+        return NULL;
+    }
 
     N_Vector cloned_abs_tol = New_Serial(tolerances.atol_len);
     memcpy(NV_DATA_S(cloned_abs_tol), tolerances.atol, tolerances.atol_len * sizeof(sunrealtype));
 
     // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
     retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, cloned_abs_tol);
-    if (check_retval(&retval, "CVodeSVtolerances", 1)) { return NULL; }
+    if (check_retval(&retval, "CVodeSVtolerances", 1))
+    {
+        return NULL;
+    }
 
     retval = CVodeSetUserData(cvode_mem, parameters);
-    if (check_retval(&retval, "CVodeSetUserData", 1)) { return NULL; }
+    if (check_retval(&retval, "CVodeSetUserData", 1))
+    {
+        return NULL;
+    }
 
     SUNMatrix A = NewDenseMatrix(cuqdyn_conf->ode_expr.y_count, cuqdyn_conf->ode_expr.y_count);
     SUNLinearSolver LS = SUNLinSol_Dense(initial_values, A, get_sundials_ctx());
     retval = CVodeSetLinearSolver(cvode_mem, LS, A);
-    if (check_retval(&retval, "CVodeSetLinearSolver", 1)) { return NULL; }
+    if (check_retval(&retval, "CVodeSetLinearSolver", 1))
+    {
+        return NULL;
+    }
 
     retval = CVodeSetMaxNumSteps(cvode_mem, 10000000);
-    if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) { return NULL; }
+    if (check_retval(&retval, "CVodeSetMaxNumSteps", 1))
+    {
+        return NULL;
+    }
 
     /* Time points */
     sunrealtype t;
@@ -53,7 +71,8 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
 
         if (actual_time == t0)
         {
-            memcpy(SM_COLUMN_D(result, i), NV_DATA_S(initial_values), NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
+            memcpy(SM_COLUMN_D(result, i), NV_DATA_S(initial_values),
+                   NV_LENGTH_S(initial_values) * sizeof(sunrealtype));
             continue;
         }
 
@@ -63,7 +82,7 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
         {
             return NULL;
         }
-        
+
         memcpy(SM_COLUMN_D(result, i), NV_DATA_S(yout), NV_LENGTH_S(yout) * sizeof(sunrealtype));
     }
 

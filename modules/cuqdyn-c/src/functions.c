@@ -46,13 +46,15 @@ void *obj_func(double *x, void *data)
 
     if (SM_ROWS_D(exptotal->yexp) != rows)
     {
-        fprintf(stderr, "ERROR: The yexp rows don't match the ode result rows: %ld vs %ld\n", SM_ROWS_D(exptotal->yexp), rows);
+        fprintf(stderr, "ERROR: The yexp rows don't match the ode result rows: %ld vs %ld\n", SM_ROWS_D(exptotal->yexp),
+                rows);
         exit(-1);
     }
 
     if (SM_COLUMNS_D(exptotal->yexp) != cols)
     {
-        fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols: %ld vs %ld\n", SM_COLUMNS_D(exptotal->yexp), cols - 1);
+        fprintf(stderr, "ERROR: The yexp cols don't match the ode result cols: %ld vs %ld\n",
+                SM_COLUMNS_D(exptotal->yexp), cols - 1);
         exit(-1);
     }
 

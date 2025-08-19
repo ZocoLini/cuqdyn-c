@@ -7,4 +7,4 @@
 
 #define VERSION "0.1.0"
 
-#endif //MAIN_H
+#endif // MAIN_H

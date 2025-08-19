@@ -1,15 +1,13 @@
-#include <stdlib.h>
-#include <unistd.h>
-
-#include <method_module/structure_paralleltestbed.h>
-#include "method_module/solversinterface.h"
-
 #include "ess_solver.h"
 
 #include <../include/functions.h>
+#include <method_module/structure_paralleltestbed.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "cuqdyn.h"
 #include "method_module/common_solver_operations.h"
+#include "method_module/solversinterface.h"
 #if defined(MPI2) || defined(MPI)
 #include <mpi.h>
 #endif
@@ -19,7 +17,7 @@
 #endif
 
 N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, SUNMatrix yexp,
-    N_Vector initial_condition, N_Vector initial_params)
+                            N_Vector initial_condition, N_Vector initial_params)
 {
     int error, NPROC_OPENMP;
     experiment_total *exptotal;

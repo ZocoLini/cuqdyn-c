@@ -100,15 +100,16 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         resid_loo = NewDenseMatrix(m, n);
         predicted_params_matrix = NewDenseMatrix(m, config->ode_expr.p_count);
 
-        N_Vector texp = copy_vector_remove_indices(times, create_array((long[]) {}, 0));
-        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]) {}, 0));
+        N_Vector texp = copy_vector_remove_indices(times, create_array((long[]){}, 0));
+        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]){}, 0));
 
-        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
+        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
 
         N_Vector predicted_params =
-            execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, NULL);
+                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, NULL);
 
-        memcpy(NV_DATA_S(initial_params), NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params) * sizeof(sunrealtype));
+        memcpy(NV_DATA_S(initial_params), NV_DATA_S(predicted_params),
+               NV_LENGTH_S(predicted_params) * sizeof(sunrealtype));
         N_VDestroy(predicted_params);
     }
 
@@ -154,12 +155,12 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     for (long i = start_index; i < end_index; ++i)
     {
-        LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
+        LongArray indices_to_remove = create_array((long[]){i + 1}, 1);
 
         N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
         SUNMatrix yexp = copy_matrix_remove_columns(observed_data, indices_to_remove);
 
-        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
+        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
 
         N_Vector predicted_params =
                 execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params);
@@ -205,16 +206,20 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                 MPI_Recv(&slaved_index, 1, MPI_LONG, slave, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
                 // Receriving the residuals of other processes
-                MPI_Recv(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, slave, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, slave, 1, MPI_COMM_WORLD,
+                         MPI_STATUS_IGNORE);
                 set_matrix_row(resid_loo, residuals, slaved_index, 0, NV_LENGTH_S(residuals));
 
                 // Receiving the predicted data matrix
-                MPI_Recv(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, slave, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(SM_DATA_D(predicted_data), predicted_data_len, MPI_DOUBLE, slave, 2, MPI_COMM_WORLD,
+                         MPI_STATUS_IGNORE);
                 matrix_array_set_index(media_matrix, slaved_index - 1, predicted_data);
 
                 // Receiving the predicted params
-                MPI_Recv(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, slave, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                set_matrix_row(predicted_params_matrix, predicted_params, slaved_index, 0, NV_LENGTH_S(predicted_params));
+                MPI_Recv(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, slave, 3,
+                         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                set_matrix_row(predicted_params_matrix, predicted_params, slaved_index, 0,
+                               NV_LENGTH_S(predicted_params));
             }
         }
 #endif
@@ -227,7 +232,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         SUNMatDestroy(predicted_obs_states);
     }
 
-N_VDestroy(residuals);
+    N_VDestroy(residuals);
 
 #ifdef MPI
     printf("%ld iterations of rank %d finalized\n", iterations, rank);

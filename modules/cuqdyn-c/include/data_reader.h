@@ -3,6 +3,7 @@
 
 #include <sundials/sundials_nvector.h>
 #include <sunmatrix/sunmatrix_dense.h>
+
 #include "cuqdyn.h"
 
 /* This function wich type of data file is being read (.txt or .mat) and
@@ -33,4 +34,4 @@ int read_data_file(const char *data_file, N_Vector *t, ObservedData *y);
  */
 int read_txt_data_file(const char *data_file, N_Vector *t, ObservedData *y);
 
-#endif //FILE_READER_H
+#endif // FILE_READER_H

@@ -4,4 +4,4 @@
 
 Handler create_help_handler();
 
-#endif //HELP_H
+#endif // HELP_H
