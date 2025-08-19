@@ -24,15 +24,15 @@ SUNContext get_sundials_ctx();
 /// Result of the cuqdyn algorithm
 typedef struct
 {
-    SUNMatrix predicted_data_median;
+    TransposedStates predicted_data_median;
     N_Vector predicted_params_median;
     SUNMatrix q_low;
     SUNMatrix q_up;
     N_Vector times;
 } CuqdynResult;
 
-CuqdynResult *create_cuqdyn_result(SUNMatrix predicted_data_median, N_Vector predicted_params_median, SUNMatrix q_low,
-                                   SUNMatrix q_up, N_Vector times);
+CuqdynResult *create_cuqdyn_result(TransposedStates predicted_data_median, N_Vector predicted_params_median,
+                                   SUNMatrix q_low, SUNMatrix q_up, N_Vector times);
 void destroy_cuqdyn_result(CuqdynResult *result);
 CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file);
 

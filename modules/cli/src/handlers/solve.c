@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #include "cuqdyn.h"
-#include "functions.h"
 #include "handlers/handlers.h"
 
 #if defined(MPI) || defined(MPI2)
@@ -18,6 +17,7 @@
 
 int handle_solve(int argc, char *argv[]);
 void print_matrix(SUNMatrix mat, FILE *output_file, char *name);
+void print_transposed_matrix(TransposedStates mat, FILE *output_file, char *name);
 void print_vector(N_Vector vec, FILE *output_file, char *name);
 
 Handler create_solve_handler()
@@ -116,7 +116,7 @@ int handle_solve(int argc, char *argv[])
     {
 
         N_Vector params_median = cuqdyn_result->predicted_params_median;
-        SUNMatrix data_median = cuqdyn_result->predicted_data_median;
+        TransposedStates data_median = cuqdyn_result->predicted_data_median;
 
         SUNMatrix q_low = cuqdyn_result->q_low;
         SUNMatrix q_up = cuqdyn_result->q_up;
@@ -129,7 +129,7 @@ int handle_solve(int argc, char *argv[])
         FILE *output_file = fopen(output_file_path, "w");
 
         print_vector(params_median, output_file, "Params");
-        print_matrix(data_median, output_file, "Data");
+        print_transposed_matrix(data_median, output_file, "Data");
         print_matrix(q_low, output_file, "Q_low");
         print_matrix(q_up, output_file, "Q_up");
         print_vector(times, output_file, "Times");
@@ -155,6 +155,21 @@ void print_matrix(SUNMatrix mat, FILE *output_file, char *name)
         for (int j = 0; j < SM_COLUMNS_D(mat); j++)
         {
             fprintf(output_file, "%.8lf ", SM_ELEMENT_D(mat, i, j));
+        }
+        fprintf(output_file, "\n");
+    }
+}
+
+void print_transposed_matrix(TransposedStates mat, FILE *output_file, char *name)
+{
+    fprintf(output_file, "[%s]\n", name);
+    fprintf(output_file, "%ld %ld\n", SM_COLUMNS_D(mat), SM_ROWS_D(mat));
+
+    for (int i = 0; i < SM_COLUMNS_D(mat); i++)
+    {
+        for (int j = 0; j < SM_ROWS_D(mat); j++)
+        {
+            fprintf(output_file, "%.8lf ", SM_ELEMENT_D(mat, j, i));
         }
         fprintf(output_file, "\n");
     }
