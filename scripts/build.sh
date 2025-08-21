@@ -2,6 +2,13 @@
 
 build-proyect() {
     VARIANT=$1
+    TOOLCHAIN=$VARIANT
+
+    if [ "$VARIANT" = "debug "]; then
+      VARIANT="serial"
+      TOOLCHAIN="debug"
+    fi
+        
 
     if [ ! -d "build-$VARIANT/" ]; then
       mkdir "build-$VARIANT"
@@ -11,7 +18,7 @@ build-proyect() {
 
     (
       cd "build-$VARIANT" || exit 1
-      cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/"$VARIANT"_toolchain.cmake ..
+      cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/"$TOOLCHAIN"_toolchain.cmake ..
       make -j "$(nproc)"
     )
 }
@@ -24,6 +31,7 @@ variants=(
   "serial"
   "mpi"
   "mpi2"
+  "debug"
 )
 
 if [ "$1" = "rebuild" ]; then

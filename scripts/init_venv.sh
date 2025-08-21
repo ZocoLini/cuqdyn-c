@@ -12,4 +12,3 @@ fi
 source .venv/bin/activate
 pip install --upgrade pip
 pip install matplotlib
-pip install pyperf
