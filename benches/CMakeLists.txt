@@ -21,6 +21,7 @@ target_link_libraries(bench_wrapper PUBLIC bench_options PRIVATE nanobench ${PAP
 
 foreach(bench_name
     bench_transform_states
+    bench_solve_ode
 )
     add_executable(${bench_name} ${bench_name}.c)
     target_link_libraries(${bench_name} PRIVATE cuqdyn-c bench_wrapper)

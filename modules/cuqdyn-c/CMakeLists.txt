@@ -41,4 +41,5 @@ target_link_libraries(cuqdyn-c
         sacess
         mexpreval
         SUNDIALS::core
+        SUNDIALS::sunmatrixsparse
 )

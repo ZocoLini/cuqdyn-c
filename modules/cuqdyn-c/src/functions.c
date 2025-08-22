@@ -1,6 +1,7 @@
 #include <functions.h>
 #include <method_module/structure_paralleltestbed.h>
 #include <nvector/nvector_serial.h>
+#include <stdio.h>
 #include <string.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
@@ -18,6 +19,11 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     sunrealtype *ydot_pointer = NV_DATA_S(ydot);
     sunrealtype *y_pointer = NV_DATA_S(y);
 
+#ifdef DEBUG
+    fprintf(stdout, "[DEBUG] [ODE MODEL FUN] ");
+    fprintf(stdout, "t: %f\n", t);
+#endif
+
     eval_f_exprs(t, y_pointer, ydot_pointer, params, get_cuqdyn_context());
 
     return 0;
@@ -34,6 +40,16 @@ void *obj_func(double *x, void *data)
 
     N_Vector texp = New_Serial(NV_LENGTH_S(exptotal->texp));
     memcpy(NV_DATA_S(texp), NV_DATA_S(exptotal->texp), NV_LENGTH_S(exptotal->texp) * sizeof(sunrealtype));
+
+#ifdef DEBUG
+    fprintf(stdout, "[DEBUG] [OBJ FUNC] ");
+    fprintf(stdout, "Params: ");
+    for (int i = 0; i < NV_LENGTH_S(parameters); i++)
+    {
+        fprintf(stdout, "%f ", NV_Ith_S(parameters, i));
+    }
+    fprintf(stdout, "\n");
+#endif
 
     const sunrealtype t0 = NV_Ith_S(texp, 0);
 

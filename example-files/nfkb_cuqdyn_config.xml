@@ -2,7 +2,7 @@
 
 <cuqdyn-config>
     <tolerances>
-        <rtol>1e-8</rtol>
+        <rtol>1e-6</rtol>
         <atol>1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8</atol>
     </tolerances>
     <ode_expr y_count="15" p_count="29">
