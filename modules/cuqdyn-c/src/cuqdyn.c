@@ -100,7 +100,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     const long m = SM_COLUMNS_D(observed_data);
 
     SUNMatrix resid_loo = NULL;
-    MatrixArray media_matrix = create_matrix_array(m - 1);
+    MatrixArray media_matrix = create_matrix_array(m - 1); // We will save transposed matrices inside the array
     SUNMatrix predicted_params_matrix = NULL;
     N_Vector initial_params = New_Serial(config->ode_expr.p_count);
 
@@ -131,20 +131,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     long min_iters_per_node = (long) ((m - 1) / (long) nproc);
     long remainder = (m - 1) % (long) nproc;
 
-    // Old and optimal version. It accepts any number of processes but causes deadlock when the number of processes
-    // is not a divisor of m - 1 due to the use of MPI_Barrier(MPI_COMM_WORLD);
-    // if (remainder > rank)
-    // {
-    //     iterations = min_iters_per_node;
-    //     start_index = rank * iterations + 1;
-    // }
-    // else
-    // {
-    //     iterations = min_iters_per_node;
-    //     start_index = (remainder * (min_iters_per_node + 1)) + ((rank - remainder) * min_iters_per_node) + 1;
-    // }
-
-    // New version. Only iterates over every row if the number of processes is a divisor of m - 1
+    // Only iterates over every column if the number of processes is a divisor of m - 1
     if (remainder != 0 && rank == 0)
     {
         fprintf(stderr, "Number of processes is not a divisor of m - 1. Please use a number of processes that is a "
@@ -254,7 +241,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         return NULL;
     }
 
-    SUNMatrix predicted_data_median = matrix_array_get_median(media_matrix);
+    // media_matrix is transposed so predicted data median is also transposed
+    TransposedStates predicted_data_median = matrix_array_get_median(media_matrix);
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
 
     double alp = 0.05;
@@ -284,10 +272,10 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
             for (int k = 1; k < m; ++k)
             {
                 SM_ELEMENT_D(matrix_array_get_index(m_low, k - 1), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) - SM_ELEMENT_D(resid_loo, k, j);
+                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), j, i) - SM_ELEMENT_D(resid_loo, k, j);
 
                 SM_ELEMENT_D(matrix_array_get_index(m_up, k - 1), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), i, j) + SM_ELEMENT_D(resid_loo, k, j);
+                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), j, i) + SM_ELEMENT_D(resid_loo, k, j);
             }
 
             SM_ELEMENT_D(q_low, i, j) = quantile(matrix_array_depth_vector_at(m_low, i, j), alp);
