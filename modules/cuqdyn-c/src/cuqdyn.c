@@ -74,12 +74,14 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         exit(1);
     }
 
+    N_Vector scaled_times = N_VNew_Serial(NV_LENGTH_S(times), get_sundials_ctx());
+    
     for (int i = 0; i < NV_LENGTH_S(times); ++i) 
     {
-        NV_Ith_S(times, i) = NV_Ith_S(times, i) * config->time_scaling;
+        NV_Ith_S(scaled_times, i) = NV_Ith_S(times, i) * config->time_scaling;
     }
     
-    const sunrealtype t0 = NV_Ith_S(times, 0);
+    const sunrealtype t0 = NV_Ith_S(scaled_times, 0);
     N_Vector initial_condition = NULL;
 
     if (config->y0.len == 0)
@@ -107,7 +109,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         resid_loo = NewDenseMatrix(m, n);
         predicted_params_matrix = NewDenseMatrix(m, config->ode_expr.p_count);
 
-        N_Vector texp = copy_vector_remove_indices(times, create_array((long[]){}, 0));
+        N_Vector texp = copy_vector_remove_indices(scaled_times, create_array((long[]){}, 0));
         SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]){}, 0));
 
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
@@ -164,7 +166,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     {
         LongArray indices_to_remove = create_array((long[]){i + 1}, 1);
 
-        N_Vector texp = copy_vector_remove_indices(times, indices_to_remove);
+        N_Vector texp = copy_vector_remove_indices(scaled_times, indices_to_remove);
         SUNMatrix yexp = copy_matrix_remove_columns(observed_data, indices_to_remove);
 
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
@@ -173,7 +175,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                 execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params);
 
         // Saving the ode solution data obtained with the predicted params
-        TransposedStates ode_solution_states = solve_ode(predicted_params, initial_condition, t0, times);
+        TransposedStates ode_solution_states = solve_ode(predicted_params, initial_condition, t0, scaled_times);
         ObservablesTransposedStates predicted_obs_states = transform_states(ode_solution_states);
 
         for (int j = 0; j < n; ++j)
