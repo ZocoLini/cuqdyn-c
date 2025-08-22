@@ -5,6 +5,7 @@
         <rtol>1e-9</rtol>
         <atol>1e-9, 1e-9</atol>
     </tolerances>
+    <time_scaling>0.1</time_scaling>
     <ode_expr y_count="2" p_count="4">
         lotka-volterra
     </ode_expr>

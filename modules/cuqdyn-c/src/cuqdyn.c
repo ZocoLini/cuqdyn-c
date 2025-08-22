@@ -243,8 +243,13 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     // media_matrix is transposed so predicted data median is also transposed
     TransposedStates predicted_data_median = matrix_array_get_median(media_matrix);
+    
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
-
+    for (int i = 0; i < NV_LENGTH_S(predicted_params_median); ++i) // Parameters are also affected by the time scaling
+    {
+        NV_Ith_S(predicted_params_median, i) = NV_Ith_S(predicted_params_median, i) * config->time_scaling;
+    }
+    
     double alp = 0.05;
 
     SUNMatrix q_low = NewDenseMatrix(m, n);
