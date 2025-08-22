@@ -2,6 +2,7 @@
 #include <cvodes/cvodes.h>
 #include <functions.h>
 #include <ode_solver.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sunlinsol/sunlinsol_dense.h>
 #include <sunmatrix/sunmatrix_dense.h>
@@ -175,10 +176,26 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
         return NULL;
     }
     
-    retval = CVodeSetMaxOrd(cvode_mem, 1);
-    if (check_retval(&retval, "CVodeSetMaxOrd", 1))
+    char *min_step_s = getenv("SACESS_CVODES_MIN_STEP");
+    if (min_step_s != NULL) 
     {
-        return NULL;
+        sunrealtype min_step = atof(min_step_s);
+        retval = CVodeSetMinStep(cvode_mem, min_step);
+        if (check_retval(&retval, "CVodeSetMinStep", 1))
+        {
+            return NULL;
+        }
+    }
+    
+    char *max_num_steps_s = getenv("SACESS_CVODES_MAX_NUM_STEPS");
+    if (max_num_steps_s != NULL)
+    {
+        long max_num_steps = atol(max_num_steps_s);
+        retval = CVodeSetMaxNumSteps(cvode_mem, max_num_steps);
+        if (check_retval(&retval, "CVodeSetMaxNumSteps", 1))
+        {
+            return NULL;
+        }
     }
     
     retval = CVodeSetMaxNumSteps(cvode_mem, 1000000);
