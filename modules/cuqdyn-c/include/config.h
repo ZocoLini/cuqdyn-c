@@ -32,6 +32,7 @@ typedef struct
 {
     Tolerances tolerances;
     OdeExpr ode_expr;
+    double time_scaling;
     Y0 y0;
     StatesTransformer states_transformer;
 } CuqdynConf;

@@ -157,14 +157,14 @@ There are three types of input files that must be provided:
 - **cuqdyn config xml:**
   This file contains the configuration of the cuqdyn solver used in the cuqdyn-c library.
 
-  - The tolerances block defines the rtol and atol used by the cvodes library.
-  - The ode model is defined inside the ode_expr block.
-  - y0 is the initial conditions of the ODE (If no present, the first row of the data matrix will be used) (Optional).
-  - The states_transformer block defines the transformations applied to the different states in case of the observed data
-  being a combination of the different states.
+  - **tolerances:** rtol and atol used by the cvodes library.
+  - **ode_expr:** ODE model expression or identifier.
+  - **time_scaling:** Scaling factor for time. Using negative powers of 10 helps cvodes speed.
+  - **y0:** Initial conditions of the ODE.
+  - **states_transformer:** Transformations expressions or identidier applied to the different states in case of the
+  observed data being a combination of the different states.
 
-  There is an option to accelerate the process of evaluating the ODE by defining it and the states transformer inside the
-  mevalexpr module. We will talk about this later.
+  There is an option to accelerate the process of evaluating the ODE by defining it and the states transformer inside the mevalexpr module. We will talk about this later.
 
     ```xml
     <?xml version="1.0" encoding="UTF-8" ?>
@@ -191,7 +191,8 @@ There are three types of input files that must be provided:
             p1 * y11 * y7 - p24 * p22 * y14
             p28 + p27 * y7 - p29 * y15
         </ode_expr>
-        <y0> <!-- Optional -->
+        <time_scaling>0.001</time_scaling> <!-- Optional (Defaults to 1.0) -->
+        <y0> <!-- Optional (Defaults to the first row of the data file) -->
             0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
         </y0>
         <states_transformer count="6"> <!-- Optional -->
@@ -208,7 +209,7 @@ There are three types of input files that must be provided:
 - **Data file:**
   The data file containing a mtrix of observed data and the initial value
   needed to solve the ODE. The data file should be a txt file written with the following format:
-  
+
     ```
     # The first row is gonna be used as the initial condition if y0 is not present in the config file
     31 3 # Matrix dimensions so the parsing is easier

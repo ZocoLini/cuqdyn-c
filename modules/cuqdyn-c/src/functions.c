@@ -14,10 +14,14 @@ extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunre
 
 int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
+    CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
+
     N_Vector params_vec = user_data;
     sunrealtype *params = NV_DATA_S(params_vec);
     sunrealtype *ydot_pointer = NV_DATA_S(ydot);
     sunrealtype *y_pointer = NV_DATA_S(y);
+
+    t /= conf->time_scaling;
 
 #ifdef DEBUG
     fprintf(stdout, "[DEBUG] [ODE MODEL FUN] ");

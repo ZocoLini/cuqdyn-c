@@ -39,8 +39,13 @@ pub struct StatesTransformerC {
 pub struct CuqdynConfigC {
     tolerances: TolerancesC,
     ode_expr: OdeExprC,
+    time_scaling: f64,
     y0: Y0C,
     states_transformer: StatesTransformerC,
+}
+
+fn default_time_scaling() -> f64 {
+    1.0
 }
 
 #[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
@@ -51,6 +56,9 @@ pub struct CuqdynConfigRs {
     #[get = "pub"]
     #[serde(rename = "ode_expr")]
     ode_expr: OdeExpr,
+    #[get = "pub"]
+    #[serde(rename = "time_scaling", default = "default_time_scaling")]
+    time_scaling: f64,
     #[get = "pub"]
     #[serde(default)]
     y0: Option<F64Vec>,
@@ -103,6 +111,7 @@ impl CuqdynConfigRs {
                 p_count: 4,
                 expr: StringVec(vec!["lotka-volterra".to_string()]),
             },
+            time_scaling: 1.0,
             y0: None,
             states_transformer: None,
         }
@@ -122,6 +131,7 @@ impl CuqdynConfigRs {
                     "-y2 * (p3 - p4 * y1)".to_string(),
                 ]),
             },
+            time_scaling: 1.0,
             y0: None,
             states_transformer: None,
         }
@@ -138,6 +148,7 @@ impl CuqdynConfigRs {
                 p_count: 5,
                 expr: StringVec(vec!["alpha-pinene".to_string()]),
             },
+            time_scaling: 1.0,
             y0: None,
             states_transformer: None,
         }
@@ -160,6 +171,7 @@ impl CuqdynConfigRs {
                     "p4 * y3 - p5 * y5".to_string(),
                 ]),
             },
+            time_scaling: 1.0,
             y0: None,
             states_transformer: None,
         }
@@ -176,6 +188,7 @@ impl CuqdynConfigRs {
                 p_count: 2,
                 expr: StringVec(vec!["p1 * y1 * (1 - y1 / p2)".to_string()]),
             },
+            time_scaling: 1.0,
             y0: None,
             states_transformer: None,
         }
@@ -208,6 +221,7 @@ impl CuqdynConfigRs {
                     "p28 + p27 * y7 - p29 * y15".to_string(),
                 ]),
             },
+            time_scaling: 0.001,
             y0: Some(F64Vec(vec![0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003])),
             states_transformer: Some(StatesTransformer {count: 6, expr: StringVec(vec![
                 "y7".to_string(),
@@ -234,6 +248,7 @@ impl CuqdynConfigRs {
                 p_count: 29,
                 expr: StringVec(vec!["nfkb".to_string()]),
             },
+            time_scaling: 0.001,
             y0: Some(F64Vec(vec![
                 0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783,
                 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003,
@@ -395,6 +410,7 @@ impl From<CuqdynConfigRs> for CuqdynContext {
         let c_config = CuqdynConfigC {
             tolerances,
             ode_expr,
+            time_scaling: value.time_scaling,
             y0,
             states_transformer: observables,
         };
@@ -485,6 +501,7 @@ mod tests {
     <ode_expr y_count="15" p_count="29">
         nfkb
     </ode_expr>
+    <time_scaling>0.001</time_scaling>
     <y0>
         0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
     </y0>

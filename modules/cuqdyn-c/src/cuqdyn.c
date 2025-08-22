@@ -74,6 +74,11 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         exit(1);
     }
 
+    for (int i = 0; i < NV_LENGTH_S(times); ++i) 
+    {
+        NV_Ith_S(times, i) = NV_Ith_S(times, i) * config->time_scaling;
+    }
+    
     const sunrealtype t0 = NV_Ith_S(times, 0);
     N_Vector initial_condition = NULL;
 
@@ -87,6 +92,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         memcpy(NV_DATA_S(initial_condition), config->y0.array, config->y0.len * sizeof(sunrealtype));
     }
 
+    // Note: observed_data is a transposed matrix so the rows of the transposed 
+    // matrix are the columns of the original matrix
     const long n = SM_ROWS_D(observed_data);
     const long m = SM_COLUMNS_D(observed_data);
 
