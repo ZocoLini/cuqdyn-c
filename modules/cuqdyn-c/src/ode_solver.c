@@ -57,7 +57,7 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
         return NULL;
     }
     
-    char *min_step_s = getenv("SACESS_CVODES_MIN_STEP");
+    char *min_step_s = getenv("CUQDYN_CVODES_MIN_STEP");
     if (min_step_s != NULL) 
     {
         sunrealtype min_step = atof(min_step_s);
@@ -68,7 +68,7 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
         }
     }
     
-    char *max_num_steps_s = getenv("SACESS_CVODES_MAX_NUM_STEPS");
+    char *max_num_steps_s = getenv("CUQDYN_CVODES_MAX_NUM_STEPS");
     if (max_num_steps_s != NULL)
     {
         long max_num_steps = atol(max_num_steps_s);

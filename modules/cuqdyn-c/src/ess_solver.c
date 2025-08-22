@@ -1,13 +1,15 @@
 #include "ess_solver.h"
 
-#include <../include/functions.h>
+#include <functions.h>
 #include <method_module/structure_paralleltestbed.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "cuqdyn.h"
 #include "method_module/common_solver_operations.h"
 #include "method_module/solversinterface.h"
+
 #if defined(MPI2) || defined(MPI)
 #include <mpi.h>
 #endif
@@ -27,6 +29,8 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     int nproc;
     int rank;
 
+    CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
+    
 #if defined(MPI2) || defined(MPI)
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -52,7 +56,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
         {
             for (int j = 0; j < NV_LENGTH_S(initial_params); j++)
             {
-                exptotal[i].test.bench.X0[0][j] = NV_Ith_S(initial_params, j);
+                exptotal[i].test.bench.X0[0][j] = NV_Ith_S(initial_params, j)  / conf->time_scaling;
             }
         }
         init = 0;
@@ -90,12 +94,22 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     init_result_data(&result, exptotal->test.bench.dim);
 
 #endif
+    for (int i = 0; i < conf->ode_expr.p_count; ++i)
+    {
+        exptotal[0].test.bench.min_dom[i] /= conf->time_scaling;
+        exptotal[0].test.bench.max_dom[i] /= conf->time_scaling;
+        
+        if (initial_params == NULL) 
+        {
+            exptotal[0].test.bench.X0[0][i] /= conf->time_scaling;
+        }
+    }
 
     execute_Solver(exptotal, &result, obj_func);
 
+    N_Vector predicted_params = New_Serial(exptotal[0].test.bench.dim);
     destroyexp(exptotal);
 
-    N_Vector predicted_params = New_Serial(exptotal->test.bench.dim);
     N_VSetArrayPointer(result.bestx_value, predicted_params);
     return predicted_params;
 }
