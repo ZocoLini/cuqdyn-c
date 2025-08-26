@@ -88,9 +88,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cvodes)
 
-### mexpeval ###
+### cuqdyn-rs ###
 
-set(RUST_LIB_DIR "${PROJECT_SOURCE_DIR}/modules/mexpreval")
+set(RUST_LIB_DIR "${PROJECT_SOURCE_DIR}/modules/cuqdyn-rs")
 set(RUST_TARGET_DIR "${RUST_LIB_DIR}/target/release")
 
 add_custom_target(rust_lib ALL

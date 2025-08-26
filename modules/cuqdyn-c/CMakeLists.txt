@@ -39,6 +39,6 @@ target_link_directories(cuqdyn-c PUBLIC ${RUST_TARGET_DIR})
 target_link_libraries(cuqdyn-c
         PUBLIC
         sacess
-        mexpreval
+        cuqdyn_rs
         SUNDIALS::core
 )

@@ -23,7 +23,7 @@ The project is structured as follows:
     - `cuqdyn-c/`: The main library that implements the functionality of the paper project.
     - `sacess/`: [External proyect](https://bitbucket.org/DavidPenas/sacess-library) adapted to enable the
       use of eSS in C.
-    - `mexpreval/`: Rust crate. Parses the model from the XML file to evaluate it.
+    - `cuqdyn-rs/`: Rust crate. Parses the model from the XML file to evaluate it.
 - `tests/`: Constains the tests of the cuqdyn-c library.
 - `CUQDyn/`: Contains the original Matlab project.
 
@@ -232,7 +232,7 @@ possible, we designed a way to define the models in Rust and compile them to mac
 Let's dig into it with an example of the Lotka Volterra model:
 
 First of all, we need to write some Rust code. We will be using the following file
-`modules/mexpreval/src/models.rs`. Inside, we create a new unit struct and implement
+`modules/cuqdyn-rs/src/models.rs`. Inside, we create a new unit struct and implement
 the Model trait like this:
 
 ```Rust
