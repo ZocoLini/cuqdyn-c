@@ -105,7 +105,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
         }
     }
 
-    execute_Solver(exptotal, &result, obj_func);
+    execute_Solver(exptotal, &result, obj_func2);
 
     N_Vector predicted_params = New_Serial(exptotal[0].test.bench.dim);
     destroyexp(exptotal);
