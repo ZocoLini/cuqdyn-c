@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use mexpreval::context::{CuqdynConfigRs, CuqdynContext};
+use cuqdyn_rs::context::{CuqdynConfigRs, CuqdynContext};
 
 fn lotka_volterra_bench_eval(c: &mut Criterion) {
     let num_exprs = 2;
@@ -15,7 +15,6 @@ fn lotka_volterra_bench_eval(c: &mut Criterion) {
     });
 }
 
-#[allow(dead_code)]
 fn lotka_volterra_predefined_bench_eval(c: &mut Criterion) {
     let num_exprs = 2;
 
@@ -38,7 +37,7 @@ fn logistic_model_bench_eval(c: &mut Criterion) {
     let params = vec![0.1, 100.0];
 
     let mut context = CuqdynContext::new_from_config(CuqdynConfigRs::logistic_growth_expr());
-    
+
     c.bench_function("logistic_model", |b| {
         b.iter(|| context.eval_f_exprs(0.0, &y, &mut ydot, &params));
     });

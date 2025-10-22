@@ -1,60 +1,73 @@
 use crate::context::CuqdynConfigRs;
-use meval::{Context, Expr};
-use std::str::FromStr;
+use fee::{prelude::*, EmptyResolver, IVRpn, IndexedResolver};
 
 pub trait StatesTransformer {
     fn transform(&mut self, input: &[f64], output: &mut [f64]);
 }
 
-struct GenericStatesTransformer<'a> {
-    exprs: Vec<Expr>,
-    ctx: Context<'a>,
-    y: Vec<&'a mut f64>,
+struct DefaultStatesTransformer;
+
+impl StatesTransformer for DefaultStatesTransformer {
+    fn transform(&mut self, input: &[f64], output: &mut [f64]) {
+        output.copy_from_slice(input);
+    }
 }
 
-impl GenericStatesTransformer<'_> {
-    fn new(cuqdyn_conf: &CuqdynConfigRs) -> Self {
-        let mut exprs: Vec<Expr> = Vec::new();
+struct GenericStatesTransformer<'e> {
+    exprs: Vec<Expr<IVRpn<'e>>>,
+    ctx: Context<
+        Unlocked,
+        IndexedResolver<Unlocked, f64>,
+        EmptyResolver<Unlocked>,
+        IndexedResolver<Locked, f64>,
+        EmptyResolver<Locked>,
+    >,
+    stack: Vec<f64>,
+}
 
-        let states_transformer = if let Some(states_transformers) = cuqdyn_conf.states_transformer()
-        {
-            states_transformers
-        } else {
-            &crate::context::StatesTransformer::default()
+impl<'e> GenericStatesTransformer<'e> {
+    fn new(cuqdyn_conf: &'e CuqdynConfigRs) -> Self {
+        let mut var_resolver = IndexedResolver::new();
+        let y_count = *cuqdyn_conf.ode_expr().y_count();
+        var_resolver.add_id('y', y_count as usize);
+
+        for i in 0..y_count {
+            var_resolver.set('y', i as usize, 0.0);
+        }
+
+        let fn_resolver = EmptyResolver::new();
+
+        let ctx = Context::new(var_resolver, fn_resolver);
+
+        let exprs = {
+            let mut exprs = Vec::new();
+            if let Some(states_transformers) = cuqdyn_conf.states_transformer() {
+                for s in states_transformers.expr().iter() {
+                    let expr = Expr::compile(s, &ctx).expect(&format!("unable to compile {s}"));
+                    exprs.push(expr);
+                }
+            }
+            exprs
         };
 
-        for s in states_transformer.expr().iter() {
-            let expr = Expr::from_str(s)
-                .unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
-
-            exprs.push(expr);
+        GenericStatesTransformer {
+            exprs,
+            ctx,
+            stack: Vec::new(),
         }
-
-        let mut ctx = Context::new();
-
-        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
-            let var_key = format!("y{}", i + 1);
-            ctx.var(&var_key, 0.0);
-        }
-
-        let mut y: Vec<&mut f64> = Vec::new();
-        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
-            let var_key = format!("y{}", i + 1);
-            unsafe { y.push(ctx.get_var_ptr(&var_key).unwrap().as_mut().unwrap()) }
-        }
-
-        Self { exprs, ctx, y }
     }
 }
 
 impl StatesTransformer for GenericStatesTransformer<'_> {
     fn transform(&mut self, input: &[f64], output: &mut [f64]) {
-        for i in 0..self.y.len() {
-            *self.y[i] = input[i]
+        for i in 0..input.len() {
+            self.ctx.vars_mut().set('y', i + 1, input[i]);
         }
 
         for (i, expr) in self.exprs.iter().enumerate() {
-            output[i] = expr.eval_with_context(&self.ctx).unwrap();
+            output[i] = expr.eval(&self.ctx, &mut self.stack).expect(&format!(
+                "Error evaluating states transformer expression with index {i}"
+            ));
         }
     }
 }
@@ -78,10 +91,14 @@ impl StatesTransformer for NFKBExampleStatesTransformer {
     }
 }
 
+pub fn build_default_states_transformer() -> Box<dyn StatesTransformer> {
+    Box::new(DefaultStatesTransformer)
+}
+
 pub fn build_states_transformer(
     transformer: &str,
-    cuqdyn_conf: &CuqdynConfigRs,
-) -> Box<dyn StatesTransformer> {
+    cuqdyn_conf: &'static CuqdynConfigRs,
+) -> Box<dyn StatesTransformer + 'static> {
     match transformer {
         "nfkb-example" => Box::new(NFKBExampleStatesTransformer),
         _ => Box::new(GenericStatesTransformer::new(cuqdyn_conf)),

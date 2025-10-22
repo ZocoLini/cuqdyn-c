@@ -50,8 +50,6 @@ execute_variant() {
       .venv/bin/python plot.py "$CLI_TEST_DIR/data/output/cuqdyn-results.txt"
 }
 
-bash scripts/init_venv.sh
-
 variants=(
   "serial"
   "mpi"

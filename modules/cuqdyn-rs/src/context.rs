@@ -1,8 +1,17 @@
 use getset::Getters;
 use serde::Deserialize;
-use std::{ffi::CString, fs, ops::Deref, os::raw::c_char, path::Path};
+use std::{
+    ffi::{c_void, CString},
+    fs,
+    ops::Deref,
+    os::raw::c_char,
+    path::Path,
+};
 
-use crate::models::Model;
+use crate::{
+    models::{self, Model},
+    states_transformers,
+};
 
 #[repr(C)]
 #[derive(Debug)]
@@ -127,8 +136,8 @@ impl CuqdynConfigRs {
                 y_count: 2,
                 p_count: 4,
                 expr: StringVec(vec![
-                    "y1 * (p1 - p2 * y2)".to_string(),
-                    "-y2 * (p3 - p4 * y1)".to_string(),
+                    "y0 * (p0 - p1 * y1)".to_string(),
+                    "-y1 * (p2 - p3 * y0)".to_string(),
                 ]),
             },
             time_scaling: 1.0,
@@ -164,11 +173,11 @@ impl CuqdynConfigRs {
                 y_count: 5,
                 p_count: 5,
                 expr: StringVec(vec![
-                    "-(p1 + p2) * y1".to_string(),
-                    "p1 * y1".to_string(),
-                    "p2 * y1 - (p3 + p4) * y3 + p5 * y5".to_string(),
-                    "p3 * y3".to_string(),
-                    "p4 * y3 - p5 * y5".to_string(),
+                    "-(p0 + p1) * y0".to_string(),
+                    "p0 * y0".to_string(),
+                    "p1 * y0 - (p2 + p3) * y2 + p4 * y4".to_string(),
+                    "p2 * y2".to_string(),
+                    "p3 * y2 - p4 * y4".to_string(),
                 ]),
             },
             time_scaling: 1.0,
@@ -186,7 +195,7 @@ impl CuqdynConfigRs {
             ode_expr: OdeExpr {
                 y_count: 1,
                 p_count: 2,
-                expr: StringVec(vec!["p1 * y1 * (1 - y1 / p2)".to_string()]),
+                expr: StringVec(vec!["p0 * y0 * (1 - y0 / p1)".to_string()]),
             },
             time_scaling: 1.0,
             y0: None,
@@ -204,32 +213,32 @@ impl CuqdynConfigRs {
                 y_count: 15,
                 p_count: 29,
                 expr: StringVec(vec![
-                    "p20 - p21 * y1 - p17 * y1".to_string(),
-                    "p17 * y1 - p19 * y2 - p18 * y2 * y8 - p21 * y2 - p2 * y2 * y10 + p3 * y4 - p4 * y2 * y13 + p5 * y5".to_string(),
-                    "p19 * y2 + p18 * y2 * y8 - p21 * y3".to_string(),
-                    "p2 * y2 * y10 - p3 * y4".to_string(),
-                    "p4 * y2 * y13 - p5 * y5".to_string(),
-                    "p11 * y13 - p1 * y6 * y10 + p5 * y5 - p23 * y6".to_string(),
-                    "p23 * p22 * y6 - p1 * y11 * y7".to_string(),
-                    "p15 * y9 - p16 * y8".to_string(),
-                    "p13 + p12 * y7 - p14 * y9".to_string(),
-                    "-p2 * y2 * y10 - p1 * y10 * y6 + p9 * y12 - p10 * y10 - p25 * y10 + p26 * y11".to_string(),
-                    "-p1 * y11 * y7 + p25 * p22 * y10 - p26 * p22 * y11".to_string(),
-                    "p7 + p6 * y7 - p8 * y12".to_string(),
-                    "p1 * y10 * y6 - p11 * y13 - p4 * y2 * y13 + p24 * y14".to_string(),
-                    "p1 * y11 * y7 - p24 * p22 * y14".to_string(),
-                    "p28 + p27 * y7 - p29 * y15".to_string(),
+                    "p19 - p20 * y0 - p16 * y0".to_string(),
+                    "p16 * y0 - p18 * y1 - p17 * y1 * y7 - p20 * y1 - p1 * y1 * y9 + p2 * y3 - p3 * y1 * y12 + p4 * y4".to_string(),
+                    "p18 * y1 + p17 * y1 * y7 - p20 * y2".to_string(),
+                    "p1 * y1 * y9 - p2 * y3".to_string(),
+                    "p3 * y1 * y12 - p4 * y4".to_string(),
+                    "p10 * y12 - p0 * y5 * y9 + p4 * y4 - p22 * y5".to_string(),
+                    "p22 * p21 * y5 - p0 * y10 * y6".to_string(),
+                    "p14 * y8 - p15 * y7".to_string(),
+                    "p12 + p11 * y6 - p13 * y8".to_string(),
+                    "-p1 * y1 * y9 - p0 * y9 * y5 + p8 * y11 - p9 * y9 - p24 * y9 + p25 * y10".to_string(),
+                    "-p0 * y10 * y6 + p24 * p21 * y9 - p25 * p21 * y10".to_string(),
+                    "p6 + p5 * y6 - p7 * y11".to_string(),
+                    "p0 * y9 * y5 - p10 * y12 - p3 * y1 * y12 + p23 * y13".to_string(),
+                    "p0 * y10 * y6 - p23 * p21 * y13".to_string(),
+                    "p27 + p26 * y6 - p28 * y14".to_string(),
                 ]),
             },
             time_scaling: 0.001,
             y0: Some(F64Vec(vec![0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003])),
             states_transformer: Some(StatesTransformer {count: 6, expr: StringVec(vec![
-                "y7".to_string(),
-                "y10 + y13".to_string(),
-                "y9".to_string(),
-                "y1 + y2 + y3".to_string(),
-                "y2".to_string(),
-                "y12".to_string(),
+                "y6".to_string(),
+                "y9 + y12".to_string(),
+                "y8".to_string(),
+                "y0 + y1 + y2".to_string(),
+                "y1".to_string(),
+                "y11".to_string(),
             ])}),
         }
     }
@@ -314,8 +323,7 @@ impl<'de> Deserialize<'de> for StringVec {
 
 #[derive(Getters)]
 pub struct CuqdynContext {
-    #[get = "pub"]
-    rs_config: CuqdynConfigRs,
+    rs_config: *const c_void,
     #[get = "pub"]
     c_config: CuqdynConfigC,
     model: Box<dyn Model>,
@@ -346,6 +354,18 @@ impl CuqdynContext {
 
     pub fn eval_states_transformer_expr(&mut self, input_state: &[f64], output_state: &mut [f64]) {
         self.states_transformer.transform(input_state, output_state);
+    }
+
+    pub fn rs_config(&self) -> &CuqdynConfigRs {
+        unsafe { &*(self.rs_config as *const CuqdynConfigRs) }
+    }
+}
+
+impl Drop for CuqdynContext {
+    fn drop(&mut self) {
+        unsafe {
+            drop(Box::from_raw(self.rs_config as *mut CuqdynConfigRs));
+        }
     }
 }
 
@@ -387,15 +407,19 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             }
         };
 
-        let (obs_exprs, obs_exprs_count) = if let Some(states_transformer) = value.states_transformer.as_ref() {
-            (states_transformer
-                .expr
-                .iter()
-                .map(|a| CString::new(a.as_bytes()).unwrap())
-                .collect::<Vec<CString>>(), states_transformer.count)
-        } else {
-            (vec![], 0)
-        };
+        let (obs_exprs, obs_exprs_count) =
+            if let Some(states_transformer) = value.states_transformer.as_ref() {
+                (
+                    states_transformer
+                        .expr
+                        .iter()
+                        .map(|a| CString::new(a.as_bytes()).unwrap())
+                        .collect::<Vec<CString>>(),
+                    states_transformer.count,
+                )
+            } else {
+                (vec![], 0)
+            };
 
         let obs_exprs_c = obs_exprs
             .iter()
@@ -404,7 +428,11 @@ impl From<CuqdynConfigRs> for CuqdynContext {
 
         let observables = StatesTransformerC {
             count: obs_exprs_count,
-            exprs: if obs_exprs_count >= 1 { obs_exprs_c.as_ptr() } else { std::ptr::null() },
+            exprs: if obs_exprs_count >= 1 {
+                obs_exprs_c.as_ptr()
+            } else {
+                std::ptr::null()
+            },
         };
 
         let c_config = CuqdynConfigC {
@@ -415,29 +443,41 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             states_transformer: observables,
         };
 
-        let model_name = &value.ode_expr().expr().first().map_or("", |v| v);
-        let transformer_name = if let Some(states_transformer) = value.states_transformer().as_ref()
-        {
-            states_transformer
-        } else {
-            &StatesTransformer::default()
-        };
-        let transformer = transformer_name.expr().deref().first().map_or("", |v| v);
+        let rs_config = Box::new(value);
+        let rs_config_ptr = Box::into_raw(rs_config) as *mut c_void;
 
-        let model = crate::models::build_model(model_name, &value);
-        let states_transformer =
-            crate::states_transformers::build_states_transformer(transformer, &value);
-
-        Self {
-            rs_config: value,
+        let mut ctx = Self {
             c_config,
-            model,
-            states_transformer,
+            model: models::build_default_model(),
+            states_transformer: states_transformers::build_default_states_transformer(),
+            rs_config: rs_config_ptr,
             _ode_exprs_vec: ode_exprs,
             _ode_exprs_pointers: ode_exprs_c,
             _obs_exprs_vec: obs_exprs,
             _obs_exprs_pointers: obs_exprs_c,
+        };
+
+        {
+            let value = unsafe { &*(rs_config_ptr as *const CuqdynConfigRs) };
+
+            let model_name = value.ode_expr().expr().first().map_or("", |v| v);
+            let transformer_name =
+                if let Some(states_transformer) = value.states_transformer().as_ref() {
+                    states_transformer
+                } else {
+                    &StatesTransformer::default()
+                };
+            let transformer = transformer_name.expr().deref().first().map_or("", |v| v);
+
+            let model = crate::models::build_model(model_name, value);
+            let states_transformer =
+                crate::states_transformers::build_states_transformer(transformer, value);
+
+            ctx.model = model;
+            ctx.states_transformer = states_transformer;
         }
+
+        ctx
     }
 }
 
@@ -478,7 +518,7 @@ mod tests {
         <atol>1e-8</atol>
     </tolerances>
     <ode_expr y_count="1" p_count="2">
-        p1 * y1 * (1 - y1 / p2)
+        p0 * y0 * (1 - y0 / p1)
     </ode_expr>
 </cuqdyn-config>
         "#;
@@ -597,7 +637,7 @@ mod tests {
             }
         }
     }
-    
+
     #[test]
     fn lotka_volterra_test() {
         let num_exprs = 2;

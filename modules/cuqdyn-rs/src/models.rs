@@ -1,70 +1,79 @@
 use crate::context::CuqdynConfigRs;
-use meval::{Context, Expr};
+use fee::{prelude::*, EmptyResolver, IVRpn, IndexedResolver};
 use std::env;
-use std::str::FromStr;
 
 pub trait Model {
     fn eval(&mut self, t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]);
 }
 
-struct GenericModel<'a> {
-    exprs: Vec<Expr>,
-    ctx: Context<'a>,
-    y: Vec<&'a mut f64>,
-    p: Vec<&'a mut f64>,
+struct DefaultModel;
+impl Model for DefaultModel {
+    fn eval(&mut self, _t: f64, _y: &[f64], _ydot: &mut [f64], _p: &[f64]) {}
 }
 
-impl GenericModel<'_> {
-    fn new(cuqdyn_conf: &CuqdynConfigRs) -> Self {
-        let mut exprs: Vec<Expr> = Vec::new();
+struct GenericModel<'e> {
+    exprs: Vec<Expr<IVRpn<'e>>>,
+    ctx: Context<
+        Unlocked,
+        IndexedResolver<Unlocked, f64>,
+        EmptyResolver<Unlocked>,
+        IndexedResolver<Locked, f64>,
+        EmptyResolver<Locked>,
+    >,
+    stack: Vec<f64>,
+}
+
+impl<'e> GenericModel<'e> {
+    fn new(cuqdyn_conf: &'e CuqdynConfigRs) -> Self {
+        let mut var_resolver = fee::IndexedResolver::new();
+
+        let p_count = *cuqdyn_conf.ode_expr().p_count();
+        let y_count = *cuqdyn_conf.ode_expr().y_count();
+
+        var_resolver.add_id('p', p_count as usize);
+        var_resolver.add_id('y', y_count as usize);
+
+        for i in 0..p_count {
+            var_resolver.set('p', i as usize, 0.0);
+        }
+
+        for i in 0..y_count {
+            var_resolver.set('y', i as usize, 0.0);
+        }
+
+        let fn_resolver = fee::EmptyResolver::new();
+
+        let ctx = Context::new(var_resolver, fn_resolver);
+
+        let mut exprs = Vec::new();
 
         for s in cuqdyn_conf.ode_expr().expr().iter() {
-            let expr = Expr::from_str(s)
-                .unwrap_or_else(|e| panic!("Error parsing expresion {}: {}", s, e));
-
+            let expr = Expr::compile(s, &ctx).expect(&format!("unable to compile {s}"));
             exprs.push(expr);
         }
 
-        let mut ctx = Context::new();
-
-        for i in 0..*cuqdyn_conf.ode_expr().p_count() {
-            let var_key = format!("p{}", i + 1);
-            ctx.var(&var_key, 0.0);
+        Self {
+            exprs,
+            ctx,
+            stack: Vec::with_capacity(2),
         }
-
-        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
-            let var_key = format!("y{}", i + 1);
-            ctx.var(&var_key, 0.0);
-        }
-
-        let mut p: Vec<&mut f64> = Vec::new();
-        for i in 0..*cuqdyn_conf.ode_expr().p_count() {
-            let var_key = format!("p{}", i + 1);
-            unsafe { p.push(ctx.get_var_ptr(&var_key).unwrap().as_mut().unwrap()) }
-        }
-
-        let mut y: Vec<&mut f64> = Vec::new();
-        for i in 0..*cuqdyn_conf.ode_expr().y_count() {
-            let var_key = format!("y{}", i + 1);
-            unsafe { y.push(ctx.get_var_ptr(&var_key).unwrap().as_mut().unwrap()) }
-        }
-
-        Self { exprs, ctx, y, p }
     }
 }
 
 impl Model for GenericModel<'_> {
     fn eval(&mut self, _t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]) {
-        for i in 0..self.y.len() {
-            *self.y[i] = y[i]
+        for i in 0..y.len() {
+            self.ctx.vars_mut().set('y', i, y[i]);
         }
 
-        for i in 0..self.p.len() {
-            *self.p[i] = p[i]
+        for i in 0..p.len() {
+            self.ctx.vars_mut().set('p', i, p[i]);
         }
 
         for (i, expr) in self.exprs.iter().enumerate() {
-            ydot[i] = expr.eval_with_context(&self.ctx).unwrap();
+            ydot[i] = expr
+                .eval(&self.ctx, &mut self.stack)
+                .expect(&format!("Error evaluating model expression with index {i}"));
 
             if !ydot[i].is_finite() {
                 let def = env::var("CUQDYN_DEF_YDOT")
@@ -163,7 +172,11 @@ impl Model for Nfkb {
     }
 }
 
-pub fn build_model(model: &str, cuqdyn_conf: &CuqdynConfigRs) -> Box<dyn Model> {
+pub fn build_default_model() -> Box<dyn Model> {
+    Box::new(DefaultModel)
+}
+
+pub fn build_model(model: &str, cuqdyn_conf: &'static CuqdynConfigRs) -> Box<dyn Model + 'static> {
     match model {
         "nfkb" => Box::new(Nfkb),
         "lotka-volterra" => Box::new(LotkaVolterra),
