@@ -61,7 +61,7 @@ impl<'e> GenericStatesTransformer<'e> {
 impl StatesTransformer for GenericStatesTransformer<'_> {
     fn transform(&mut self, input: &[f64], output: &mut [f64]) {
         for i in 0..input.len() {
-            self.ctx.vars_mut().set('y', i + 1, input[i]);
+            self.ctx.vars_mut().set('y', i, input[i]);
         }
 
         for (i, expr) in self.exprs.iter().enumerate() {

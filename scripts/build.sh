@@ -4,7 +4,7 @@ build-proyect() {
     VARIANT=$1
     TOOLCHAIN=$VARIANT
 
-    if [ "$VARIANT" = "debug "]; then
+    if [ "$VARIANT" = "debug " ]; then
       VARIANT="serial"
       TOOLCHAIN="debug"
     fi
