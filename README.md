@@ -82,6 +82,12 @@ first argument. The available variants are:
 
 After this, running `scripts/test.sh` is a good way to know if the cuqdyn library works as expected.
 
+There is also a Dockerfile and a Docker Compose file to build and run the project in a container.
+
+```bash
+docker compose up
+```
+
 ## Using the CLI
 
 After building using the `scripts/build.sh` script, you can execute this command to run the CLI
