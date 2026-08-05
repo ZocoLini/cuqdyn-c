@@ -8,10 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{
-    models::{self, Model},
-    states_transformers,
-};
+use crate::models::{self, Model};
 
 #[repr(C)]
 #[derive(Debug)]
@@ -36,11 +33,62 @@ pub struct Y0C {
     array: *const f64,
 }
 
+/// Residual error model. Mirrors cuqdyn_weight_residuals.m.
+///
+/// The C side declares the matching struct fields as plain `int` because a C
+/// enum has no portable underlying type. `repr(i32)` pins it here instead, so
+/// the layout still matches while the value keeps its type.
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(field_identifier, rename_all = "snake_case")]
+pub enum ResidualModel {
+    #[default]
+    None = 0,
+    KnownSigma = 1,
+    StateWeights = 2,
+}
+
+/// FIM parameterization. Mirrors cuqdyn_fim_covariance.m.
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(field_identifier, rename_all = "lowercase")]
+pub enum FimParameterization {
+    Natural = 0,
+    #[default]
+    Log = 1,
+}
+
+/// How the hidden states get their covariance.
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(field_identifier, rename_all = "lowercase")]
+pub enum UqMethod {
+    /// CUQDyn1_Plus: the FIM covariance.
+    #[default]
+    Fim = 0,
+    /// CUQDyn1_Plus_HybridCov: FIM scale with LOO correlation.
+    HybridCov = 1,
+}
+
 #[repr(C)]
 #[derive(Debug)]
-pub struct StatesTransformerC {
-    count: i32,
-    exprs: *const *const c_char,
+pub struct CostOptionsC {
+    residual_model: ResidualModel,
+    sigma_len: i32,
+    sigma: *const f64,
+    sigma_is_known: i32,
+    sigma_floor: f64,
+    weights_len: i32,
+    weights: *const f64,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct FimOptionsC {
+    parameterization: FimParameterization,
+    relative_ridge: f64,
+    rank_tol_factor: f64,
+    weak_fraction_threshold: f64,
 }
 
 #[repr(C)]
@@ -50,11 +98,99 @@ pub struct CuqdynConfigC {
     ode_expr: OdeExprC,
     time_scaling: f64,
     y0: Y0C,
-    states_transformer: StatesTransformerC,
+    /// Predictive region level; bands are nominally 1 - 2*alp.
+    alp: f64,
+    uq_method: UqMethod,
+    cost: CostOptionsC,
+    fim: FimOptionsC,
 }
 
 fn default_time_scaling() -> f64 {
     1.0
+}
+
+fn default_alp() -> f64 {
+    0.025
+}
+
+fn default_sigma_is_known() -> bool {
+    true
+}
+
+fn default_sigma_floor() -> f64 {
+    1e-12
+}
+
+fn default_relative_ridge() -> f64 {
+    1e-12
+}
+
+fn default_rank_tol_factor() -> f64 {
+    100.0
+}
+
+fn default_weak_fraction_threshold() -> f64 {
+    0.1
+}
+
+/// Residual weighting, matching cuqdyn_default_options().cost.
+#[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
+pub struct CostOptions {
+    #[get = "pub"]
+    #[serde(default)]
+    residual_model: ResidualModel,
+    #[get = "pub"]
+    #[serde(default)]
+    sigma: Option<F64Vec>,
+    #[get = "pub"]
+    #[serde(default = "default_sigma_is_known")]
+    sigma_is_known: bool,
+    #[get = "pub"]
+    #[serde(default = "default_sigma_floor")]
+    sigma_floor: f64,
+    #[get = "pub"]
+    #[serde(default)]
+    observed_state_weights: Option<F64Vec>,
+}
+
+impl Default for CostOptions {
+    fn default() -> Self {
+        Self {
+            residual_model: ResidualModel::default(),
+            sigma: None,
+            sigma_is_known: default_sigma_is_known(),
+            sigma_floor: default_sigma_floor(),
+            observed_state_weights: None,
+        }
+    }
+}
+
+/// FIM covariance settings, matching cuqdyn_default_options().fim.
+#[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
+pub struct FimOptions {
+    #[get = "pub"]
+    #[serde(default)]
+    parameterization: FimParameterization,
+    #[get = "pub"]
+    #[serde(default = "default_relative_ridge")]
+    relative_ridge: f64,
+    #[get = "pub"]
+    #[serde(default = "default_rank_tol_factor")]
+    rank_tol_factor: f64,
+    #[get = "pub"]
+    #[serde(default = "default_weak_fraction_threshold")]
+    weak_fraction_threshold: f64,
+}
+
+impl Default for FimOptions {
+    fn default() -> Self {
+        Self {
+            parameterization: FimParameterization::default(),
+            relative_ridge: default_relative_ridge(),
+            rank_tol_factor: default_rank_tol_factor(),
+            weak_fraction_threshold: default_weak_fraction_threshold(),
+        }
+    }
 }
 
 #[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
@@ -72,9 +208,17 @@ pub struct CuqdynConfigRs {
     #[serde(default)]
     y0: Option<F64Vec>,
     #[get = "pub"]
-    #[serde(rename = "states_transformer")]
+    #[serde(default = "default_alp")]
+    alp: f64,
+    #[get = "pub"]
     #[serde(default)]
-    states_transformer: Option<StatesTransformer>,
+    uq_method: UqMethod,
+    #[get = "pub"]
+    #[serde(default)]
+    cost: CostOptions,
+    #[get = "pub"]
+    #[serde(default)]
+    fim: FimOptions,
 }
 
 #[derive(Debug, Getters, Deserialize, Clone, PartialEq)]
@@ -98,16 +242,6 @@ pub struct OdeExpr {
     expr: StringVec,
 }
 
-#[derive(Debug, Getters, Deserialize, Default, Clone, PartialEq)]
-pub struct StatesTransformer {
-    #[get = "pub"]
-    #[serde(rename = "@count")]
-    count: i32,
-    #[get = "pub"]
-    #[serde(rename = "#text")]
-    expr: StringVec,
-}
-
 impl CuqdynConfigRs {
     pub fn lotka_volterra() -> Self {
         Self {
@@ -122,7 +256,10 @@ impl CuqdynConfigRs {
             },
             time_scaling: 1.0,
             y0: None,
-            states_transformer: None,
+            alp: default_alp(),
+            uq_method: UqMethod::default(),
+            cost: CostOptions::default(),
+            fim: FimOptions::default(),
         }
     }
 
@@ -142,7 +279,10 @@ impl CuqdynConfigRs {
             },
             time_scaling: 1.0,
             y0: None,
-            states_transformer: None,
+            alp: default_alp(),
+            uq_method: UqMethod::default(),
+            cost: CostOptions::default(),
+            fim: FimOptions::default(),
         }
     }
 
@@ -159,7 +299,10 @@ impl CuqdynConfigRs {
             },
             time_scaling: 1.0,
             y0: None,
-            states_transformer: None,
+            alp: default_alp(),
+            uq_method: UqMethod::default(),
+            cost: CostOptions::default(),
+            fim: FimOptions::default(),
         }
     }
 
@@ -182,7 +325,10 @@ impl CuqdynConfigRs {
             },
             time_scaling: 1.0,
             y0: None,
-            states_transformer: None,
+            alp: default_alp(),
+            uq_method: UqMethod::default(),
+            cost: CostOptions::default(),
+            fim: FimOptions::default(),
         }
     }
 
@@ -199,7 +345,10 @@ impl CuqdynConfigRs {
             },
             time_scaling: 1.0,
             y0: None,
-            states_transformer: None,
+            alp: default_alp(),
+            uq_method: UqMethod::default(),
+            cost: CostOptions::default(),
+            fim: FimOptions::default(),
         }
     }
 
@@ -232,14 +381,10 @@ impl CuqdynConfigRs {
             },
             time_scaling: 0.001,
             y0: Some(F64Vec(vec![0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003])),
-            states_transformer: Some(StatesTransformer {count: 6, expr: StringVec(vec![
-                "y6".to_string(),
-                "y9 + y12".to_string(),
-                "y8".to_string(),
-                "y0 + y1 + y2".to_string(),
-                "y1".to_string(),
-                "y11".to_string(),
-            ])}),
+            alp: default_alp(),
+            uq_method: UqMethod::default(),
+            cost: CostOptions::default(),
+            fim: FimOptions::default(),
         }
     }
 
@@ -262,10 +407,10 @@ impl CuqdynConfigRs {
                 0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783,
                 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003,
             ])),
-            states_transformer: Some(StatesTransformer {
-                count: 6,
-                expr: StringVec(vec!["nfkb-example".to_string()]),
-            }),
+            alp: default_alp(),
+            uq_method: UqMethod::default(),
+            cost: CostOptions::default(),
+            fim: FimOptions::default(),
         }
     }
 }
@@ -327,12 +472,9 @@ pub struct CuqdynContext {
     #[get = "pub"]
     c_config: CuqdynConfigC,
     model: Box<dyn Model>,
-    states_transformer: Box<dyn crate::states_transformers::StatesTransformer>,
 
     _ode_exprs_vec: Vec<CString>,
     _ode_exprs_pointers: Vec<*const c_char>,
-    _obs_exprs_vec: Vec<CString>,
-    _obs_exprs_pointers: Vec<*const c_char>,
 }
 
 impl CuqdynContext {
@@ -350,10 +492,6 @@ impl CuqdynContext {
 
     pub fn eval_f_exprs(&mut self, t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]) {
         self.model.eval(t, y, ydot, p)
-    }
-
-    pub fn eval_states_transformer_expr(&mut self, input_state: &[f64], output_state: &mut [f64]) {
-        self.states_transformer.transform(input_state, output_state);
     }
 
     pub fn rs_config(&self) -> &CuqdynConfigRs {
@@ -407,32 +545,36 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             }
         };
 
-        let (obs_exprs, obs_exprs_count) =
-            if let Some(states_transformer) = value.states_transformer.as_ref() {
-                (
-                    states_transformer
-                        .expr
-                        .iter()
-                        .map(|a| CString::new(a.as_bytes()).unwrap())
-                        .collect::<Vec<CString>>(),
-                    states_transformer.count,
-                )
-            } else {
-                (vec![], 0)
-            };
+        // Pointers alias the vectors owned by `value`, which is boxed just below.
+        // Moving the struct moves the Vec headers but not their heap buffers, so
+        // the addresses stay valid, which is the same contract atol and y0 use.
+        let cost = CostOptionsC {
+            residual_model: value.cost.residual_model,
+            sigma_len: value.cost.sigma.as_ref().map_or(0, |s| s.len() as i32),
+            sigma: value
+                .cost
+                .sigma
+                .as_ref()
+                .map_or(std::ptr::null(), |s| s.as_ptr()),
+            sigma_is_known: i32::from(value.cost.sigma_is_known),
+            sigma_floor: value.cost.sigma_floor,
+            weights_len: value
+                .cost
+                .observed_state_weights
+                .as_ref()
+                .map_or(0, |w| w.len() as i32),
+            weights: value
+                .cost
+                .observed_state_weights
+                .as_ref()
+                .map_or(std::ptr::null(), |w| w.as_ptr()),
+        };
 
-        let obs_exprs_c = obs_exprs
-            .iter()
-            .map(|s| s.as_ptr())
-            .collect::<Vec<*const c_char>>();
-
-        let observables = StatesTransformerC {
-            count: obs_exprs_count,
-            exprs: if obs_exprs_count >= 1 {
-                obs_exprs_c.as_ptr()
-            } else {
-                std::ptr::null()
-            },
+        let fim = FimOptionsC {
+            parameterization: value.fim.parameterization,
+            relative_ridge: value.fim.relative_ridge,
+            rank_tol_factor: value.fim.rank_tol_factor,
+            weak_fraction_threshold: value.fim.weak_fraction_threshold,
         };
 
         let c_config = CuqdynConfigC {
@@ -440,7 +582,10 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             ode_expr,
             time_scaling: value.time_scaling,
             y0,
-            states_transformer: observables,
+            alp: value.alp,
+            uq_method: value.uq_method,
+            cost,
+            fim,
         };
 
         let rs_config = Box::new(value);
@@ -449,32 +594,18 @@ impl From<CuqdynConfigRs> for CuqdynContext {
         let mut ctx = Self {
             c_config,
             model: models::build_default_model(),
-            states_transformer: states_transformers::build_default_states_transformer(),
             rs_config: rs_config_ptr,
             _ode_exprs_vec: ode_exprs,
             _ode_exprs_pointers: ode_exprs_c,
-            _obs_exprs_vec: obs_exprs,
-            _obs_exprs_pointers: obs_exprs_c,
         };
 
         {
             let value = unsafe { &*(rs_config_ptr as *const CuqdynConfigRs) };
 
             let model_name = value.ode_expr().expr().first().map_or("", |v| v);
-            let transformer_name =
-                if let Some(states_transformer) = value.states_transformer().as_ref() {
-                    states_transformer
-                } else {
-                    &StatesTransformer::default()
-                };
-            let transformer = transformer_name.expr().deref().first().map_or("", |v| v);
 
             let model = crate::models::build_model(model_name, value);
-            let states_transformer =
-                crate::states_transformers::build_states_transformer(transformer, value);
-
             ctx.model = model;
-            ctx.states_transformer = states_transformer;
         }
 
         ctx
@@ -486,6 +617,84 @@ mod tests {
     use std::{ffi::CStr, slice};
 
     use super::*;
+
+    #[test]
+    fn enum_options_come_from_element_text() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-6</rtol>
+        <atol>1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="2" p_count="4">
+        lotka-volterra
+    </ode_expr>
+    <uq_method>hybridcov</uq_method>
+    <cost>
+        <residual_model>known_sigma</residual_model>
+    </cost>
+    <fim>
+        <parameterization>natural</parameterization>
+    </fim>
+</cuqdyn-config>
+        "#;
+
+        let config: CuqdynConfigRs = serde_xml_rs::from_str(xml).unwrap();
+
+        assert_eq!(*config.uq_method(), UqMethod::HybridCov);
+        assert_eq!(*config.cost().residual_model(), ResidualModel::KnownSigma);
+        assert_eq!(
+            *config.fim().parameterization(),
+            FimParameterization::Natural
+        );
+    }
+
+    #[test]
+    fn enum_options_default_when_absent() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-6</rtol>
+        <atol>1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="2" p_count="4">
+        lotka-volterra
+    </ode_expr>
+</cuqdyn-config>
+        "#;
+
+        let config: CuqdynConfigRs = serde_xml_rs::from_str(xml).unwrap();
+
+        assert_eq!(*config.uq_method(), UqMethod::Fim);
+        assert_eq!(*config.cost().residual_model(), ResidualModel::None);
+        assert_eq!(*config.fim().parameterization(), FimParameterization::Log);
+    }
+
+    #[test]
+    fn unknown_enum_option_is_an_error() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-6</rtol>
+        <atol>1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="2" p_count="4">
+        lotka-volterra
+    </ode_expr>
+    <uq_method>asd</uq_method>
+</cuqdyn-config>
+        "#;
+
+        let error = serde_xml_rs::from_str::<CuqdynConfigRs>(xml).unwrap_err();
+
+        assert!(
+            error.to_string().contains("asd"),
+            "the message should name the offending value, got: {error}"
+        );
+    }
 
     #[test]
     fn alpha_pinene_config_file_test() {
@@ -545,9 +754,6 @@ mod tests {
     <y0>
         0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
     </y0>
-    <states_transformer count="6">
-        nfkb-example
-    </states_transformer>
 </cuqdyn-config>
         "#;
 
@@ -617,24 +823,6 @@ mod tests {
                 }
             }
 
-            // States transformer
-
-            if c_config.states_transformer.count == 0 {
-                assert!(rs_config.states_transformer().is_none())
-            } else {
-                unsafe {
-                    for (i, e) in slice::from_raw_parts(
-                        c_config.states_transformer.exprs,
-                        c_config.states_transformer.count as usize,
-                    )
-                    .iter()
-                    .map(|p| CStr::from_ptr(*p).to_str().unwrap().to_string())
-                    .enumerate()
-                    {
-                        assert_eq!(e, rs_config.states_transformer().as_ref().unwrap().expr[i])
-                    }
-                }
-            }
         }
     }
 

@@ -1,36 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
+<!-- NF-kB with partial observability: 15 states, 10 of them measured directly.
+     This replaces the old states_transformer setup, where the observables were
+     combinations of states; upstream CUQDyn1_Plus selects states by index. -->
 <cuqdyn-config>
     <tolerances>
         <rtol>1e-6</rtol>
-        <atol>1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6</atol>
+        <atol>1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8</atol>
     </tolerances>
     <ode_expr y_count="15" p_count="29">
-        p20 - p21 * y1 - p17 * y1
-        p17 * y1 - p19 * y2 - p18 * y2 * y8 - p21 * y2 - p2 * y2 * y10 + p3 * y4 - p4 * y2 * y13 + p5 * y5
-        p19 * y2 + p18 * y2 * y8 - p21 * y3
-        p2 * y2 * y10 - p3 * y4
-        p4 * y2 * y13 - p5 * y5
-        p11 * y13 - p1 * y6 * y10 + p5 * y5 - p23 * y6
-        p23 * p22 * y6 - p1 * y11 * y7
-        p15 * y9 - p16 * y8
-        p13 + p12 * y7 - p14 * y9
-        -p2 * y2 * y10 - p1 * y10 * y6 + p9 * y12 - p10 * y10 - p25 * y10 + p26 * y11
-        -p1 * y11 * y7 + p25 * p22 * y10 - p26 * p22 * y11
-        p7 + p6 * y7 - p8 * y12
-        p1 * y10 * y6 - p11 * y13 - p4 * y2 * y13 + p24 * y14
-        p1 * y11 * y7 - p24 * p22 * y14
-        p28 + p27 * y7 - p29 * y15
+        nfkb
     </ode_expr>
-    <y0>
-        0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
-    </y0>
-    <states_transformer count="6">
-        y7
-        y10 + y13
-        y9
-        y1 + y2 + y3
-        y2
-        y12
-    </states_transformer>
+    <alp>0.05</alp>
+    <cost>
+        <residual_model>known_sigma</residual_model>
+        <sigma>
+            0.0009484677802766179, 2.133883904846068e-06, 0.009036182470740797,
+            1.4079926168471676e-06, 3.10782125772412e-06, 0.009547673575538,
+            23.63648744, 0.009547673575538, 0.00303688372, 0.009547673575538
+        </sigma>
+        <sigma_is_known>true</sigma_is_known>
+    </cost>
 </cuqdyn-config>

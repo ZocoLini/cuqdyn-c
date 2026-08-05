@@ -297,6 +297,7 @@ extern "C" {
         N_Vector texp;
         SUNMatrix yexp;
         N_Vector initial_values;
+        int *observed_idx;
     }experiment_total;
 
     typedef struct {

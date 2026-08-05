@@ -18,7 +18,8 @@ int main()
     assert(config->ode_expr.y_count == 1);
     assert(config->ode_expr.p_count == 2);
 
-    char *exp_expr = "p1 * y1 * (1 - y1 / p2)";
+    // States and parameters are indexed from zero, as the evaluator registers them.
+    char *exp_expr = "p0 * y0 * (1 - y0 / p1)";
     int i = 0;
 
     while (exp_expr[i] != '\0') {
@@ -28,9 +29,6 @@ int main()
 
     assert(config->y0.len == 0);
     assert(config->y0.array == NULL);
-
-    assert(config->states_transformer.count == 0);
-    assert(config->states_transformer.exprs == NULL);
 
     destroy_cuqdyn_context(context);
 

@@ -1,0 +1,28 @@
+% lotka-volterra model (2 species) where only the first species is observed
+% initial conditions as known and fixed for both states
+% estimation problem: find the parameters that better explain the data
+% measurements only for state 1 (state 2 is unobserved)
+
+nstates = 2; 
+n_params = 4;
+true_parameters = [0.5,0.02,0.02,0.5];
+guess_params = true_parameters*0.8;
+lb_params = true_parameters*0.2; % lower bounds
+ub_params = true_parameters*2.0; % upper bounds
+
+% partially observed data set
+dataDir = 'Data';
+data_file_name = 'lv2_synthetic_data_noi10_partobs_1.csv';
+% this file contains times in the first column, first state in the second column, second state in third column.
+% initial conditions are the values of the states in the first raw (that is, at time 0.0)
+% the second state (third row) contains NaNs for the rest of the times, indicating non-observed
+
+% the dynamics are declared in the following function:
+% Function of the dynamic system
+% Simple Lotka-Volterra model with 2 species
+function dy=prob_mod_dynamics_LV(t,y,p)
+dy=zeros(2,1); %Initialize the state variables
+dy(1)=(p(1)-p(2)*y(2))*y(1);
+dy(2)=(p(3)*y(1)-p(4))*y(2);
+return
+

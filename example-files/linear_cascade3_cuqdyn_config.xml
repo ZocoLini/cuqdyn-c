@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- Three-state linear cascade with only the downstream state measured:
+     y2 is observed, y0 and y1 stay hidden. Two hidden states downstream of a
+     single measurement makes this the stress test for the delta-method path. -->
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-7</rtol>
+        <atol>1e-9, 1e-9, 1e-9</atol>
+    </tolerances>
+    <ode_expr y_count="3" p_count="3">
+        0 - p0 * y0
+        p0 * y0 - p1 * y1
+        p1 * y1 - p2 * y2
+    </ode_expr>
+    <y0>
+        10, 0, 0
+    </y0>
+    <alp>0.025</alp>
+    <cost>
+        <residual_model>known_sigma</residual_model>
+        <sigma>0.286526506526479</sigma>
+        <sigma_is_known>true</sigma_is_known>
+    </cost>
+</cuqdyn-config>

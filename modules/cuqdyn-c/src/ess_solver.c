@@ -19,7 +19,7 @@
 #endif
 
 N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, SUNMatrix yexp,
-                            N_Vector initial_condition, N_Vector initial_params)
+                            N_Vector initial_condition, N_Vector initial_params, int *observed_idx)
 {
     int error, NPROC_OPENMP;
     experiment_total *exptotal;
@@ -105,7 +105,10 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
         }
     }
 
-    execute_Solver(exptotal, &result, obj_func2);
+    // The objective compares only the measured states.
+    exptotal[0].observed_idx = observed_idx;
+
+    execute_Solver(exptotal, &result, obj_func);
 
     N_Vector predicted_params = New_Serial(exptotal[0].test.bench.dim);
     destroyexp(exptotal);

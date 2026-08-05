@@ -1,6 +1,12 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/*
+ * These structs mirror the #[repr(C)] definitions in cuqdyn-rs/src/context.rs
+ * field for field. A change here needs the same change there; the layout is
+ * exercised by comparing_rs_struct_to_c_struct_test on the Rust side.
+ */
+
 typedef struct
 {
     double rtol;
@@ -22,11 +28,41 @@ typedef struct
     double *array;
 } Y0;
 
+/// Residual error model, mirroring cuqdyn_weight_residuals.m.
+typedef enum
+{
+    RESIDUAL_MODEL_NONE = 0,
+    RESIDUAL_MODEL_KNOWN_SIGMA = 1,
+    RESIDUAL_MODEL_STATE_WEIGHTS = 2,
+} ResidualModel;
+
 typedef struct
 {
-    int count;
-    char **exprs;
-} StatesTransformer;
+    int residual_model;
+    int sigma_len;
+    double *sigma;
+    /// When set, residuals are already standardized and the FIM variance scale is 1.
+    int sigma_is_known;
+    double sigma_floor;
+    int weights_len;
+    double *weights;
+} CostOptions;
+
+typedef struct
+{
+    /// 0 = natural parameters, 1 = log parameters.
+    int parameterization;
+    double relative_ridge;
+    double rank_tol_factor;
+    double weak_fraction_threshold;
+} FimConfigOptions;
+
+/// How the hidden states get their covariance.
+typedef enum
+{
+    UQ_METHOD_FIM = 0,
+    UQ_METHOD_HYBRIDCOV = 1,
+} UqMethod;
 
 typedef struct
 {
@@ -34,7 +70,12 @@ typedef struct
     OdeExpr ode_expr;
     double time_scaling;
     Y0 y0;
-    StatesTransformer states_transformer;
+    /// Predictive region level; bands are nominally 1 - 2*alp.
+    double alp;
+    /// 0 = FIM covariance, 1 = hybrid FIM scale with LOO correlation.
+    int uq_method;
+    CostOptions cost;
+    FimConfigOptions fim;
 } CuqdynConf;
 
 typedef void *CuqDynContext;

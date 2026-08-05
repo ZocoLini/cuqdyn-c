@@ -6,10 +6,28 @@
 
 #include "cuqdyn.h"
 
-/* This function wich type of data file is being read (.txt or .mat) and
- * calls the appropriate function to read it.
+/*
+ * Observed data plus the observability pattern.
+ *
+ * Measured states get distribution-free conformal bands and the rest get
+ * Gaussian delta-method ones, so every stage downstream needs to know which is
+ * which. Matrices follow the transposed convention used across the library:
+ * rows are states, columns are time points.
  */
-int read_data_file(const char *data_file, N_Vector *t, ObservedData *y);
+typedef struct
+{
+    N_Vector times;              // length m
+    ObservedData all_state_data; // n_states x m, NaN where a state is unmeasured
+    ObservedData observed_data;  // n_obs x m, the measured rows only
+    N_Vector initial_values;     // length n_states, finite for every state
+
+    int *observed_idx; // 0-based state indices, ascending, length n_obs
+    int n_obs;
+    long n_states;
+    long m;
+} CuqdynData;
+
+void destroy_cuqdyn_data(CuqdynData *data);
 
 /*
  * The file should be two ints, m and n, and a matrix mxn
@@ -23,15 +41,14 @@ int read_data_file(const char *data_file, N_Vector *t, ObservedData *y);
  *      .                   .
  *      tm ym0 ym1 ym2 ... ymn
  *
- * The time vector is the first column of the matrix [t0, t1, t2, ..., tm]
- * The y matrix is the entire matrix skipping the first column
- *      y00 y01 y02 ... y0n
- *      y10 y11 y12 ... y1n
- *      .                .
- *      .                .
- *      .                .
- *      ym0 ym1 ym2 ... ymn
+ * The time vector is the first column of the matrix [t0, t1, t2, ..., tm] and
+ * every column after it is a model state, in order: y1, y2, ... yn.
+ *
+ * A state that is never measured carries NaN from t > 0 onwards. That is the
+ * only thing that marks a state as unobserved; a file without NaN is fully
+ * observed. Row 1 must be finite for every state, hidden ones included, since
+ * it is the initial condition.
  */
-int read_txt_data_file(const char *data_file, N_Vector *t, ObservedData *y);
+int read_data_file(const char *data_file, CuqdynData *data);
 
 #endif // FILE_READER_H

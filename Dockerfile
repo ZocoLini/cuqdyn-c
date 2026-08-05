@@ -13,6 +13,7 @@ RUN apt-get update && \
     cmake \
     gdb \
     libpapi-dev papi-tools \
+    libgsl-dev \
     gfortran && \
     rm -rf /var/lib/apt/lists/*
 

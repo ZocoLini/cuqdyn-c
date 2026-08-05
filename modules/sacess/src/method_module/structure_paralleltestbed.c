@@ -140,6 +140,7 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
     exptotal->texp = texp;
     exptotal->yexp = yexp;
     exptotal->initial_values = initial_values;
+    exptotal->observed_idx = NULL;
 
     exptotal->execution.idp = id;
     exptotal->execution.NPROC = NPROC;

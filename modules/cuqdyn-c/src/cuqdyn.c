@@ -9,9 +9,9 @@
 #include <string.h>
 
 #include "config.h"
+#include "uq_bands.h"
 #include "matlab.h"
 #include "ode_solver.h"
-#include "states_transformer.h"
 #include "sunmatrix/sunmatrix_dense.h"
 #ifdef MPI
 #include <mpi.h>
@@ -29,25 +29,34 @@ SUNContext get_sundials_ctx()
     return ctx;
 }
 
-CuqdynResult *create_cuqdyn_result(SUNMatrix predicted_data_median, N_Vector predicted_params_median, SUNMatrix q_low,
-                                   SUNMatrix q_up, N_Vector times)
+CuqdynResult *create_cuqdyn_result(void)
 {
-    CuqdynResult *cuqdyn_result = malloc(sizeof(CuqdynResult));
-    cuqdyn_result->predicted_data_median = predicted_data_median;
-    cuqdyn_result->predicted_params_median = predicted_params_median;
-    cuqdyn_result->q_low = q_low;
-    cuqdyn_result->q_up = q_up;
-    cuqdyn_result->times = times;
-    return cuqdyn_result;
+    // Zeroed, so a field the caller does not set is NULL rather than garbage.
+    return calloc(1, sizeof(CuqdynResult));
 }
 void destroy_cuqdyn_result(CuqdynResult *result)
 {
+    if (result == NULL)
+    {
+        return;
+    }
+
     SUNMatDestroy(result->predicted_data_median);
     SUNMatDestroy(result->q_low);
     SUNMatDestroy(result->q_up);
+    SUNMatDestroy(result->media_tot);
+    SUNMatDestroy(result->cov_p);
+    SUNMatDestroy(result->std_y);
+    SUNMatDestroy(result->q_low_alt);
+    SUNMatDestroy(result->q_up_alt);
+    SUNMatDestroy(result->loo_params);
+    SUNMatDestroy(result->resid_loo);
 
     N_VDestroy(result->predicted_params_median);
     N_VDestroy(result->times);
+    N_VDestroy(result->parameters_init);
+
+    free(result->observed_idx);
     free(result);
 }
 
@@ -65,28 +74,35 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 #endif
     CuqdynConf *config = get_cuqdyn_conf(get_cuqdyn_context());
 
-    N_Vector times = NULL;
-    TransposedObservedData observed_data = NULL;
-
-    if (read_data_file(data_file, &times, &observed_data) != 0)
+    CuqdynData data;
+    if (read_data_file(data_file, &data) != 0)
     {
         fprintf(stderr, "Error reading data file: %s\n", data_file);
         exit(1);
     }
 
+    N_Vector times = data.times;
+    TransposedObservedData observed_data = data.observed_data;
+    const int n_obs = data.n_obs;
+    const long n_states = config->ode_expr.y_count;
+
     N_Vector scaled_times = N_VNew_Serial(NV_LENGTH_S(times), get_sundials_ctx());
-    
-    for (int i = 0; i < NV_LENGTH_S(times); ++i) 
+
+    for (int i = 0; i < NV_LENGTH_S(times); ++i)
     {
         NV_Ith_S(scaled_times, i) = NV_Ith_S(times, i) * config->time_scaling;
     }
-    
+
     const sunrealtype t0 = NV_Ith_S(scaled_times, 0);
     N_Vector initial_condition = NULL;
 
     if (config->y0.len == 0)
     {
-        initial_condition = copy_matrix_column(observed_data, 0, 0, SM_ROWS_D(observed_data));
+        // Row 1 of the data file carries a finite value for every state,
+        // hidden ones included, so it is the full initial condition.
+        initial_condition = New_Serial(NV_LENGTH_S(data.initial_values));
+        memcpy(NV_DATA_S(initial_condition), NV_DATA_S(data.initial_values),
+               NV_LENGTH_S(data.initial_values) * sizeof(sunrealtype));
     }
     else
     {
@@ -94,8 +110,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         memcpy(NV_DATA_S(initial_condition), config->y0.array, config->y0.len * sizeof(sunrealtype));
     }
 
-    // Note: observed_data is a transposed matrix so the rows of the transposed 
-    // matrix are the columns of the original matrix
+    // observed_data is transposed: rows are measured states, columns time points
     const long n = SM_ROWS_D(observed_data);
     const long m = SM_COLUMNS_D(observed_data);
 
@@ -107,7 +122,10 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     if (rank == 0)
     {
         resid_loo = NewDenseMatrix(m, n);
-        predicted_params_matrix = NewDenseMatrix(m, config->ode_expr.p_count);
+        // One row per leave-one-out refit. It used to have m rows with the
+        // first left at zero, which dragged the median and would wreck the
+        // covariance the hybrid method takes from this ensemble.
+        predicted_params_matrix = NewDenseMatrix(m - 1, config->ode_expr.p_count);
 
         N_Vector texp = copy_vector_remove_indices(scaled_times, create_array((long[]){}, 0));
         SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]){}, 0));
@@ -115,10 +133,25 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
 
         N_Vector predicted_params =
-                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, NULL);
+                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, NULL,
+                                   data.observed_idx);
+
+        // The solver dimension comes from the sacess config while p_count comes
+        // from the cuqdyn config. A mismatch used to overflow initial_params.
+        if (NV_LENGTH_S(predicted_params) != NV_LENGTH_S(initial_params))
+        {
+            fprintf(stderr,
+                    "ERROR: the sacess config declares %ld decision variables but the cuqdyn config declares "
+                    "p_count=%ld. They must match.\n",
+                    NV_LENGTH_S(predicted_params), NV_LENGTH_S(initial_params));
+            N_VDestroy(predicted_params);
+            destroy_cuqdyn_data(&data);
+            return NULL;
+        }
 
         memcpy(NV_DATA_S(initial_params), NV_DATA_S(predicted_params),
                NV_LENGTH_S(predicted_params) * sizeof(sunrealtype));
+
         N_VDestroy(predicted_params);
     }
 
@@ -131,11 +164,25 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     long min_iters_per_node = (long) ((m - 1) / (long) nproc);
     long remainder = (m - 1) % (long) nproc;
 
-    // Only iterates over every column if the number of processes is a divisor of m - 1
-    if (remainder != 0 && rank == 0)
+    // The leave-one-out points are split evenly, so the process count has to
+    // divide m - 1. Every rank has to bail, not just the one that reports it:
+    // if the others carried on they would block on sends nobody receives.
+    if (remainder != 0)
     {
-        fprintf(stderr, "Number of processes is not a divisor of m - 1. Please use a number of processes that is a "
-                        "divisor of m - 1\n");
+        if (rank == 0)
+        {
+            fprintf(stderr,
+                    "ERROR: %d processes do not divide m - 1 = %ld. Use a process count that divides it.\n", nproc,
+                    m - 1);
+        }
+
+        N_VDestroy(initial_condition);
+        N_VDestroy(scaled_times);
+        N_VDestroy(initial_params);
+        destroy_matrix_array(media_matrix);
+        SUNMatDestroy(resid_loo);
+        SUNMatDestroy(predicted_params_matrix);
+        destroy_cuqdyn_data(&data);
         return NULL;
     }
     iterations = min_iters_per_node;
@@ -159,16 +206,17 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
 
         N_Vector predicted_params =
-                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params);
+                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params,
+                                   data.observed_idx);
 
         // Saving the ode solution data obtained with the predicted params
-        TransposedStates ode_solution_states = solve_ode(predicted_params, initial_condition, t0, scaled_times);
-        ObservablesTransposedStates predicted_obs_states = transform_states(ode_solution_states);
+        TransposedStates predicted_obs_states = solve_ode(predicted_params, initial_condition, t0, scaled_times);
 
-        for (int j = 0; j < n; ++j)
+        for (int j = 0; j < n_obs; ++j)
         {
-            sunrealtype observed = SM_ELEMENT_D(observed_data, j, i);
-            sunrealtype predicted = SM_ELEMENT_D(predicted_obs_states, j, i);
+            const long state = data.observed_idx[j];
+            const sunrealtype observed = SM_ELEMENT_D(observed_data, j, i);
+            const sunrealtype predicted = SM_ELEMENT_D(predicted_obs_states, state, i);
 
             NV_Ith_S(residuals, j) = fabs(observed - predicted);
         }
@@ -193,7 +241,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 #endif
             set_matrix_row(resid_loo, residuals, i, 0, NV_LENGTH_S(residuals));
             matrix_array_set_index(media_matrix, i - 1, predicted_obs_states);
-            set_matrix_row(predicted_params_matrix, predicted_params, i, 0, NV_LENGTH_S(predicted_params));
+            set_matrix_row(predicted_params_matrix, predicted_params, i - 1, 0, NV_LENGTH_S(predicted_params));
 #ifdef MPI
             // Receiving
             long slaved_index;
@@ -214,7 +262,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                 // Receiving the predicted params
                 MPI_Recv(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, slave, 3,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                set_matrix_row(predicted_params_matrix, predicted_params, slaved_index, 0,
+                set_matrix_row(predicted_params_matrix, predicted_params, slaved_index - 1, 0,
                                NV_LENGTH_S(predicted_params));
             }
         }
@@ -237,7 +285,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     if (rank != 0)
     {
         N_VDestroy(initial_condition);
-        SUNMatDestroy(observed_data);
+        N_VDestroy(scaled_times);
+        destroy_cuqdyn_data(&data);
         return NULL;
     }
 
@@ -250,53 +299,66 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         NV_Ith_S(predicted_params_median, i) = NV_Ith_S(predicted_params_median, i) * config->time_scaling;
     }
     
-    double alp = 0.05;
+    const double alp = config->alp;
 
-    SUNMatrix q_low = NewDenseMatrix(m, n);
-    SUNMatrix q_up = NewDenseMatrix(m, n);
+    // Bands cover every state, not just the measured ones.
+    SUNMatrix q_low = NewDenseMatrix(m, n_states);
+    SUNMatrix q_up = NewDenseMatrix(m, n_states);
 
-    for (int i = 0; i < n; ++i)
+    for (long k = 0; k < n_states; ++k)
     {
-        SM_ELEMENT_D(q_low, 0, i) = NV_Ith_S(initial_condition, i);
-        SM_ELEMENT_D(q_up, 0, i) = NV_Ith_S(initial_condition, i);
+        SM_ELEMENT_D(q_low, 0, k) = NV_Ith_S(initial_condition, k);
+        SM_ELEMENT_D(q_up, 0, k) = NV_Ith_S(initial_condition, k);
     }
 
-    MatrixArray m_low = create_matrix_array(m - 1);
-    MatrixArray m_up = create_matrix_array(m - 1);
+    conformal_bands(media_matrix, resid_loo, data.observed_idx, n_obs, alp, q_low, q_up);
 
-    for (int i = 0; i < m - 1; ++i)
+    /* ---- Delta-method bands for the hidden states ---------------------- */
+    SUNMatrix cov_p = NULL;
+    SUNMatrix std_y = NULL;
+    SUNMatrix q_low_alt = NULL;
+    SUNMatrix q_up_alt = NULL;
+    TransposedStates media_tot = solve_ode(initial_params, initial_condition, t0, scaled_times);
+
+    if (media_tot == NULL)
     {
-        matrix_array_set_index(m_low, i, NewDenseMatrix(m, n));
-        matrix_array_set_index(m_up, i, NewDenseMatrix(m, n));
+        fprintf(stderr, "ERROR: could not solve the ODE at the best-fit parameters\n");
+    }
+    else if (delta_method_bands(initial_params, initial_condition, t0, scaled_times, media_tot, observed_data,
+                                data.observed_idx, n_obs, predicted_params_matrix, q_low, q_up, &cov_p, &std_y,
+                                &q_low_alt, &q_up_alt) != 0)
+    {
+        fprintf(stderr, "ERROR: could not propagate the parameter covariance\n");
     }
 
-    for (int j = 0; j < n; ++j)
-    {
-        for (int i = 1; i < m; ++i)
-        {
-            for (int k = 1; k < m; ++k)
-            {
-                SM_ELEMENT_D(matrix_array_get_index(m_low, k - 1), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), j, i) - SM_ELEMENT_D(resid_loo, k, j);
-
-                SM_ELEMENT_D(matrix_array_get_index(m_up, k - 1), i, j) =
-                        SM_ELEMENT_D(matrix_array_get_index(media_matrix, k - 1), j, i) + SM_ELEMENT_D(resid_loo, k, j);
-            }
-
-            SM_ELEMENT_D(q_low, i, j) = quantile(matrix_array_depth_vector_at(m_low, i, j), alp);
-            SM_ELEMENT_D(q_up, i, j) = quantile(matrix_array_depth_vector_at(m_up, i, j), 1 - alp);
-        }
-    }
-
-    destroy_matrix_array(m_low);
-    destroy_matrix_array(m_up);
     destroy_matrix_array(media_matrix);
     N_VDestroy(initial_condition);
-    SUNMatDestroy(observed_data);
-    SUNMatDestroy(resid_loo);
-    SUNMatDestroy(predicted_params_matrix);
 
-    CuqdynResult *result = create_cuqdyn_result(predicted_data_median, predicted_params_median, q_low, q_up, times);
+    CuqdynResult *result = create_cuqdyn_result();
+
+    result->predicted_data_median = predicted_data_median;
+    result->predicted_params_median = predicted_params_median;
+    result->q_low = q_low;
+    result->q_up = q_up;
+    result->q_low_alt = q_low_alt;
+    result->q_up_alt = q_up_alt;
+    result->media_tot = media_tot;
+    result->parameters_init = initial_params;
+    result->cov_p = cov_p;
+    result->std_y = std_y;
+    result->loo_params = predicted_params_matrix;
+    result->resid_loo = resid_loo;
+    result->n_obs = n_obs;
+    result->n_states = n_states;
+
+    result->times = New_Serial(NV_LENGTH_S(times));
+    memcpy(NV_DATA_S(result->times), NV_DATA_S(times), NV_LENGTH_S(times) * sizeof(sunrealtype));
+
+    result->observed_idx = malloc(n_obs * sizeof(int));
+    memcpy(result->observed_idx, data.observed_idx, n_obs * sizeof(int));
+
+    N_VDestroy(scaled_times);
+    destroy_cuqdyn_data(&data);
 
     return result;
 }
@@ -337,10 +399,7 @@ void destroy_matrix_array(MatrixArray array)
 
     for (int i = 0; i < array.len; ++i)
     {
-        if (array.data[i] != NULL)
-        {
-            SUNMatDestroy(array.data[i]);
-        }
+        SUNMatDestroy(array.data[i]);
     }
 
     free(array.data);

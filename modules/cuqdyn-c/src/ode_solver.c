@@ -15,46 +15,62 @@
 static int check_retval(void *, const char *, int);
 
 
+/*
+ * Solves the ODE at the given parameters.
+ *
+ * Every allocation is released on every path. This matters more than it looks:
+ * solve_ode runs once per objective evaluation, so a single leaked dense matrix
+ * per call is millions of them over a full run, which is enough to exhaust
+ * memory on the larger models.
+ */
 TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times)
 {
     CuqdynConf *cuqdyn_conf = get_cuqdyn_conf(get_cuqdyn_context());
     Tolerances tolerances = cuqdyn_conf->tolerances;
 
     int retval;
-    void *cvode_mem = CVodeCreate(CV_BDF, get_sundials_ctx());
+    void *cvode_mem = NULL;
+    SUNMatrix A = NULL;
+    SUNLinearSolver LS = NULL;
+    N_Vector yout = NULL;
+    N_Vector cloned_abs_tol = NULL;
+    TransposedStates result = NULL;
+    int failed = 1;
+
+    cvode_mem = CVodeCreate(CV_BDF, get_sundials_ctx());
     if (check_retval((void *) cvode_mem, "CVodeCreate", 0))
     {
-        return NULL;
+        goto cleanup;
     }
 
     retval = CVodeInit(cvode_mem, ode_model_fun, t0, initial_values);
     if (check_retval(&retval, "CVodeInit", 1))
     {
-        return NULL;
+        goto cleanup;
     }
 
-    N_Vector cloned_abs_tol = New_Serial(tolerances.atol_len);
+    cloned_abs_tol = New_Serial(tolerances.atol_len);
     memcpy(NV_DATA_S(cloned_abs_tol), tolerances.atol, tolerances.atol_len * sizeof(sunrealtype));
 
     // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
     retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, cloned_abs_tol);
     if (check_retval(&retval, "CVodeSVtolerances", 1))
     {
-        return NULL;
+        goto cleanup;
     }
 
     retval = CVodeSetUserData(cvode_mem, parameters);
     if (check_retval(&retval, "CVodeSetUserData", 1))
     {
-        return NULL;
+        goto cleanup;
     }
 
-    SUNMatrix A = NewDenseMatrix(cuqdyn_conf->ode_expr.y_count, cuqdyn_conf->ode_expr.y_count);
-    SUNLinearSolver LS = SUNLinSol_Dense(initial_values, A, get_sundials_ctx());
+    A = NewDenseMatrix(cuqdyn_conf->ode_expr.y_count, cuqdyn_conf->ode_expr.y_count);
+    LS = SUNLinSol_Dense(initial_values, A, get_sundials_ctx());
     retval = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (check_retval(&retval, "CVodeSetLinearSolver", 1))
     {
-        return NULL;
+        goto cleanup;
     }
     
     char *min_step_s = getenv("CUQDYN_CVODES_MIN_STEP");
@@ -64,7 +80,7 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
         retval = CVodeSetMinStep(cvode_mem, min_step);
         if (check_retval(&retval, "CVodeSetMinStep", 1))
         {
-            return NULL;
+            goto cleanup;
         }
     }
     
@@ -75,22 +91,22 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
         retval = CVodeSetMaxNumSteps(cvode_mem, max_num_steps);
         if (check_retval(&retval, "CVodeSetMaxNumSteps", 1))
         {
-            return NULL;
+            goto cleanup;
         }
     }
     
     retval = CVodeSetMaxNumSteps(cvode_mem, 1000000);
     if (check_retval(&retval, "CVodeSetMaxNumSteps", 1))
     {
-        return NULL;
+        goto cleanup;
     }
 
     /* Time points */
     sunrealtype t;
 
-    N_Vector yout = New_Serial(NV_LENGTH_S(initial_values));
-    int result_rows = cuqdyn_conf->ode_expr.y_count;
-    TransposedStates result = NewDenseMatrix(result_rows, NV_LENGTH_S(times));
+    yout = New_Serial(NV_LENGTH_S(initial_values));
+    const int result_rows = cuqdyn_conf->ode_expr.y_count;
+    result = NewDenseMatrix(result_rows, NV_LENGTH_S(times));
 
     for (int i = 0; i < NV_LENGTH_S(times); ++i)
     {
@@ -107,14 +123,35 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
 
         if (check_retval(&retval, "CVode", 1))
         {
-            return NULL;
+            goto cleanup;
         }
 
         memcpy(SM_COLUMN_D(result, i), NV_DATA_S(yout), NV_LENGTH_S(yout) * sizeof(sunrealtype));
     }
 
+    failed = 0;
+
+cleanup:
     N_VDestroy(yout);
-    CVodeFree(&cvode_mem);
+
+    if (cvode_mem != NULL)
+    {
+        // CVodeFree also releases the tolerance vector it was handed.
+        CVodeFree(&cvode_mem);
+    }
+    else
+    {
+        N_VDestroy(cloned_abs_tol);
+    }
+
+    SUNLinSolFree(LS);
+    SUNMatDestroy(A);
+
+    if (failed && result != NULL)
+    {
+        SUNMatDestroy(result);
+        result = NULL;
+    }
 
     return result;
 }

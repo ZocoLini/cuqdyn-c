@@ -21,7 +21,15 @@ typedef SUNMatrix TransposedObservedData;
 
 SUNContext get_sundials_ctx();
 
-/// Result of the cuqdyn algorithm
+/*
+ * Result of the CUQDyn1_Plus algorithm.
+ *
+ * q_low/q_up hold the prediction bands for every state. Observed states get
+ * distribution-free conformal bands from the leave-one-out ensemble; states
+ * that are never measured get Gaussian delta-method bands propagated from the
+ * parameter covariance. When every state is observed the Gaussian branch is
+ * skipped entirely and the result matches the original CUQDyn1.
+ */
 typedef struct
 {
     TransposedStates predicted_data_median;
@@ -29,10 +37,31 @@ typedef struct
     SUNMatrix q_low;
     SUNMatrix q_up;
     N_Vector times;
+
+    /// Best-fit trajectory from the full-data fit, n_states x m.
+    TransposedStates media_tot;
+    /// Best-fit parameters from the full-data fit.
+    N_Vector parameters_init;
+    /// Parameter covariance in natural units, or NULL when every state is observed.
+    SUNMatrix cov_p;
+    /// Delta-method standard deviations, n_states x m, or NULL as above.
+    SUNMatrix std_y;
+    /// Plain FIM bands, filled only when the hybrid covariance was used, so the
+    /// two can be compared. NULL otherwise.
+    SUNMatrix q_low_alt;
+    SUNMatrix q_up_alt;
+    /// Leave-one-out parameter estimates, (m-1) x n_params.
+    SUNMatrix loo_params;
+    /// Held-out absolute residuals, (m-1) x n_obs.
+    SUNMatrix resid_loo;
+
+    /// 0-based indices of the measured states, length n_obs.
+    int *observed_idx;
+    int n_obs;
+    long n_states;
 } CuqdynResult;
 
-CuqdynResult *create_cuqdyn_result(TransposedStates predicted_data_median, N_Vector predicted_params_median,
-                                   SUNMatrix q_low, SUNMatrix q_up, N_Vector times);
+CuqdynResult *create_cuqdyn_result(void);
 void destroy_cuqdyn_result(CuqdynResult *result);
 CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file);
 

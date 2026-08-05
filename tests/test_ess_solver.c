@@ -11,6 +11,7 @@
 
 #define OUPUT_PATH "ess_output"
 
+#include <assert.h>
 #include <config.h>
 #include <cuqdyn.h>
 #include <stdio.h>
@@ -60,14 +61,14 @@ void lotka_volterra_ess(char *conf_file)
 
     sunrealtype expected_values[4] = {0.5, 0.02, 0.5, 0.02};
 
-    N_Vector texp = NULL;
-    SUNMatrix yexp = NULL;
+    CuqdynData data;
+    assert(read_data_file(LOTKA_VOLTERRA_DATA, &data) == 0);
 
-    read_data_file(LOTKA_VOLTERRA_DATA, &texp, &yexp);
-
+    N_Vector texp = data.times;
+    SUNMatrix yexp = data.observed_data;
     N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL, data.observed_idx);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -86,14 +87,14 @@ void alpha_pinene_ess(char *conf_file)
 
     sunrealtype expected_values[5] = {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5};
 
-    N_Vector texp = NULL;
-    SUNMatrix yexp = NULL;
+    CuqdynData data;
+    assert(read_data_file(ALPHA_PINENE_DATA, &data) == 0);
 
-    read_data_file(ALPHA_PINENE_DATA, &texp, &yexp);
-
+    N_Vector texp = data.times;
+    SUNMatrix yexp = data.observed_data;
     N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL, data.observed_idx);
 
     for (int i = 0; i < 5; ++i)
     {
@@ -112,14 +113,14 @@ void logistic_model_ess(char *conf_file)
 
     sunrealtype expected_values[2] = {0.1, 102};
 
-    N_Vector texp = NULL;
-    SUNMatrix yexp = NULL;
+    CuqdynData data;
+    assert(read_data_file(LOGISTIC_MODEL_DATA, &data) == 0);
 
-    read_data_file(LOGISTIC_MODEL_DATA, &texp, &yexp);
-
+    N_Vector texp = data.times;
+    SUNMatrix yexp = data.observed_data;
     N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
 
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL);
+    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL, data.observed_idx);
 
     for (int i = 0; i < 2; ++i)
     {

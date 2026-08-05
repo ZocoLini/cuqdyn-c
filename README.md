@@ -1,9 +1,11 @@
 # Uncertainty Quantification in Dynamic Models of Biological Systems Using Conformal Prediction
 
-This project is a transpilation of the Matlab project defined in this [paper](https://zenodo.org/records/13838652).
+This project is a transpilation of the Matlab project defined in this [paper](https://zenodo.org/records/13838652),
+extended with the **CUQDyn1_Plus** method for partially observed systems.
 
 ## Index
 
+- [Partial observability](#partial-observability)
 - [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
 - [ENV Vars](#env-vars)
@@ -11,6 +13,51 @@ This project is a transpilation of the Matlab project defined in this [paper](ht
 - [Using the CLI](#using-the-cli)
 - [Input files](#input-files)
 - [Defining a new model](#defining-a-new-model)
+
+## Partial observability
+
+The algorithm builds prediction bands two different ways depending on whether a
+state is measured:
+
+| State | Method | Basis |
+|---|---|---|
+| **Observed** | Conformal prediction over the leave-one-out ensemble | Distribution-free under exchangeability |
+| **Unobserved** | Delta method through the parameter covariance | Linearised error propagation |
+
+The unobserved states can take their covariance two ways, selected with
+`<uq_method>`:
+
+| `uq_method` | Covariance | Upstream equivalent |
+|---|---|---|
+| `fim` (default) | Rank-aware FIM / Gauss-Newton | `CUQDyn1_Plus` |
+| `hybridcov` | `D_FIM . R_LOO . D_FIM` — FIM marginal scale, correlation from the LOO ensemble | `CUQDyn1_Plus_HybridCov` |
+
+Observability is inferred from the data file: a state is unmeasured when its
+column is `NaN` after `t = 0`. A state is either measured at every point after
+`t = 0` or at none of them — the format cannot express a gap, and a column that
+mixes `NaN` with values is rejected rather than silently treated as unobserved.
+
+The same code path handles both cases; nothing branches on observability.
+**With every state observed the bands are exactly the original CUQDyn1**, since
+conformal prediction covers every state and the delta method has nothing left to
+write. The parameter covariance is still computed and reported (`CovP`, `StdY`),
+so existing `.txt` inputs keep their bands and gain the FIM diagnostics.
+
+Trajectory sensitivities come from CVODES forward sensitivity analysis
+(`CVodeSensInit`), which replaces the complex-step differentiation used by the
+Matlab toolbox — CVODES cannot integrate in complex arithmetic, but it computes
+`dy/dtheta` natively in a single augmented integration.
+
+Two ready-to-run partially observed examples ship in `example-files/`:
+`linear_cascade` (2 states, downstream one measured) and `lv2_partobs`
+(Lotka-Volterra with the prey measured and the predator hidden). See
+[Using the CLI](#using-the-cli).
+
+> **Note on the optimiser budget.** The conformal bands come from the LOO
+> ensemble and tolerate a mediocre global fit; the delta-method bands are
+> anchored at `parameters_init` and inherit its error directly. If the bands for
+> a hidden state look implausibly wide, raise `<maxevaluation>` in the eSS config
+> before suspecting anything else.
 
 ## Project Structure
 
@@ -114,6 +161,64 @@ VARIANT=serial
     -o output/
 ```
 
+The two examples below are **partially observed**: one state is measured and the
+other never is, so they exercise both band types. Their data files are `.txt`
+with `NaN` in the columns of the states that are never measured.
+
+```bash
+mkdir -p output/linear-cascade
+VARIANT=serial
+./build-${VARIANT}/modules/cli/cli solve \
+    -c example-files/linear_cascade_cuqdyn_config.xml \
+    -s example-files/linear_cascade_ess_${VARIANT}_config.xml \
+    -d example-files/linear_cascade_paper_data.txt \
+    -o output/linear-cascade/
+```
+
+```bash
+mkdir -p output/lotka-volterra
+VARIANT=serial
+./build-${VARIANT}/modules/cli/cli solve \
+    -c example-files/lv2_partobs_cuqdyn_config.xml \
+    -s example-files/lv2_partobs_ess_${VARIANT}_config.xml \
+    -d example-files/lv2_partobs_paper_data.txt \
+    -o output/lotka-volterra/
+```
+
+NF-kB is the largest case: 15 states, 29 parameters, 10 of the states measured.
+
+```bash
+mkdir -p output/nfkb
+VARIANT=serial
+./build-${VARIANT}/modules/cli/cli solve \
+    -c example-files/nfkb_cuqdyn_config.xml \
+    -s example-files/nfkb_ess_${VARIANT}_config.xml \
+    -d example-files/nfkb_paper_data.txt \
+    -o output/nfkb/
+```
+
+Its FIM is close to singular (`cond(J) ~ 6e8`), so its hidden-state bands should
+be read together with the reported rank and condition number rather than taken at
+face value.
+
+Both print which states were observed and a one-line FIM summary:
+
+```
+Observed 1 of 2 states; hidden states use FIM delta-method bands
+FIM: rank 4/4, condition number 7.050e+01, ridge 9.803e-08, sigma2 1
+```
+
+Everything above also runs inside the container:
+
+```bash
+docker compose up -d
+docker compose exec cuqdyn_c ./build-serial/modules/cli/cli solve \
+    -c example-files/lv2_partobs_cuqdyn_config.xml \
+    -s example-files/lv2_partobs_ess_serial_config.xml \
+    -d example-files/lv2_partobs_paper_data.txt \
+    -o output/lotka-volterra/
+```
+
 After this, the file `output/cuqdyn-results.txt` contains the results of the algorithm but reading it as a plain text is not very useful. To fix this, you can run: (Needs python3 and matplotlib installed)
 
 ```bash
@@ -122,7 +227,7 @@ python3 plot.py output/cuqdyn-results.txt
 
 Note: Be carefull when executing with `mpirun`, the number of precesses must be divisor of m - 1, where m is the number of rows in the input data matrix.
 
-This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example).
+This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example). Each panel is labelled with the band type it carries, conformal or delta/FIM, and coloured accordingly.
 
 To get information about all the options the cli supports, you can run the following command:
 
@@ -151,9 +256,47 @@ There are three types of input files that must be provided:
   - **ode_expr:** ODE model expression or identifier.
   - **time_scaling:** Scaling factor for time. Using lower than 1 helps cvodes speed. You may have to increase the number of sacess maxevals. The sacess lb, up, and point constraints also get scaled. The same for the params median written in the output file. Params that are dividing shouldn't be scaled as the testing shows but they get scaled as well. This helps the solver converge faster but hasn't been proved to be valid for all cases. This has been made with testing purposes, not recommended to use it.
   - **y0:** Initial conditions of the ODE.
-  - **states_transformer:** Transformations expressions or identidier applied to the different states in case of the observed data being a combination of the different states.
+  - **observed states:** inferred from the data file rather than declared here. A
+    state is unmeasured when its column is `NaN` after `t = 0`; see
+    [Partial observability](#partial-observability).
 
-  There is an option to accelerate the process of evaluating the ODE by defining it and the states transformer inside the mevalexpr module. We will talk about this later.
+  There is an option to accelerate the process of evaluating the ODE by defining it inside the `cuqdyn-rs` module and compiling it. We will talk about this later.
+
+  **CUQDyn1_Plus options** (all optional, shown with their defaults):
+
+  - **alp:** predictive region level. Bands are nominally `1 - 2*alp`, so `0.025`
+    gives 95%. Defaults to `0.025`.
+  - **uq_method:** `fim` (default) or `hybridcov`. Only affects the states that
+    are never measured; see [Partial observability](#partial-observability).
+  - **cost:** how residuals are weighted before the fit and the FIM.
+    - `residual_model`: `none` (raw residuals, the default), `known_sigma`
+      (divide by the measurement standard deviations) or `state_weights`
+      (multiply by explicit weights).
+    - `sigma`: one value per observed state, or a single value applied to all.
+    - `sigma_is_known`: when true the residuals are already standardized and the
+      FIM variance scale is fixed at 1 instead of being estimated. Defaults to true.
+    - `observed_state_weights`: one weight per observed state, for `state_weights`.
+  - **fim:** parameter covariance construction, used only when some state is hidden.
+    - `parameterization`: `log` (default) or `natural`. The log form is more
+      stable for positive rate constants; the covariance is always returned in
+      natural units.
+    - `relative_ridge`: regularizer relative to the largest squared singular
+      value. Defaults to `1e-12`.
+    - `rank_tol_factor`: singular-value cutoff factor for the rank test. Defaults to `100`.
+
+  ```xml
+  <alp>0.025</alp>
+  <uq_method>fim</uq_method>
+  <cost>
+      <residual_model>known_sigma</residual_model>
+      <sigma>2.4531439541663325</sigma>
+      <sigma_is_known>true</sigma_is_known>
+  </cost>
+  <fim>
+      <parameterization>log</parameterization>
+      <relative_ridge>1e-12</relative_ridge>
+  </fim>
+  ```
 
   ```xml
   <?xml version="1.0" encoding="UTF-8" ?>
@@ -184,14 +327,6 @@ There are three types of input files that must be provided:
       <y0> <!-- Optional (Defaults to the first row of the data file) -->
           0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003
       </y0>
-      <states_transformer count="6"> <!-- Optional -->
-          y6
-          y9 + y12
-          y8
-          y0 + y1 + y2
-          y1
-          y11
-      </states_transformer>
   </cuqdyn-config>
   ```
 
@@ -199,14 +334,56 @@ There are three types of input files that must be provided:
   The data file containing a mtrix of observed data and the initial value needed to solve the ODE. The data file should be a txt file written with the following format:
 
   ```
-  # The first row is gonna be used as the initial condition if y0 is not present in the config file
-  31 3 # Matrix dimensions so the parsing is easier
-  0 10 5 # Column 1: time, Column 2: y1(t), Column 3: y2(t)
+  31 3            # matrix dimensions, so the parsing is easier
+  0 10 5          # row 1 is the initial condition for every state
+  1 16.27 -0.03196
   .
   .
-  .
-  30 1e1 5e1
+  30 9.117 4.548
   ```
+
+  Column 1 is time and every column after it is a model state, in order:
+  `y1, y2, ... yn`. Row 1 (`t = 0`) must be finite for every state, hidden ones
+  included, because it is the full initial condition used to integrate the ODE.
+  If `y0` is set in the cuqdyn config it takes precedence.
+
+  A state that is **never measured** carries `NaN` from `t > 0` onwards:
+
+  ```
+  41 3
+  0 10 0
+  0.5 NaN 1.69132433390405
+  1 NaN 2.66665964152082
+  ```
+
+  That is the only thing that marks a state as unobserved. A file with no `NaN`
+  is fully observed, and the bands reduce to the original CUQDyn1.
+
+  A column must be all `NaN` after `t = 0` or have no `NaN` at all. A single
+  stray one would otherwise demote the state to unobserved and throw away every
+  real measurement it had, so it is reported as an error instead.
+
+### Output file
+
+`cuqdyn-results.txt` holds one section per array. The first five are the original
+CUQDyn1 output and the rest are added by CUQDyn1_Plus:
+
+| Section | Shape | Contents |
+|---|---|---|
+| `Params` | n_params | Median of the leave-one-out parameter estimates |
+| `Data` | m x n_states | Median of the leave-one-out trajectories |
+| `Q_low` / `Q_up` | m x n_states | Prediction bands for every state |
+| `Times` | m | Time points |
+| `ObservedIdx` | n_obs | 0-based indices of the measured states |
+| `ParamsInit` | n_params | Best-fit parameters from the full-data fit |
+| `MediaTot` | m x n_states | Trajectory at those best-fit parameters |
+| `CovP` | n_params x n_params | Parameter covariance, only when a state is hidden |
+| `StdY` | m x n_states | Delta-method standard deviations, same condition |
+| `LooParams` | (m-1) x n_params | Per-replicate leave-one-out parameter estimates |
+| `Q_low_fim` / `Q_up_fim` | m x n_states | Plain FIM bands, only with `uq_method=hybridcov` |
+
+`ObservedIdx` is what tells a reader which bands are conformal and which come
+from the delta method.
 
 ## Defining a new model
 

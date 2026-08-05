@@ -1,16 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
 
+<!-- NF-kB with partial observability: 15 states, 10 of them measured directly.
+     This replaces the old states_transformer setup, where the observables were
+     combinations of states; upstream CUQDyn1_Plus selects states by index. -->
 <cuqdyn-config>
     <tolerances>
-        <rtol>1e-8</rtol>
+        <rtol>1e-6</rtol>
         <atol>1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8</atol>
     </tolerances>
     <ode_expr y_count="15" p_count="29">
         nfkb
     </ode_expr>
-    <y0>
-        2.00000000e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 3.15500000e-04, 2.29580000e-03, 4.78285000e-03, 2.86970000e-06, 2.50663000e-03, 3.43573000e-03, 2.86971000e-06, 6.00000000e-02, 7.88800000e-05, 2.86971000e-06
-    </y0>
-    <states_transformer count="6">
-        nfkb-example
-    </states_transformer>
+    <alp>0.05</alp>
+    <cost>
+        <residual_model>known_sigma</residual_model>
+        <sigma>
+            0.0009484677802766179, 2.133883904846068e-06, 0.009036182470740797,
+            1.4079926168471676e-06, 3.10782125772412e-06, 0.009547673575538,
+            23.63648744, 0.009547673575538, 0.00303688372, 0.009547673575538
+        </sigma>
+        <sigma_is_known>true</sigma_is_known>
+    </cost>
 </cuqdyn-config>
