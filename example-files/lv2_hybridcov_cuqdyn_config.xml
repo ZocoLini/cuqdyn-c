@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- Lotka-Volterra with partial observability, hybrid covariance variant.
+     Same setup as lv2_partobs_cuqdyn_config.xml but the hidden predator takes
+     the FIM marginal scale with the LOO correlation structure. The run also
+     emits the plain FIM bands so the two can be compared. -->
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-6</rtol>
+        <atol>1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="2" p_count="4">
+        (p0 - p1 * y1) * y0
+        (p2 * y0 - p3) * y1
+    </ode_expr>
+    <alp>0.025</alp>
+    <uq_method>hybridcov</uq_method> <!-- 95% two-sided bands -->
+    <cost>
+        <!-- Synthetic data with 10% noise; sigma is the known measurement scale. -->
+        <residual_model>known_sigma</residual_model>
+        <sigma>2.4531439541663325</sigma>
+        <sigma_is_known>true</sigma_is_known>
+    </cost>
+</cuqdyn-config>

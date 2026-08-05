@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- SIR epidemic model: only the infected (y1) are measured; susceptible and
+     recovered stay hidden. Its FIM and LOO correlation structures differ a lot
+     (0.21 against 0.45), so this is where the two covariance choices give
+     visibly different bands. -->
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-8</rtol>
+        <atol>1e-8, 1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="3" p_count="2">
+        0 - p0 * y0 * y1
+        p0 * y0 * y1 - p1 * y1
+        p1 * y1
+    </ode_expr>
+    <alp>0.05</alp>
+    <uq_method>hybridcov</uq_method>
+    <cost>
+        <residual_model>known_sigma</residual_model>
+        <sigma>12.99754447212377</sigma>
+        <sigma_is_known>true</sigma_is_known>
+    </cost>
+</cuqdyn-config>

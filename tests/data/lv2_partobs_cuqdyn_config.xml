@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- Lotka-Volterra, prey (y0) observed and predator (y1) hidden.
+     Mirrors EXAMPLES/LV/prob_mod_dynamics_LV.m. -->
+<cuqdyn-config>
+    <tolerances>
+        <rtol>1e-6</rtol>
+        <atol>1e-8, 1e-8</atol>
+    </tolerances>
+    <ode_expr y_count="2" p_count="4">
+        (p0 - p1 * y1) * y0
+        (p2 * y0 - p3) * y1
+    </ode_expr>
+    <alp>0.025</alp>
+    <cost>
+        <residual_model>known_sigma</residual_model>
+        <sigma>2.4531439541663325</sigma>
+        <sigma_is_known>true</sigma_is_known>
+    </cost>
+</cuqdyn-config>

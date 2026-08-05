@@ -27,7 +27,5 @@ int main(int argc, char *argv[])
         handler = create_help_handler();
     }
 
-    handler.handle(argc, argv);
-
-    return 0;
+    return handler.handle(argc, argv);
 }

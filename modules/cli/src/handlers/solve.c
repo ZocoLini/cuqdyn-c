@@ -19,6 +19,7 @@ int handle_solve(int argc, char *argv[]);
 void print_matrix(SUNMatrix mat, FILE *output_file, char *name);
 void print_transposed_matrix(TransposedStates mat, FILE *output_file, char *name);
 void print_vector(N_Vector vec, FILE *output_file, char *name);
+void print_observed_idx(const CuqdynResult *result, FILE *output_file);
 
 Handler create_solve_handler()
 {
@@ -112,6 +113,14 @@ int handle_solve(int argc, char *argv[])
 
     CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_dir);
 
+    if (cuqdyn_result == NULL)
+    {
+#ifdef MPI
+        MPI_Finalize();
+#endif
+        return rank == 0 ? 1 : 0;
+    }
+
     if (rank == 0)
     {
 
@@ -127,12 +136,57 @@ int handle_solve(int argc, char *argv[])
         strcat(output_file_path, "/cuqdyn-results.txt");
 
         FILE *output_file = fopen(output_file_path, "w");
+        if (output_file == NULL)
+        {
+            fprintf(stderr, "ERROR: cannot write to %s\n", output_file_path);
+            free(output_file_path);
+            return 1;
+        }
 
         print_vector(params_median, output_file, "Params");
         print_transposed_matrix(data_median, output_file, "Data");
         print_matrix(q_low, output_file, "Q_low");
         print_matrix(q_up, output_file, "Q_up");
         print_vector(times, output_file, "Times");
+
+        // CUQDyn1_Plus additions. Observed states carry conformal bands and the
+        // rest delta-method ones, so the reader needs to know which is which.
+        print_observed_idx(cuqdyn_result, output_file);
+
+        if (cuqdyn_result->parameters_init != NULL)
+        {
+            print_vector(cuqdyn_result->parameters_init, output_file, "ParamsInit");
+        }
+        if (cuqdyn_result->media_tot != NULL)
+        {
+            print_transposed_matrix(cuqdyn_result->media_tot, output_file, "MediaTot");
+        }
+        if (cuqdyn_result->cov_p != NULL)
+        {
+            print_matrix(cuqdyn_result->cov_p, output_file, "CovP");
+        }
+        if (cuqdyn_result->std_y != NULL)
+        {
+            print_transposed_matrix(cuqdyn_result->std_y, output_file, "StdY");
+        }
+        // Only present with the hybrid covariance: the plain FIM bands, so a
+        // reader can draw both and compare them.
+        if (cuqdyn_result->q_low_alt != NULL)
+        {
+            print_matrix(cuqdyn_result->q_low_alt, output_file, "Q_low_fim");
+            print_matrix(cuqdyn_result->q_up_alt, output_file, "Q_up_fim");
+        }
+        if (cuqdyn_result->loo_params != NULL)
+        {
+            print_matrix(cuqdyn_result->loo_params, output_file, "LooParams");
+        }
+        if (cuqdyn_result->resid_loo != NULL)
+        {
+            print_matrix(cuqdyn_result->resid_loo, output_file, "ResidLoo");
+        }
+
+        fclose(output_file);
+        fprintf(stdout, "Results written to %s\n", output_file_path);
 
         free(output_file_path);
         destroy_cuqdyn_result(cuqdyn_result);
@@ -154,7 +208,7 @@ void print_matrix(SUNMatrix mat, FILE *output_file, char *name)
     {
         for (int j = 0; j < SM_COLUMNS_D(mat); j++)
         {
-            fprintf(output_file, "%.8lf ", SM_ELEMENT_D(mat, i, j));
+            fprintf(output_file, "%.17g ", SM_ELEMENT_D(mat, i, j));
         }
         fprintf(output_file, "\n");
     }
@@ -169,10 +223,23 @@ void print_transposed_matrix(TransposedStates mat, FILE *output_file, char *name
     {
         for (int j = 0; j < SM_ROWS_D(mat); j++)
         {
-            fprintf(output_file, "%.8lf ", SM_ELEMENT_D(mat, j, i));
+            fprintf(output_file, "%.17g ", SM_ELEMENT_D(mat, j, i));
         }
         fprintf(output_file, "\n");
     }
+}
+
+/// 0-based indices of the measured states, so a reader can tell which bands are
+/// conformal and which come from the delta method.
+void print_observed_idx(const CuqdynResult *result, FILE *output_file)
+{
+    fprintf(output_file, "[ObservedIdx]\n");
+    fprintf(output_file, "%d\n", result->n_obs);
+    for (int i = 0; i < result->n_obs; i++)
+    {
+        fprintf(output_file, "%d ", result->observed_idx[i]);
+    }
+    fprintf(output_file, "\n");
 }
 
 void print_vector(N_Vector vec, FILE *output_file, char *name)
@@ -181,7 +248,7 @@ void print_vector(N_Vector vec, FILE *output_file, char *name)
     fprintf(output_file, "%ld\n", NV_LENGTH_S(vec));
     for (int i = 0; i < NV_LENGTH_S(vec); i++)
     {
-        fprintf(output_file, "%.8lf ", NV_Ith_S(vec, i));
+        fprintf(output_file, "%.17g ", NV_Ith_S(vec, i));
     }
     fprintf(output_file, "\n");
 }

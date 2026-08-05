@@ -17,7 +17,7 @@ REPEATS=3
 
 # === OUTPUT ===
 mkdir -p "output/scalability"
-OUT_FILE="output/scalability_results.csv"
+OUT_FILE="output/scalability_results.txt"
 echo "Variant,Procs,Iteration,Metric,Value,Unit" > "$OUT_FILE"
 
 # === MAIN LOOP ===

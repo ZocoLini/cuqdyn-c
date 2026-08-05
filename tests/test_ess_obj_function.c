@@ -13,14 +13,16 @@ int main()
 {
     CuqDynContext context = init_cuqdyn_context_from_file(CUQDYN_CONF);
 
-    N_Vector texp = NULL;
-    SUNMatrix yexp = NULL;
+    CuqdynData data;
+    assert(read_data_file(DATA, &data) == 0);
 
-    read_data_file(DATA, &texp, &yexp);
+    N_Vector texp = data.times;
+    SUNMatrix yexp = data.observed_data;
     N_Vector initial_values = copy_matrix_row(yexp, 0, 0, SM_ROWS_D(yexp));
 
     experiment_total *exp_total = malloc(sizeof(experiment_total));
     create_expetiment_struct(SACESS_CONF, &exp_total[0], 1, 0, "output", 1, texp, yexp, initial_values);
+    exp_total[0].observed_idx = data.observed_idx;
 
     double x[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
 

@@ -19,10 +19,12 @@ int main(void)
 
 void test_read_data_txt()
 {
-    N_Vector t = NULL;
-    SUNMatrix y = NULL;
 
-    assert(read_txt_data_file(DATA_TXT, &t, &y) == 0);
+    CuqdynData data;
+    assert(read_data_file(DATA_TXT, &data) == 0);
+
+    N_Vector t = data.times;
+    SUNMatrix y = data.all_state_data;
 
     assert(y != NULL);
     assert(t != NULL);

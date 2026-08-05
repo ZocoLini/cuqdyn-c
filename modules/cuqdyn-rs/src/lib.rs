@@ -1,7 +1,6 @@
 #![allow(static_mut_refs)]
 pub mod context;
 mod models;
-mod states_transformers;
 
 use std::ffi::{c_char, c_void, CStr};
 use std::slice;
@@ -65,31 +64,3 @@ pub unsafe extern "C" fn eval_f_exprs(
     context.eval_f_exprs(t, y, ydot, p)
 }
 
-#[allow(clippy::missing_safety_doc)]
-#[no_mangle]
-pub unsafe extern "C" fn eval_states_transformer_expr(
-    input_state: *const f64,
-    output_state: *mut f64,
-    context: *mut c_void,
-) {
-    if context.is_null() {
-        panic!("Tried to eval states transformer expr with a null context")
-    }
-
-    let context = &mut *(context as *mut CuqdynContext);
-
-    let cuqdyn_conf = context.rs_config();
-
-    let input_state =
-        slice::from_raw_parts(input_state, *cuqdyn_conf.ode_expr().y_count() as usize);
-    let output_state = slice::from_raw_parts_mut(
-        output_state,
-        *cuqdyn_conf
-            .states_transformer()
-            .clone()
-            .unwrap_or_default()
-            .count() as usize,
-    );
-
-    context.eval_states_transformer_expr(input_state, output_state);
-}

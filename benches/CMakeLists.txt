@@ -20,7 +20,6 @@ add_library(bench_wrapper bench_wrapper.cpp)
 target_link_libraries(bench_wrapper PUBLIC bench_options PRIVATE nanobench ${PAPI_LIB})
 
 foreach(bench_name
-    bench_transform_states
     bench_solve_ode
 )
     add_executable(${bench_name} ${bench_name}.c)
