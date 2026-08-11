@@ -1,10 +1,11 @@
-- Diagnósticos de fiabilidad FIM: se calculan direcciones débiles y no se reportan. NF-kB demuestra que hacen falta: dice rank 29/29 con cond 6e8, o sea bandas ocultas
-  que no valen nada sin aviso.
-- Verificación numérica en el repo: hoy los tests solo comprueban estructura. Si alguien invierte un signo en fim.c, la suite sigue verde.
+- Validacion del metodo traspilado.  -> David y Marta
 - MPI sin ejercitar con observabilidad parcial
 - Debug sin compilar siquiera.
-- Eliminar variante MPI2 por simplicidad.
-- MemSanitizer
-- Montar una CI como dios manda
-- Fuga restante: ~0.7 KB por evaluación, dentro de sacess. No bloquea, pero limita maxevaluation.
+- Eliminar variante MPI2 por simplicidad.      -> Borja
+- MemSanitizer                                 -> Borja
+- Montar una CI como dios manda                -> Borja
+- Fuga restante: ~0.7 KB por evaluación, dentro de sacess. No bloquea, pero limita maxevaluation. -> Borja
 - Bootstrap trayectorial.
+- Usar solo un ODE solver                      -> Borja
+- Verificar que lo de las Sensitivities ete bien implementado
+- Eliminar librerias misqp y xml2              -> David
