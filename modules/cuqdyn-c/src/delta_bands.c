@@ -9,7 +9,7 @@
 #include "cuqdyn.h"
 #include "fim.h"
 #include "functions.h"
-#include "sensitivity.h"
+#include "ode_solver.h"
 #include "uq_bands.h"
 
 /// Var[y_k(t_i)] = S_k(t_i) * Cov_p * S_k(t_i)', for every state and time.
@@ -64,7 +64,8 @@ int delta_method_bands(N_Vector parameters, N_Vector initial_condition, const su
     TransposedStates states = NULL;
     Sensitivities sensitivities = {0};
 
-    if (solve_ode_with_sensitivities(parameters, initial_condition, t0, times, &states, &sensitivities) != 0)
+    states = solve_ode(parameters, initial_condition, t0, times, &sensitivities);
+    if (states == NULL)
     {
         fprintf(stderr, "ERROR: forward sensitivity solve failed\n");
         return 1;

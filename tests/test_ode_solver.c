@@ -54,7 +54,7 @@ void test_lotka_volterra()
 
     const sunrealtype t0 = 0.0;
 
-    TransposedStates result = solve_ode(parameters, initial_values, t0, times);
+    TransposedStates result = solve_ode(parameters, initial_values, t0, times, NULL);
 
     assert(result != NULL);
 
@@ -105,7 +105,7 @@ void test_alpha_pienene()
 
     const sunrealtype t0 = 0.0;
 
-    SUNMatrix result = solve_ode(parameters, initial_values, t0, times);
+    SUNMatrix result = solve_ode(parameters, initial_values, t0, times, NULL);
 
     assert(result != NULL);
 
@@ -151,7 +151,7 @@ void test_logistic_model()
 
     const sunrealtype t0 = 0.0;
 
-    SUNMatrix result = solve_ode(parameters, initial_values, t0, times);
+    SUNMatrix result = solve_ode(parameters, initial_values, t0, times, NULL);
 
     assert(result != NULL);
 

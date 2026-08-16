@@ -215,7 +215,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                                                        initial_params, data.observed_idx);
 
         // Saving the ode solution data obtained with the predicted params
-        TransposedStates predicted_obs_states = solve_ode(predicted_params, initial_condition, t0, scaled_times);
+        TransposedStates predicted_obs_states = solve_ode(predicted_params, initial_condition, t0, scaled_times, NULL);
 
         for (int j = 0; j < n_obs; ++j)
         {
@@ -327,7 +327,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     SUNMatrix std_y = NULL;
     SUNMatrix q_low_alt = NULL;
     SUNMatrix q_up_alt = NULL;
-    TransposedStates media_tot = solve_ode(initial_params, initial_condition, t0, scaled_times);
+    TransposedStates media_tot = solve_ode(initial_params, initial_condition, t0, scaled_times, NULL);
 
     if (media_tot == NULL)
     {
