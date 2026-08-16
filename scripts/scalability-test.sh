@@ -11,7 +11,9 @@
 bash scripts/build.sh
 
 # === CONFIGURATION ===
-VARIANTS=("mpi" "mpi2" "serial")
+# mpi2 is left out: it no longer ships a sacess config of its own.
+VARIANTS=("mpi" "serial")
+EXAMPLE="${EXAMPLE:-lotka-volterra}"
 PROCS_LIST=(2 3 5 6 10 15 30)
 REPEATS=3
 
@@ -32,9 +34,9 @@ for VARIANT in "${VARIANTS[@]}"; do
       START_TIME=$(date +%s.%N)
 
       ./build-"$VARIANT"/modules/cli/cli solve \
-        -c example-files/lotka_volterra_cuqdyn_config.xml \
-        -s example-files/lotka_volterra_ess_"$VARIANT"_config.xml \
-        -d example-files/lotka_volterra_paper_data.txt \
+        -c example-files/"$EXAMPLE"/cuqdyn-fim.xml \
+        -s example-files/"$EXAMPLE"/sacess-"$VARIANT".xml \
+        -d example-files/"$EXAMPLE"/data.txt \
         -o "output/scalability/$VARIANT/$R"
 
       END_TIME=$(date +%s.%N)
@@ -50,9 +52,9 @@ for VARIANT in "${VARIANTS[@]}"; do
         START_TIME=$(date +%s.%N)
 
         srun --ntasks="$PROCS" --cpus-per-task=1 ./build-"$VARIANT"/modules/cli/cli solve \
-          -c example-files/lotka_volterra_cuqdyn_config.xml \
-          -s example-files/lotka_volterra_ess_"$VARIANT"_config.xml \
-          -d example-files/lotka_volterra_paper_data.txt \
+          -c example-files/"$EXAMPLE"/cuqdyn-fim.xml \
+          -s example-files/"$EXAMPLE"/sacess-"$VARIANT".xml \
+          -d example-files/"$EXAMPLE"/data.txt \
           -o "output/scalability/$VARIANT/$PROCS/$R"
 
         END_TIME=$(date +%s.%N)

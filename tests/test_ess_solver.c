@@ -1,13 +1,12 @@
-#define LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB "data/lotka_volterra_ess_config_nl2sol.dn2gb.xml"
-#define LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2FB "data/lotka_volterra_ess_config_nl2sol.dn2fb.xml"
-#define LOTKA_VOLTERRA_CONF_FILE_DHC "data/lotka_volterra_ess_config_dhc.xml"
-#define LOTKA_VOLTERRA_CONF_FILE_MISQP "data/lotka_volterra_ess_config_misqp.xml"
-#define ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB "data/alpha_pinene_ess_config_nl2sol.dn2fb.xml"
-#define LOGISTIC_MODEL_CONF_FILE_NL2SOL_DN2FB "data/logistic_model_ess_config_nl2sol.dn2fb.xml"
+// Every shipped example drives eSS with the same local solver, so one run per
+// model is the whole of the coverage: there are no solver variants left to sweep.
+#define LOTKA_VOLTERRA_CONF EXAMPLES_DIR "/lotka-volterra/sacess-serial.xml"
+#define ALPHA_PINENE_CONF EXAMPLES_DIR "/alpha-pinene/sacess-serial.xml"
+#define LOGISTIC_MODEL_CONF EXAMPLES_DIR "/logistic/sacess-serial.xml"
 
-#define LOTKA_VOLTERRA_DATA "data/lotka_volterra_paper_data.txt"
-#define ALPHA_PINENE_DATA "data/alpha_pinene_paper_data.txt"
-#define LOGISTIC_MODEL_DATA "data/logistic_model_paper_data.txt"
+#define LOTKA_VOLTERRA_DATA EXAMPLES_DIR "/lotka-volterra/data.txt"
+#define ALPHA_PINENE_DATA EXAMPLES_DIR "/alpha-pinene/data.txt"
+#define LOGISTIC_MODEL_DATA EXAMPLES_DIR "/logistic/data.txt"
 
 #define OUPUT_PATH "ess_output"
 
@@ -34,30 +33,21 @@ int main(int argc, char **argv)
     return 0;
 #endif
 
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB);
-    printf("\tTest 1 passed NL2SOL_DN2GB\n");
+    lotka_volterra_ess(LOTKA_VOLTERRA_CONF);
+    printf("\tTest 1 passed Lotka-Volterra\n");
 
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 2 passed NL2SOL_DN2FB\n");
+    logistic_model_ess(LOGISTIC_MODEL_CONF);
+    printf("\tTest 2 passed Logistic Model\n");
 
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_DHC);
-    printf("\tTest 3 passed DHC\n");
-
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_MISQP);
-    printf("\tTest 4 passed MISQP\n");
-
-    logistic_model_ess(LOGISTIC_MODEL_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 5 passed Logistic Model NL2SOL_DN2FB\n");
-
-    alpha_pinene_ess(ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 6 passed Alpha-Pinene NL2SOL_DN2GB\n");
+    alpha_pinene_ess(ALPHA_PINENE_CONF);
+    printf("\tTest 3 passed Alpha-Pinene\n");
 
     return 0;
 }
 
 void lotka_volterra_ess(char *conf_file)
 {
-    CuqDynContext context = init_cuqdyn_context_from_file("data/lotka_volterra_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/lotka-volterra/cuqdyn-fim.xml");
 
     sunrealtype expected_values[4] = {0.5, 0.02, 0.5, 0.02};
 
@@ -83,7 +73,7 @@ void lotka_volterra_ess(char *conf_file)
 
 void alpha_pinene_ess(char *conf_file)
 {
-    CuqDynContext context = init_cuqdyn_context_from_file("data/alpha_pinene_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/alpha-pinene/cuqdyn-fim.xml");
 
     sunrealtype expected_values[5] = {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5};
 
@@ -109,7 +99,7 @@ void alpha_pinene_ess(char *conf_file)
 
 void logistic_model_ess(char *conf_file)
 {
-    CuqDynContext context = init_cuqdyn_context_from_file("data/logistic_model_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/logistic/cuqdyn-fim.xml");
 
     sunrealtype expected_values[2] = {0.1, 102};
 

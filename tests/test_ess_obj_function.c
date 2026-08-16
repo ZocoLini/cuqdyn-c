@@ -5,9 +5,9 @@
 #include "method_module/structure_paralleltestbed.h"
 #include "sunmatrix/sunmatrix_dense.h"
 
-#define CUQDYN_CONF "data/obj_function_cuqdyn_config.xml"
-#define SACESS_CONF "data/obj_function_ess_config_nl2sol.dn2fb.xml"
-#define DATA "data/alpha_pinene_paper_data.txt"
+#define CUQDYN_CONF EXAMPLES_DIR "/alpha-pinene/cuqdyn-fim.xml"
+#define SACESS_CONF EXAMPLES_DIR "/alpha-pinene/sacess-serial.xml"
+#define DATA EXAMPLES_DIR "/alpha-pinene/data.txt"
 
 int main()
 {

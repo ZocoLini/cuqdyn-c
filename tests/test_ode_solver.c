@@ -29,7 +29,7 @@ int main(void)
 
 void test_lotka_volterra()
 {
-    CuqDynContext context = init_cuqdyn_context_from_file("data/lotka_volterra_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/lotka-volterra/cuqdyn-fim.xml");
 
     N_Vector times = New_Serial(9);
     NV_Ith_S(times, 0) = 1.0;
@@ -76,7 +76,7 @@ void test_lotka_volterra()
 
 void test_alpha_pienene()
 {
-    CuqDynContext context = init_cuqdyn_context_from_file("data/alpha_pinene_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/alpha-pinene/cuqdyn-fim.xml");
 
     N_Vector times = New_Serial(9);
     NV_Ith_S(times, 0) = 0;
@@ -127,7 +127,7 @@ void test_alpha_pienene()
 
 void test_logistic_model()
 {
-    CuqDynContext context = init_cuqdyn_context_from_file("data/logistic_model_cuqdyn_config.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/logistic/cuqdyn-fim.xml");
 
     N_Vector times = New_Serial(11);
     NV_Ith_S(times, 0) = 0;

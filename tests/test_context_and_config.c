@@ -4,7 +4,7 @@
 #include "config.h"
 
 
-#define CUQDYN_CONF "data/logistic_model_cuqdyn_config.xml"
+#define CUQDYN_CONF EXAMPLES_DIR "/logistic/cuqdyn-fim.xml"
 
 int main()
 {
