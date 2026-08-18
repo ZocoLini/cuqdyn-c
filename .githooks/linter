@@ -2,24 +2,9 @@
 
 set -euo pipefail
 
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
 echo ""
-
-if [ -t 1 ]; then
-  GREEN=$'\033[0;32m'
-  YELLOW=$'\033[0;33m'
-  RED=$'\033[0;31m'
-  NC=$'\033[0m'
-else
-  GREEN=""; YELLOW=""; RED=""; NC=""
-fi
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE_ROOT="$SCRIPT_DIR/.."
-
-cd "$WORKSPACE_ROOT" || {
-  echo "${RED}Unable to change to workspace root: $WORKSPACE_ROOT${NC}"
-  exit 1
-}
 
 # git feeds the refs being pushed on stdin, one line per ref. Read them once:
 # they say both whether there is anything to lint and which files changed.
@@ -36,18 +21,6 @@ fi
 
 echo "${YELLOW}Linting before pushing${NC}"
 echo "${YELLOW}(skip with 'git push --no-verify')${NC}"
-
-# modules/sacess, deps and the CUQDyn* trees are vendored: sacess comes from
-# upstream and the CUQDyn folders are the reference Matlab toolbox. Linting them
-# would report on code this project does not own. Same list as the formatter.
-VENDORED='^(modules/sacess|deps|CUQDyn|CUQDyn1_Plus)/'
-
-# Every tracked file matching $1, minus the vendored trees.
-owned() {
-  git ls-files \
-    | { grep -vE "$VENDORED" || true; } \
-    | { grep -E "$1" || true; }
-}
 
 RUN=()
 if command -v cargo >/dev/null 2>&1 && command -v clang-tidy >/dev/null 2>&1; then

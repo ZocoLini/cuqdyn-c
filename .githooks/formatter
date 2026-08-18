@@ -1,52 +1,12 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
+
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 echo ""
 
-if [ -t 1 ]; then
-  GREEN=$'\033[0;32m'
-  YELLOW=$'\033[0;33m'
-  RED=$'\033[0;31m'
-  NC=$'\033[0m'
-else
-  GREEN=""; YELLOW=""; RED=""; NC=""
-fi
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE_ROOT="$SCRIPT_DIR/.."
-
-cd "$WORKSPACE_ROOT" || {
-  echo "${RED}Unable to change to workspace root: $WORKSPACE_ROOT${NC}"
-  exit 1
-}
-
 echo "${YELLOW}Running formatter over the whole tree${NC}"
-
-# modules/sacess, deps and the CUQDyn* trees are vendored: sacess comes from
-# upstream and the CUQDyn folders are the reference Matlab toolbox. Reformatting
-# them would bury real changes under thousands of noise lines.
-VENDORED='^(modules/sacess|deps|CUQDyn|CUQDyn1_Plus)/'
-
-# The project container already carries every formatter (see Dockerfile), and
-# docker-compose mounts the repository at its working directory, so the same
-# repo-relative paths work inside and outside.
-CONTAINER=""
-if command -v docker >/dev/null 2>&1 &&
-   docker compose ps --status running --services 2>/dev/null | grep -qx cuqdyn_c; then
-  CONTAINER="cuqdyn_c"
-fi
-
-# Every tracked file matching $1, minus the vendored trees. Checking the whole
-# tree rather than just what is staged means formatting cannot drift: a file
-# someone committed with --no-verify is caught by the next commit, whoever makes
-# it. Never fails: an empty result is normal for languages the repo barely uses.
-owned() {
-  git ls-files \
-    | { grep -vE "$VENDORED" || true; } \
-    | { grep -E "$1" || true; }
-}
-
-have() { command -v "$1" >/dev/null 2>&1; }
 
 # Picks how to invoke a formatter and leaves it in RUNNER. Local install wins;
 # the container is the fallback. A tool available in neither only warns: a gap
@@ -93,8 +53,6 @@ reformatted() {
   echo "${YELLOW}Files were reformatted. Run 'git add .' and commit again.${NC}"
   exit 1
 }
-
-DOCKER_HINT="Install it, or start the project container with 'docker compose up -d'."
 
 # --- C / C++ -----------------------------------------------------------------
 # .clang-format at the repository root is the single source of style.
