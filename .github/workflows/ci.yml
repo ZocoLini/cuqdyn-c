@@ -14,15 +14,10 @@ permissions:
   contents: read
 
 env:
-  # Pinned so the image name compose derives (<project>-<service>) matches the
-  # tag the setup action loads, whatever the checkout directory is called.
   COMPOSE_PROJECT_NAME: cuqdyn-c
-  # Incremental compilation buys nothing on a runner that starts clean, and it
-  # costs 61 MB across 360 extra files in the cached target directory.
+  CARGO_HOME: /home/ubuntu/workspace/.cargo-home
   CARGO_INCREMENTAL: 0
   CARGO_TERM_COLOR: always
-  # Everything runs through the project image, so a job is the same command a
-  # developer would type. --rm because each step wants a fresh container.
   RUN: docker compose run --rm -T cuqdyn_c
 
 jobs:
@@ -55,7 +50,7 @@ jobs:
             build-serial
             build-mpi
             modules/cuqdyn-rs/target
-            ~/.cargo/registry
+            .cargo-home
           key: ${{ steps.setup.outputs.cache-primary-key }}
 
   lint:
@@ -69,9 +64,6 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      # The same scripts the hooks run, so CI cannot disagree with a commit that
-      # passed locally. The formatter rewrites what it finds and exits non-zero,
-      # which is exactly the signal wanted here.
       - name: Formatting
         run: ${{ env.RUN }} ./.githooks/formatter
 

@@ -102,3 +102,4 @@ ESTADO.md
 .cache/
 perf.data
 .~lock*
+.cargo-home/

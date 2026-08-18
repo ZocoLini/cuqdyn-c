@@ -33,6 +33,13 @@ runs:
           build-serial
           build-mpi
           modules/cuqdyn-rs/target
-          ~/.cargo/registry
+          .cargo-home
         key: build-${{ hashFiles('deps.cmake', 'CMakeLists.txt', 'toolchains/*.cmake', 'modules/cuqdyn-rs/Cargo.lock') }}
         restore-keys: build-
+
+    # The repository is bind-mounted into the container, whose user is uid 1000,
+    # while the runner checks out as a different one. Without this the container
+    # cannot even create its own build directories. Last, so that whatever the
+    # cache just restored is handed over too.
+    - shell: bash
+      run: sudo chown -R 1000:1000 "$GITHUB_WORKSPACE"
