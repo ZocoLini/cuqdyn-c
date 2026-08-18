@@ -18,36 +18,6 @@ execute_variant() {
     ctest
   )
 
-  exit 0 # Disabling the cli test
-
-  CLI_TEST_DIR="$BUILD_DIR/cli-test"
-
-  rm -r "$CLI_TEST_DIR"
-  mkdir "$CLI_TEST_DIR"
-
-  cp "$BUILD_DIR/modules/cli/cli" "$CLI_TEST_DIR"
-  cp -r "$BUILD_DIR/tests/data" "$CLI_TEST_DIR"
-  cp plot.py "$CLI_TEST_DIR"
-
-  if [ ! "$variant" = "serial" ]; then
-    (
-      cd "$CLI_TEST_DIR" || exit 1
-      mpirun -np 6 --use-hwthread-cpus ./cli solve -c data/lotka_volterra_cuqdyn_config.xml \
-        -s "data/lotka_volterra_ess_mpi_config_nl2sol.dn2gb.xml" \
-        -d data/lotka_volterra_paper_data.txt \
-        -o "data/output"
-    )
-  else
-    (
-      cd "$CLI_TEST_DIR" || exit 1
-      ./cli solve -c data/lotka_volterra_cuqdyn_config.xml \
-        -s "data/lotka_volterra_ess_serial_config_nl2sol.dn2gb.xml" \
-        -d data/lotka_volterra_paper_data.txt \
-        -o "data/output"
-    )
-  fi
-
-  .venv/bin/python plot.py "$CLI_TEST_DIR/data/output/cuqdyn-results.txt"
 }
 
 variants=(

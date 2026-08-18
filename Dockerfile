@@ -17,6 +17,7 @@ RUN apt-get update && \
     gfortran \
     python3-pip \
     shfmt \
+    shellcheck \
     clang-tidy \
     libxml2-utils && \
     rm -rf /var/lib/apt/lists/*

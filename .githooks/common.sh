@@ -1,3 +1,8 @@
+# shellcheck shell=bash
+# The colour palette and the container settings are read by the scripts that
+# source this file, which shellcheck cannot see from here.
+# shellcheck disable=SC2034
+
 # Shared by the hooks in this directory. Source it, do not run it:
 #
 #   . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
