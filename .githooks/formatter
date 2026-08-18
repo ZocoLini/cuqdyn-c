@@ -20,7 +20,7 @@ cd "$WORKSPACE_ROOT" || {
   exit 1
 }
 
-echo "${YELLOW}Running formatter over the staged files${NC}"
+echo "${YELLOW}Running formatter over the whole tree${NC}"
 
 # modules/sacess, deps and the CUQDyn* trees are vendored: sacess comes from
 # upstream and the CUQDyn folders are the reference Matlab toolbox. Reformatting
@@ -36,10 +36,12 @@ if command -v docker >/dev/null 2>&1 &&
   CONTAINER="cuqdyn_c"
 fi
 
-# Staged files matching $1, minus the vendored trees. Never fails: an empty
-# result is the normal case for most languages on most commits.
-staged() {
-  git diff --cached --name-only --diff-filter=ACM \
+# Every tracked file matching $1, minus the vendored trees. Checking the whole
+# tree rather than just what is staged means formatting cannot drift: a file
+# someone committed with --no-verify is caught by the next commit, whoever makes
+# it. Never fails: an empty result is normal for languages the repo barely uses.
+owned() {
+  git ls-files \
     | { grep -vE "$VENDORED" || true; } \
     | { grep -E "$1" || true; }
 }
@@ -97,7 +99,7 @@ DOCKER_HINT="Install it, or start the project container with 'docker compose up 
 
 # --- C / C++ -----------------------------------------------------------------
 # .clang-format at the repository root is the single source of style.
-mapfile -t C_FILES < <(staged '\.(c|h|cpp|hpp|cc)$')
+mapfile -t C_FILES < <(owned '\.(c|h|cpp|hpp|cc)$')
 if [ ${#C_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> clang-format (check)${NC}"
   if resolve clang-format "$DOCKER_HINT"; then
@@ -110,7 +112,7 @@ if [ ${#C_FILES[@]} -gt 0 ]; then
 fi
 
 # --- Rust --------------------------------------------------------------------
-mapfile -t RS_FILES < <(staged '\.rs$')
+mapfile -t RS_FILES < <(owned '\.rs$')
 if [ ${#RS_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> cargo fmt (check)${NC}"
   if resolve cargo "Install the Rust toolchain with rustup."; then
@@ -126,7 +128,7 @@ fi
 # --- Fortran -----------------------------------------------------------------
 # Every .f/.f90 in the tree currently belongs to the vendored sacess library, so
 # this only starts doing anything if the project grows Fortran of its own.
-mapfile -t F_FILES < <(staged '\.([fF]|f90|F90|f77|for)$')
+mapfile -t F_FILES < <(owned '\.([fF]|f90|F90|f77|for)$')
 if [ ${#F_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> fprettify (check)${NC}"
   if resolve fprettify "$DOCKER_HINT"; then
@@ -139,7 +141,7 @@ if [ ${#F_FILES[@]} -gt 0 ]; then
 fi
 
 # --- Markdown ----------------------------------------------------------------
-mapfile -t MD_FILES < <(staged '\.md$')
+mapfile -t MD_FILES < <(owned '\.md$')
 if [ ${#MD_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> mdformat (check)${NC}"
   if resolve mdformat "$DOCKER_HINT"; then
@@ -152,7 +154,7 @@ if [ ${#MD_FILES[@]} -gt 0 ]; then
 fi
 
 # --- Python ------------------------------------------------------------------
-mapfile -t PY_FILES < <(staged '\.py$')
+mapfile -t PY_FILES < <(owned '\.py$')
 if [ ${#PY_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> black (check)${NC}"
   if resolve black "$DOCKER_HINT"; then
@@ -165,7 +167,7 @@ if [ ${#PY_FILES[@]} -gt 0 ]; then
 fi
 
 # --- Shell -------------------------------------------------------------------
-mapfile -t SH_FILES < <(staged '\.sh$')
+mapfile -t SH_FILES < <(owned '\.sh$')
 if [ ${#SH_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> shfmt (check)${NC}"
   if resolve shfmt "$DOCKER_HINT"; then
@@ -178,7 +180,7 @@ if [ ${#SH_FILES[@]} -gt 0 ]; then
 fi
 
 # --- CMake -------------------------------------------------------------------
-mapfile -t CMAKE_FILES < <(staged '(\.cmake|CMakeLists\.txt)$')
+mapfile -t CMAKE_FILES < <(owned '(\.cmake|CMakeLists\.txt)$')
 if [ ${#CMAKE_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> gersemi (check)${NC}"
   if resolve gersemi "$DOCKER_HINT"; then
@@ -195,7 +197,7 @@ fi
 # modules/cuqdyn-rs/src/context.rs:463 splits <ode_expr> on newlines, so one
 # equation per line is load-bearing and a formatter that reflowed it would fold
 # a 15-state model into a single equation.
-mapfile -t XML_FILES < <(staged '\.xml$')
+mapfile -t XML_FILES < <(owned '\.xml$')
 if [ ${#XML_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> xmllint (check)${NC}"
   RUNNER_ENV=(XMLLINT_INDENT="    ")
