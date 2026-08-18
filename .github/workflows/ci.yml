@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["*/v*"]
   pull_request:
 
 concurrency:
@@ -20,9 +21,6 @@ env:
   CARGO_TERM_COLOR: always
   RUN: docker compose run --rm -T cuqdyn_c
 
-# One job rather than one per step: clang-tidy needs the compile database and
-# ctest needs the binaries, so splitting them would mean either shipping half a
-# gigabyte of build directory between jobs or building three times over.
 jobs:
   ci:
     runs-on: ubuntu-latest
