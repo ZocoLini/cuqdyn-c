@@ -9,40 +9,11 @@ echo ""
 
 echo "${YELLOW}Running formatter over the whole tree${NC}"
 
-# Picks how to invoke a formatter and leaves it in RUNNER. Local install wins;
-# the container is the fallback. A tool available in neither only warns: a gap
-# in someone's setup is not a reason to refuse their commit.
-# Set RUNNER_ENV to a list of VAR=value before calling resolve when the tool
-# needs environment; it has to be forwarded with -e to reach inside a container.
-RUNNER=()
-RUNNER_ENV=()
-resolve() {
-  local tool=$1 hint=$2
-  local status=1
-  if have "$tool"; then
-    if [ ${#RUNNER_ENV[@]} -gt 0 ]; then
-      RUNNER=(env "${RUNNER_ENV[@]}" "$tool")
-    else
-      RUNNER=("$tool")
-    fi
-    status=0
-  elif [ -n "$CONTAINER" ] &&
-       docker compose exec -T "$CONTAINER" sh -lc "command -v $tool" >/dev/null 2>&1; then
-    local env_flags=()
-    local kv
-    for kv in ${RUNNER_ENV[@]+"${RUNNER_ENV[@]}"}; do
-      env_flags+=(-e "$kv")
-    done
-    RUNNER=(docker compose exec -T ${env_flags[@]+"${env_flags[@]}"} "$CONTAINER" "$tool")
-    status=0
-  fi
-  RUNNER_ENV=()
-  if [ $status -eq 0 ]; then
-    return 0
-  fi
-  echo "${YELLOW}   WARNING: $tool not found, skipping this check. $hint${NC}"
+# Reports a check that could not run. A gap in someone's setup warns rather
+# than refusing their commit.
+skip() {
+  echo "${YELLOW}   WARNING: $1 not found, skipping this check. $DOCKER_HINT${NC}"
   SKIPPED=$((SKIPPED + 1))
-  return 1
 }
 
 SKIPPED=0
@@ -60,12 +31,12 @@ reformatted() {
 mapfile -t C_FILES < <(owned '\.(c|h|cpp|hpp|cc)$')
 if [ ${#C_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> clang-format (check)${NC}"
-  if resolve clang-format "$DOCKER_HINT"; then
-    if ! "${RUNNER[@]}" --dry-run --Werror "${C_FILES[@]}" >/dev/null 2>&1; then
-      echo "${RED}ERROR: Formatting issues detected. Applying clang-format...${NC}"
-      "${RUNNER[@]}" -i "${C_FILES[@]}"
-      reformatted
-    fi
+  if ! available clang-format; then
+    skip clang-format
+  elif ! "${RUN[@]}" "clang-format --dry-run --Werror ${C_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying clang-format...${NC}"
+    "${RUN[@]}" "clang-format -i ${C_FILES[*]}"
+    reformatted
   fi
 fi
 
@@ -73,13 +44,13 @@ fi
 mapfile -t RS_FILES < <(owned '\.rs$')
 if [ ${#RS_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> cargo fmt (check)${NC}"
-  if resolve cargo "Install the Rust toolchain with rustup."; then
-    # cargo fmt works on the crate, not on a file list.
-    if ! (cd modules/cuqdyn-rs && "${RUNNER[@]}" fmt --all -- --check >/dev/null 2>&1); then
-      echo "${RED}ERROR: Formatting issues detected. Applying cargo fmt...${NC}"
-      (cd modules/cuqdyn-rs && "${RUNNER[@]}" fmt --all)
-      reformatted
-    fi
+  # cargo fmt works on the crate, not on a file list.
+  if ! available cargo; then
+    skip cargo
+  elif ! "${RUN[@]}" "cd modules/cuqdyn-rs && cargo fmt --all -- --check" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying cargo fmt...${NC}"
+    "${RUN[@]}" "cd modules/cuqdyn-rs && cargo fmt --all"
+    reformatted
   fi
 fi
 
@@ -89,12 +60,12 @@ fi
 mapfile -t F_FILES < <(owned '\.([fF]|f90|F90|f77|for)$')
 if [ ${#F_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> fprettify (check)${NC}"
-  if resolve fprettify "$DOCKER_HINT"; then
-    if [ -n "$("${RUNNER[@]}" --diff "${F_FILES[@]}" 2>/dev/null)" ]; then
-      echo "${RED}ERROR: Formatting issues detected. Applying fprettify...${NC}"
-      "${RUNNER[@]}" "${F_FILES[@]}"
-      reformatted
-    fi
+  if ! available fprettify; then
+    skip fprettify
+  elif [ -n "$("${RUN[@]}" "fprettify --diff ${F_FILES[*]}" 2>/dev/null)" ]; then
+    echo "${RED}ERROR: Formatting issues detected. Applying fprettify...${NC}"
+    "${RUN[@]}" "fprettify ${F_FILES[*]}"
+    reformatted
   fi
 fi
 
@@ -102,12 +73,12 @@ fi
 mapfile -t MD_FILES < <(owned '\.md$')
 if [ ${#MD_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> mdformat (check)${NC}"
-  if resolve mdformat "$DOCKER_HINT"; then
-    if ! "${RUNNER[@]}" --check "${MD_FILES[@]}" >/dev/null 2>&1; then
-      echo "${RED}ERROR: Formatting issues detected. Applying mdformat...${NC}"
-      "${RUNNER[@]}" "${MD_FILES[@]}" >/dev/null
-      reformatted
-    fi
+  if ! available mdformat; then
+    skip mdformat
+  elif ! "${RUN[@]}" "mdformat --check ${MD_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying mdformat...${NC}"
+    "${RUN[@]}" "mdformat ${MD_FILES[*]}" >/dev/null
+    reformatted
   fi
 fi
 
@@ -115,12 +86,12 @@ fi
 mapfile -t PY_FILES < <(owned '\.py$')
 if [ ${#PY_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> black (check)${NC}"
-  if resolve black "$DOCKER_HINT"; then
-    if ! "${RUNNER[@]}" --check --quiet "${PY_FILES[@]}" >/dev/null 2>&1; then
-      echo "${RED}ERROR: Formatting issues detected. Applying black...${NC}"
-      "${RUNNER[@]}" --quiet "${PY_FILES[@]}"
-      reformatted
-    fi
+  if ! available black; then
+    skip black
+  elif ! "${RUN[@]}" "black --check --quiet ${PY_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying black...${NC}"
+    "${RUN[@]}" "black --quiet ${PY_FILES[*]}" >/dev/null
+    reformatted
   fi
 fi
 
@@ -128,12 +99,12 @@ fi
 mapfile -t SH_FILES < <(owned '\.sh$')
 if [ ${#SH_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> shfmt (check)${NC}"
-  if resolve shfmt "$DOCKER_HINT"; then
-    if ! "${RUNNER[@]}" --diff --indent 2 "${SH_FILES[@]}" >/dev/null 2>&1; then
-      echo "${RED}ERROR: Formatting issues detected. Applying shfmt...${NC}"
-      "${RUNNER[@]}" --write --indent 2 "${SH_FILES[@]}"
-      reformatted
-    fi
+  if ! available shfmt; then
+    skip shfmt
+  elif ! "${RUN[@]}" "shfmt --diff --indent 2 ${SH_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying shfmt...${NC}"
+    "${RUN[@]}" "shfmt --write --indent 2 ${SH_FILES[*]}" >/dev/null
+    reformatted
   fi
 fi
 
@@ -141,12 +112,12 @@ fi
 mapfile -t CMAKE_FILES < <(owned '(\.cmake|CMakeLists\.txt)$')
 if [ ${#CMAKE_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> gersemi (check)${NC}"
-  if resolve gersemi "$DOCKER_HINT"; then
-    if ! "${RUNNER[@]}" --check "${CMAKE_FILES[@]}" >/dev/null 2>&1; then
-      echo "${RED}ERROR: Formatting issues detected. Applying gersemi...${NC}"
-      "${RUNNER[@]}" --in-place "${CMAKE_FILES[@]}"
-      reformatted
-    fi
+  if ! available gersemi; then
+    skip gersemi
+  elif ! "${RUN[@]}" "gersemi --check ${CMAKE_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying gersemi...${NC}"
+    "${RUN[@]}" "gersemi --in-place ${CMAKE_FILES[*]}" >/dev/null
+    reformatted
   fi
 fi
 
@@ -158,21 +129,22 @@ fi
 mapfile -t XML_FILES < <(owned '\.xml$')
 if [ ${#XML_FILES[@]} -gt 0 ]; then
   echo "${YELLOW}==> xmllint (check)${NC}"
-  RUNNER_ENV=(XMLLINT_INDENT="    ")
-  if resolve xmllint "$DOCKER_HINT"; then
-    NEEDS_FORMAT=()
-    for f in "${XML_FILES[@]}"; do
-      if ! "${RUNNER[@]}" --format "$f" 2>/dev/null | diff -q - "$f" >/dev/null 2>&1; then
-        NEEDS_FORMAT+=("$f")
-      fi
-    done
-    if [ ${#NEEDS_FORMAT[@]} -gt 0 ]; then
-      echo "${RED}ERROR: Formatting issues detected. Applying xmllint...${NC}"
-      for f in "${NEEDS_FORMAT[@]}"; do
-        "${RUNNER[@]}" --format "$f" > "$f.fmt" && mv "$f.fmt" "$f"
-      done
-      reformatted
-    fi
+  # The whole loop runs inside a single invocation: 46 files times one docker
+  # exec each would dominate the hook's runtime. XMLLINT_INDENT is set inside
+  # the command so it reaches xmllint whichever side RUN runs on.
+  # $f is the loop variable of the shell RUN starts, so it must survive as
+  # literal text rather than expanding here.
+  # shellcheck disable=SC2016
+  xml_fmt='XMLLINT_INDENT="    " xmllint --format "$f"'
+  xml_check="for f in ${XML_FILES[*]}; do $xml_fmt | diff -q - \"\$f\" >/dev/null || exit 1; done"
+  xml_apply="for f in ${XML_FILES[*]}; do $xml_fmt >\"\$f.fmt\" && mv \"\$f.fmt\" \"\$f\"; done"
+
+  if ! available xmllint; then
+    skip xmllint
+  elif ! "${RUN[@]}" "$xml_check" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying xmllint...${NC}"
+    "${RUN[@]}" "$xml_apply"
+    reformatted
   fi
 fi
 
