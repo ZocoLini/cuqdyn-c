@@ -1,0 +1,38 @@
+name: Set up the cuqdyn toolchain
+description: >
+  Builds the project image and restores the shared build cache. Every job needs
+  both, so they live here instead of being repeated in each one.
+
+outputs:
+  cache-primary-key:
+    description: Key the caller passes back to actions/cache/save on main.
+    value: ${{ steps.build-cache.outputs.cache-primary-key }}
+
+runs:
+  using: composite
+  steps:
+    - uses: docker/setup-buildx-action@v3
+
+    # The image is the single source of truth for tool versions: the same one
+    # the hooks reach for locally. Only main writes the layer cache, so a branch
+    # cannot poison what everyone else pulls.
+    - uses: docker/build-push-action@v6
+      with:
+        context: .
+        load: true
+        tags: cuqdyn-c-cuqdyn_c:latest
+        cache-from: type=gha
+        cache-to: ${{ github.ref == 'refs/heads/main' && 'type=gha,mode=max' || '' }}
+
+    # CMake fetches and builds SUNDIALS, HDF5, GSL and muparser, which is by far
+    # the slowest part of a build. Restoring build-*/ skips it.
+    - id: build-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          build-serial
+          build-mpi
+          modules/cuqdyn-rs/target
+          ~/.cargo/registry
+        key: build-${{ hashFiles('deps.cmake', 'CMakeLists.txt', 'toolchains/*.cmake', 'modules/cuqdyn-rs/Cargo.lock') }}
+        restore-keys: build-

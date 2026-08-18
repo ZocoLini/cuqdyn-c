@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push to the same branch makes the first run pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so the image name compose derives (<project>-<service>) matches the
+  # tag the setup action loads, whatever the checkout directory is called.
+  COMPOSE_PROJECT_NAME: cuqdyn-c
+  # Incremental compilation buys nothing on a runner that starts clean, and it
+  # costs 61 MB across 360 extra files in the cached target directory.
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  # Everything runs through the project image, so a job is the same command a
+  # developer would type. --rm because each step wants a fresh container.
+  RUN: docker compose run --rm -T cuqdyn_c
+
+jobs:
+  # clang-tidy needs compile_commands.json and the generated headers, so the
+  # build has to come first. The formatter has no such dependency, but keeping
+  # both halves of the lint in one job is worth more than the minutes saved by
+  # splitting them.
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scripts/get_module_version.sh reads the tags
+
+      - id: setup
+        uses: ./.github/actions/setup
+
+      - name: Build every variant
+        run: |
+          ${{ env.RUN }} ./scripts/build.sh serial
+          ${{ env.RUN }} ./scripts/build.sh mpi
+
+      # Only main writes, so branches share one warm cache instead of each
+      # leaving its own behind.
+      - if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            build-serial
+            build-mpi
+            modules/cuqdyn-rs/target
+            ~/.cargo/registry
+          key: ${{ steps.setup.outputs.cache-primary-key }}
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: compile
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+
+      # The same scripts the hooks run, so CI cannot disagree with a commit that
+      # passed locally. The formatter rewrites what it finds and exits non-zero,
+      # which is exactly the signal wanted here.
+      - name: Formatting
+        run: ${{ env.RUN }} ./.githooks/formatter
+
+      - name: Linters
+        run: ${{ env.RUN }} ./.githooks/linter < /dev/null
+
+  test:
+    runs-on: ubuntu-latest
+    needs: compile
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+
+      - name: ctest
+        run: ${{ env.RUN }} ./scripts/test.sh

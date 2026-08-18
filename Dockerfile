@@ -32,6 +32,11 @@ RUN pip install --no-cache-dir --break-system-packages \
     gersemi \
     mdformat
 
+# The repository is bind-mounted from the host, so its owner is whatever UID
+# checked it out. Without this git refuses to operate on it, which breaks every
+# hook the moment CI runs them in here.
+RUN git config --system --add safe.directory '*'
+
 USER ubuntu
 WORKDIR /home/ubuntu
 

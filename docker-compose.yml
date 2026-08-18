@@ -9,3 +9,9 @@ services:
         volumes:
             - .:/home/ubuntu/workspace
         working_dir: /home/ubuntu/workspace
+        environment:
+            # Passed through rather than hardcoded: CI turns incremental
+            # compilation off to keep the build cache small, a developer
+            # rebuilding all day wants it on.
+            - CARGO_INCREMENTAL
+            - CARGO_TERM_COLOR
