@@ -55,7 +55,6 @@ if command -v cargo >/dev/null 2>&1 && command -v clang-tidy >/dev/null 2>&1; th
 elif command -v docker >/dev/null 2>&1 &&
      docker compose ps --status running --services 2>/dev/null | grep -qx cuqdyn_c; then
   RUN=(docker compose exec -T cuqdyn_c bash -lc)
-  echo "   running the linters in the cuqdyn_c container"
 elif command -v cargo >/dev/null 2>&1; then
   RUN=(bash -lc)
 else

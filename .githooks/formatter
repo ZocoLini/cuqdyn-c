@@ -73,7 +73,6 @@ resolve() {
       env_flags+=(-e "$kv")
     done
     RUNNER=(docker compose exec -T ${env_flags[@]+"${env_flags[@]}"} "$CONTAINER" "$tool")
-    echo "   ${tool} not installed locally, running it in the ${CONTAINER} container"
     status=0
   fi
   RUNNER_ENV=()
