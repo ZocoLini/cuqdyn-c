@@ -76,35 +76,10 @@ else
 fi
 
 # --- clang-tidy --------------------------------------------------------------
-# Only the C files this push actually touches. The tree still carries older
-# findings, and blocking every push on code nobody is changing would just teach
-# people to reach for --no-verify; this way anything you touch has to come out
-# clean, and the backlog drains as files are edited.
+# The whole of the project's own C, not just what this push touches: the tree is
+# clean and a full pass costs about four seconds, so there is nothing to gain
+# from working out which files changed.
 echo "${YELLOW}==> clang-tidy${NC}"
-
-pushed_c_files() {
-  local lref loid rref roid base
-  {
-    while read -r lref loid rref roid; do
-      [ -z "${loid:-}" ] && continue
-      case "$loid" in *[!0]*) ;; *) continue ;; esac
-      base=""
-      case "${roid:-}" in
-        *[!0]*) base="$roid" ;;
-        *)
-          # New branch upstream: compare against wherever it forked from.
-          for candidate in origin/HEAD origin/main origin/master; do
-            if base=$(git merge-base "$loid" "$candidate" 2>/dev/null); then
-              break
-            fi
-            base=""
-          done
-          ;;
-      esac
-      [ -n "$base" ] && git diff --name-only "$base" "$loid" 2>/dev/null || true
-    done
-  } <<< "$REFS"
-}
 
 BUILD_DIR=""
 for candidate in build-serial build-mpi build-debug; do
@@ -114,6 +89,8 @@ for candidate in build-serial build-mpi build-debug; do
   fi
 done
 
+mapfile -t TIDY_FILES < <(git ls-files 'modules/cuqdyn-c/src/*.c' 'modules/cli/src/*.c' 'benches/*.c')
+
 if ! "${RUN[@]}" "command -v clang-tidy" >/dev/null 2>&1; then
   echo "${YELLOW}   WARNING: clang-tidy not found, skipping.${NC}"
   SKIPPED=$((SKIPPED + 1))
@@ -121,25 +98,18 @@ elif [ -z "$BUILD_DIR" ]; then
   echo "${YELLOW}   WARNING: no compile_commands.json found, skipping.${NC}"
   echo "${YELLOW}   Build once with './scripts/build.sh serial' to enable this check.${NC}"
   SKIPPED=$((SKIPPED + 1))
+elif [ ${#TIDY_FILES[@]} -eq 0 ]; then
+  echo "${YELLOW}   WARNING: no C sources found, skipping.${NC}"
+  SKIPPED=$((SKIPPED + 1))
 else
-  mapfile -t TIDY_FILES < <(
-    { [ -n "$REFS" ] && pushed_c_files || true; } \
-      | { grep -E '^modules/(cuqdyn-c|cli)/src/.*\.c$' || true; } \
-      | sort -u
-  )
-  if [ ${#TIDY_FILES[@]} -eq 0 ]; then
-    echo "   no C files in this push"
-  else
-    echo "   ${#TIDY_FILES[@]} file(s), against $BUILD_DIR"
-    TIDY_LOG=/tmp/cuqdyn-prepush-tidy.log
-    if ! "${RUN[@]}" "clang-tidy -p $BUILD_DIR --quiet ${TIDY_FILES[*]}" \
-         > "$TIDY_LOG" 2>&1; then
-      echo "${RED}ERROR: clang-tidy reported problems:${NC}"
-      grep -E "(warning|error):" "$TIDY_LOG" | head -15 || tail -20 "$TIDY_LOG"
-      echo ""
-      echo "${RED}Push aborted. Full log: $TIDY_LOG${NC}"
-      exit 1
-    fi
+  echo "   ${#TIDY_FILES[@]} file(s), against $BUILD_DIR"
+  TIDY_LOG=/tmp/cuqdyn-prepush-tidy.log
+  if ! "${RUN[@]}" "clang-tidy -p $BUILD_DIR --quiet ${TIDY_FILES[*]}" > "$TIDY_LOG" 2>&1; then
+    echo "${RED}ERROR: clang-tidy reported problems:${NC}"
+    grep -E "(warning|error):" "$TIDY_LOG" | head -15 || tail -20 "$TIDY_LOG"
+    echo ""
+    echo "${RED}Push aborted. Full log: $TIDY_LOG${NC}"
+    exit 1
   fi
 fi
 

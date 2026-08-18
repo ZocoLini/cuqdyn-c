@@ -62,14 +62,13 @@ void destroy_cuqdyn_result(CuqdynResult *result)
 
 CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file)
 {
-    int nproc;
     int rank;
 
 #if defined(MPI2) || defined(MPI)
+    int nproc;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #else
-    nproc = 1;
     rank = 0;
 #endif
     CuqdynConf *config = get_cuqdyn_conf(get_cuqdyn_context());
@@ -144,6 +143,15 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                     "p_count=%ld. They must match.\n",
                     NV_LENGTH_S(predicted_params), NV_LENGTH_S(initial_params));
             N_VDestroy(predicted_params);
+            N_VDestroy(texp);
+            SUNMatDestroy(yexp);
+            N_VDestroy(tmp_initial_condition);
+            N_VDestroy(initial_condition);
+            N_VDestroy(scaled_times);
+            N_VDestroy(initial_params);
+            destroy_matrix_array(media_matrix);
+            SUNMatDestroy(resid_loo);
+            SUNMatDestroy(predicted_params_matrix);
             destroy_cuqdyn_data(&data);
             return NULL;
         }
@@ -399,7 +407,7 @@ void destroy_matrix_array(MatrixArray array)
         SUNMatDestroy(array.data[i]);
     }
 
-    free(array.data);
+    free((void *) array.data);
 }
 
 SUNMatrix matrix_array_get_index(MatrixArray array, long i)
@@ -462,7 +470,6 @@ SUNMatrix matrix_array_get_median(MatrixArray matrix_array)
     long max_z = matrix_array.len;
 
     SUNMatrix medians_matrix = NewDenseMatrix(rows, cols);
-    sunrealtype *medians = SM_DATA_D(medians_matrix);
 
     sunrealtype values[max_z];
 

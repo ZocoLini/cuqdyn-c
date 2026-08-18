@@ -19,7 +19,7 @@ Sensitivities create_sensitivities(const int n_params, const long n_states, cons
     sensitivities.n_params = n_params;
     sensitivities.n_states = n_states;
     sensitivities.n_times = n_times;
-    sensitivities.data = calloc(n_params, sizeof(SUNMatrix));
+    sensitivities.data = (SUNMatrix *) calloc(n_params, sizeof(SUNMatrix));
 
     for (int i = 0; i < n_params; ++i)
     {
@@ -41,7 +41,7 @@ void destroy_sensitivities(const Sensitivities sensitivities)
         SUNMatDestroy(sensitivities.data[i]);
     }
 
-    free(sensitivities.data);
+    free((void *) sensitivities.data);
 }
 
 sunrealtype sensitivity_at(const Sensitivities sensitivities, const long state, const long time, const int param)

@@ -463,6 +463,7 @@ SUNMatrix cuqdyn_hybrid_covariance(SUNMatrix cov_fim, SUNMatrix loo_params)
         }
     }
 
+    free(fim_std);
     gsl_vector_free(values);
     gsl_matrix_free(vectors);
     gsl_matrix_free(hybrid);
