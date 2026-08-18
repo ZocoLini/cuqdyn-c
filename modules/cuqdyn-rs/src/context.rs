@@ -528,8 +528,8 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             .collect::<Vec<*const c_char>>();
 
         let ode_expr = OdeExprC {
-            y_count: value.ode_expr.y_count as i32,
-            p_count: value.ode_expr.p_count as i32,
+            y_count: value.ode_expr.y_count,
+            p_count: value.ode_expr.p_count,
             exprs: ode_exprs_c.as_ptr(),
         };
 
@@ -692,6 +692,7 @@ mod tests {
 
         assert!(
             error.to_string().contains("asd"),
+            "{}",
             "the message should name the offending value, got: {error}"
         );
     }
@@ -822,7 +823,6 @@ mod tests {
                     }
                 }
             }
-
         }
     }
 

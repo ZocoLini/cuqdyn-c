@@ -11,15 +11,17 @@ impl Model for DefaultModel {
     fn eval(&mut self, _t: f64, _y: &[f64], _ydot: &mut [f64], _p: &[f64]) {}
 }
 
+type ModelContext = Context<
+    Unlocked,
+    IndexedResolver<Unlocked, f64>,
+    EmptyResolver<Unlocked>,
+    IndexedResolver<Locked, f64>,
+    EmptyResolver<Locked>,
+>;
+
 struct GenericModel<'e> {
     exprs: Vec<Expr<IVRpn<'e>>>,
-    ctx: Context<
-        Unlocked,
-        IndexedResolver<Unlocked, f64>,
-        EmptyResolver<Unlocked>,
-        IndexedResolver<Locked, f64>,
-        EmptyResolver<Locked>,
-    >,
+    ctx: ModelContext,
     stack: Vec<f64>,
 }
 
@@ -48,7 +50,8 @@ impl<'e> GenericModel<'e> {
         let mut exprs = Vec::new();
 
         for s in cuqdyn_conf.ode_expr().expr().iter() {
-            let expr = Expr::compile(s, &ctx).expect(&format!("unable to compile {s}"));
+            let expr =
+                Expr::compile(s, &ctx).unwrap_or_else(|_| panic!("{}", "unable to compile {s}"));
             exprs.push(expr);
         }
 
@@ -62,18 +65,18 @@ impl<'e> GenericModel<'e> {
 
 impl Model for GenericModel<'_> {
     fn eval(&mut self, _t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]) {
-        for i in 0..y.len() {
-            self.ctx.vars_mut().set('y', i, y[i]);
+        for (i, value) in y.iter().enumerate() {
+            self.ctx.vars_mut().set('y', i, *value);
         }
 
-        for i in 0..p.len() {
-            self.ctx.vars_mut().set('p', i, p[i]);
+        for (i, value) in p.iter().enumerate() {
+            self.ctx.vars_mut().set('p', i, *value);
         }
 
         for (i, expr) in self.exprs.iter().enumerate() {
-            ydot[i] = expr
-                .eval(&self.ctx, &mut self.stack)
-                .expect(&format!("Error evaluating model expression with index {i}"));
+            ydot[i] = expr.eval(&self.ctx, &mut self.stack).unwrap_or_else(|_| {
+                panic!("{}", "Error evaluating model expression with index {i}")
+            });
 
             if !ydot[i].is_finite() {
                 let def = env::var("CUQDYN_DEF_YDOT")

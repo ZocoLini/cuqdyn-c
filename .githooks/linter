@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+echo ""
+
+if [ -t 1 ]; then
+  GREEN=$'\033[0;32m'
+  YELLOW=$'\033[0;33m'
+  RED=$'\033[0;31m'
+  NC=$'\033[0m'
+else
+  GREEN=""; YELLOW=""; RED=""; NC=""
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_ROOT="$SCRIPT_DIR/.."
+
+cd "$WORKSPACE_ROOT" || {
+  echo "${RED}Unable to change to workspace root: $WORKSPACE_ROOT${NC}"
+  exit 1
+}
+
+# git feeds the refs being pushed on stdin, one line per ref. Read them once:
+# they say both whether there is anything to lint and which files changed.
+REFS=""
+if [ ! -t 0 ]; then
+  REFS="$(cat)"
+fi
+
+if [ -n "$REFS" ] && ! printf '%s\n' "$REFS" | awk '{print $2}' | grep -qE '[^0]'; then
+  echo "${GREEN}Only branch deletions pushed, nothing to lint${NC}"
+  echo ""
+  exit 0
+fi
+
+echo "${YELLOW}Linting before pushing${NC}"
+echo "${YELLOW}(skip with 'git push --no-verify')${NC}"
+
+RUN=()
+if command -v cargo >/dev/null 2>&1 && command -v clang-tidy >/dev/null 2>&1; then
+  RUN=(bash -lc)
+elif command -v docker >/dev/null 2>&1 &&
+     docker compose ps --status running --services 2>/dev/null | grep -qx cuqdyn_c; then
+  RUN=(docker compose exec -T cuqdyn_c bash -lc)
+  echo "   running the linters in the cuqdyn_c container"
+elif command -v cargo >/dev/null 2>&1; then
+  RUN=(bash -lc)
+else
+  # Consistent with the formatter: a gap in someone's setup warns rather than
+  # refusing their push.
+  echo "${YELLOW}   WARNING: no linter toolchain and no cuqdyn_c container found.${NC}"
+  echo "${YELLOW}   Skipping. Start the container with 'docker compose up -d'.${NC}"
+  echo ""
+  exit 0
+fi
+
+SKIPPED=0
+
+# --- clippy ------------------------------------------------------------------
+CLIPPY_LOG=/tmp/cuqdyn-prepush-clippy.log
+echo ""
+echo "${YELLOW}==> clippy${NC}"
+if "${RUN[@]}" "command -v cargo" >/dev/null 2>&1; then
+  if ! "${RUN[@]}" "cd modules/cuqdyn-rs && cargo clippy --all-targets -- -D warnings" \
+       > "$CLIPPY_LOG" 2>&1; then
+    echo "${RED}ERROR: clippy reported problems. Last lines:${NC}"
+    tail -25 "$CLIPPY_LOG"
+    echo ""
+    echo "${RED}Push aborted. Full log: $CLIPPY_LOG${NC}"
+    exit 1
+  fi
+else
+  echo "${YELLOW}   WARNING: cargo not found, skipping.${NC}"
+  SKIPPED=$((SKIPPED + 1))
+fi
+
+# --- clang-tidy --------------------------------------------------------------
+# Only the C files this push actually touches. The tree still carries older
+# findings, and blocking every push on code nobody is changing would just teach
+# people to reach for --no-verify; this way anything you touch has to come out
+# clean, and the backlog drains as files are edited.
+echo "${YELLOW}==> clang-tidy${NC}"
+
+pushed_c_files() {
+  local lref loid rref roid base
+  {
+    while read -r lref loid rref roid; do
+      [ -z "${loid:-}" ] && continue
+      case "$loid" in *[!0]*) ;; *) continue ;; esac
+      base=""
+      case "${roid:-}" in
+        *[!0]*) base="$roid" ;;
+        *)
+          # New branch upstream: compare against wherever it forked from.
+          for candidate in origin/HEAD origin/main origin/master; do
+            if base=$(git merge-base "$loid" "$candidate" 2>/dev/null); then
+              break
+            fi
+            base=""
+          done
+          ;;
+      esac
+      [ -n "$base" ] && git diff --name-only "$base" "$loid" 2>/dev/null || true
+    done
+  } <<< "$REFS"
+}
+
+BUILD_DIR=""
+for candidate in build-serial build-mpi build-debug; do
+  if [ -f "$candidate/compile_commands.json" ]; then
+    BUILD_DIR="$candidate"
+    break
+  fi
+done
+
+if ! "${RUN[@]}" "command -v clang-tidy" >/dev/null 2>&1; then
+  echo "${YELLOW}   WARNING: clang-tidy not found, skipping.${NC}"
+  SKIPPED=$((SKIPPED + 1))
+elif [ -z "$BUILD_DIR" ]; then
+  echo "${YELLOW}   WARNING: no compile_commands.json found, skipping.${NC}"
+  echo "${YELLOW}   Build once with './scripts/build.sh serial' to enable this check.${NC}"
+  SKIPPED=$((SKIPPED + 1))
+else
+  mapfile -t TIDY_FILES < <(
+    { [ -n "$REFS" ] && pushed_c_files || true; } \
+      | { grep -E '^modules/(cuqdyn-c|cli)/src/.*\.c$' || true; } \
+      | sort -u
+  )
+  if [ ${#TIDY_FILES[@]} -eq 0 ]; then
+    echo "   no C files in this push"
+  else
+    echo "   ${#TIDY_FILES[@]} file(s), against $BUILD_DIR"
+    TIDY_LOG=/tmp/cuqdyn-prepush-tidy.log
+    if ! "${RUN[@]}" "clang-tidy -p $BUILD_DIR --quiet ${TIDY_FILES[*]}" \
+         > "$TIDY_LOG" 2>&1; then
+      echo "${RED}ERROR: clang-tidy reported problems:${NC}"
+      grep -E "(warning|error):" "$TIDY_LOG" | head -15 || tail -20 "$TIDY_LOG"
+      echo ""
+      echo "${RED}Push aborted. Full log: $TIDY_LOG${NC}"
+      exit 1
+    fi
+  fi
+fi
+
+echo ""
+if [ "$SKIPPED" -gt 0 ]; then
+  echo "${YELLOW}Linting passed, $SKIPPED check(s) skipped for missing tools${NC}"
+else
+  echo "${GREEN}Linting passed${NC}"
+fi
+echo ""
+exit 0
