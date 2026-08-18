@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <xml>
     <run>
         <typebench>customized</typebench>
@@ -45,7 +46,6 @@
         <!-- CeSS option: migration time -->
         <migration_max_time>10</migration_max_time>
     </parallelization>
-
     <problem>
         <dim> 29 </dim>
         <neq> 0 </neq>
@@ -62,5 +62,4 @@
             0.4, 0.16, 0.08, 0.8, 0.08, 4e-07, 8e-05, 0.00032, 0.4, 8e-05, 1.6e-05, 4e-07, 8e-05, 0.00032, 0.4, 0.00024, 0.002, 0.08, 0.0012, 2e-05, 0.0001, 4, 0.002, 0.008, 0.0008, 0.0004, 4e-07, 8e-05, 0.00032
         </point>
     </problem>
-
 </xml>

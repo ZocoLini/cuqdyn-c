@@ -126,8 +126,8 @@ void *obj_func(double *x, void *data)
 
     if (SM_COLUMNS_D(exptotal->yexp) != cols)
     {
-        fprintf(stderr, "ERROR: yexp has %ld time points but the ODE result has %ld\n",
-                SM_COLUMNS_D(exptotal->yexp), cols);
+        fprintf(stderr, "ERROR: yexp has %ld time points but the ODE result has %ld\n", SM_COLUMNS_D(exptotal->yexp),
+                cols);
         exit(-1);
     }
 

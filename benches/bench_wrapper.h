@@ -5,4 +5,4 @@
 
 extern void run_benchmark(BenchOptions *options);
 
-#endif //BENCH_WRAPPER_H
+#endif // BENCH_WRAPPER_H

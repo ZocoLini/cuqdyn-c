@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Three-state linear cascade with only the downstream state measured:
      y2 is observed, y0 and y1 stay hidden. Two hidden states downstream of a
      single measurement makes this the stress test for the delta-method path. -->

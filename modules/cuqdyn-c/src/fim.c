@@ -223,8 +223,9 @@ FimResult *cuqdyn_fim_covariance(SUNMatrix j_nat, const double sigma2, N_Vector 
         // Truncated pseudo-inverse: Cov = sigma2 * Vk * diag(1/s_k^2) * Vk'.
         if (rank < n_params)
         {
-            fprintf(stderr, "WARNING: SVD pseudoinverse drops %ld weak FIM direction(s); "
-                            "propagated uncertainty can be anti-conservative.\n",
+            fprintf(stderr,
+                    "WARNING: SVD pseudoinverse drops %ld weak FIM direction(s); "
+                    "propagated uncertainty can be anti-conservative.\n",
                     n_params - rank);
         }
 
@@ -320,8 +321,8 @@ SUNMatrix cuqdyn_hybrid_covariance(SUNMatrix cov_fim, SUNMatrix loo_params)
 
     if (SM_COLUMNS_D(loo_params) != n_params)
     {
-        fprintf(stderr, "ERROR: loo_params has %ld columns but the covariance is %ld x %ld\n",
-                SM_COLUMNS_D(loo_params), n_params, n_params);
+        fprintf(stderr, "ERROR: loo_params has %ld columns but the covariance is %ld x %ld\n", SM_COLUMNS_D(loo_params),
+                n_params, n_params);
         return NULL;
     }
 
@@ -444,7 +445,8 @@ SUNMatrix cuqdyn_hybrid_covariance(SUNMatrix cov_fim, SUNMatrix loo_params)
                     double acc = 0.0;
                     for (long k = 0; k < n_params; ++k)
                     {
-                        acc += gsl_matrix_get(vectors, i, k) * gsl_vector_get(values, k) * gsl_matrix_get(vectors, j, k);
+                        acc += gsl_matrix_get(vectors, i, k) * gsl_vector_get(values, k) *
+                               gsl_matrix_get(vectors, j, k);
                     }
                     gsl_matrix_set(hybrid, i, j, acc);
                 }

@@ -16,10 +16,10 @@
  */
 typedef struct
 {
-    N_Vector times;              // length m
+    N_Vector times; // length m
     ObservedData all_state_data; // n_states x m, NaN where a state is unmeasured
-    ObservedData observed_data;  // n_obs x m, the measured rows only
-    N_Vector initial_values;     // length n_states, finite for every state
+    ObservedData observed_data; // n_obs x m, the measured rows only
+    N_Vector initial_values; // length n_states, finite for every state
 
     int *observed_idx; // 0-based state indices, ascending, length n_obs
     int n_obs;

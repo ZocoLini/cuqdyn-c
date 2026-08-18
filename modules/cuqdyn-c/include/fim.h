@@ -87,7 +87,6 @@ SUNMatrix cuqdyn_hybrid_covariance(SUNMatrix cov_fim, SUNMatrix loo_params);
  * 1.0 when the residuals were divided by known measurement sigmas, and the
  * usual unbiased estimate otherwise.
  */
-double cuqdyn_residual_variance(const double *weighted_residuals, long n_residuals, int n_params,
-                                int sigma_is_known);
+double cuqdyn_residual_variance(const double *weighted_residuals, long n_residuals, int n_params, int sigma_is_known);
 
 #endif // FIM_H

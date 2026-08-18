@@ -252,6 +252,7 @@ There are three types of input files that must be provided:
 
 - **cuqdyn config xml:**
   This file contains the configuration of the cuqdyn solver used in the cuqdyn-c library.
+
   - **tolerances:** rtol and atol used by the cvodes library.
   - **ode_expr:** ODE model expression or identifier.
   - **time_scaling:** Scaling factor for time. Using lower than 1 helps cvodes speed. You may have to increase the number of sacess maxevals. The sacess lb, up, and point constraints also get scaled. The same for the params median written in the output file. Params that are dividing shouldn't be scaled as the testing shows but they get scaled as well. This helps the solver converge faster but hasn't been proved to be valid for all cases. This has been made with testing purposes, not recommended to use it.

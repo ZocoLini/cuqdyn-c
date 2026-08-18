@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Two-state irreversible linear cascade, x2 observed and x1 hidden.
      Mirrors EXAMPLES/LinearCascade/define_problem_LinearCascade.m and the
      integration tolerances recorded in its run_options.mat. -->

@@ -1,10 +1,9 @@
-#include "uq_bands.h"
-
 #include <nvector/nvector_serial.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
 #include "cuqdyn.h"
 #include "matlab.h"
+#include "uq_bands.h"
 
 void conformal_bands(const MatrixArray media_matrix, SUNMatrix resid_loo, const int *observed_idx, const int n_obs,
                      const double alp, SUNMatrix q_low, SUNMatrix q_up)

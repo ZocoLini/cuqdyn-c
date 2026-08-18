@@ -1,5 +1,6 @@
 #include <iostream>
 #include <papi.h>
+
 #include "bench_options.h"
 #include "nanobench.h"
 

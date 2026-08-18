@@ -18,7 +18,7 @@ REPEATS=3
 # === OUTPUT ===
 mkdir -p "output/scalability"
 OUT_FILE="output/scalability_results.txt"
-echo "Variant,Procs,Iteration,Metric,Value,Unit" > "$OUT_FILE"
+echo "Variant,Procs,Iteration,Metric,Value,Unit" >"$OUT_FILE"
 
 # === MAIN LOOP ===
 for VARIANT in "${VARIANTS[@]}"; do
@@ -27,7 +27,7 @@ for VARIANT in "${VARIANTS[@]}"; do
   # If variant is serial, only run with 1 process
   if [[ "$VARIANT" == "serial" ]]; then
     echo "  Serial run (1 proc only)..."
-    for (( R=1; R<="$REPEATS"; R++ )); do
+    for ((R = 1; R <= "$REPEATS"; R++)); do
       mkdir -p "output/scalability/$VARIANT/$R"
       START_TIME=$(date +%s.%N)
 
@@ -40,12 +40,12 @@ for VARIANT in "${VARIANTS[@]}"; do
       END_TIME=$(date +%s.%N)
       ELAPSED_TIME=$(echo "$END_TIME - $START_TIME" | bc)
 
-      echo "$VARIANT,1,$R,wall-time,$ELAPSED_TIME,s" >> "$OUT_FILE"
+      echo "$VARIANT,1,$R,wall-time,$ELAPSED_TIME,s" >>"$OUT_FILE"
     done
   else
     for PROCS in "${PROCS_LIST[@]}"; do
       echo "  Running with $PROCS processes..."
-      for (( R=1; R<="$REPEATS"; R++ )); do
+      for ((R = 1; R <= "$REPEATS"; R++)); do
         mkdir -p "output/scalability/$VARIANT/$PROCS/$R"
         START_TIME=$(date +%s.%N)
 
@@ -58,7 +58,7 @@ for VARIANT in "${VARIANTS[@]}"; do
         END_TIME=$(date +%s.%N)
         ELAPSED_TIME=$(echo "$END_TIME - $START_TIME" | bc)
 
-        echo "$VARIANT,$PROCS,$R,wall-time,$ELAPSED_TIME,s" >> "$OUT_FILE"
+        echo "$VARIANT,$PROCS,$R,wall-time,$ELAPSED_TIME,s" >>"$OUT_FILE"
       done
     done
   fi

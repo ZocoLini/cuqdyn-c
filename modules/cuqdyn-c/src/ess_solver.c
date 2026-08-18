@@ -30,7 +30,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     int rank;
 
     CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
-    
+
 #if defined(MPI2) || defined(MPI)
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -56,7 +56,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
         {
             for (int j = 0; j < NV_LENGTH_S(initial_params); j++)
             {
-                exptotal[i].test.bench.X0[0][j] = NV_Ith_S(initial_params, j)  / conf->time_scaling;
+                exptotal[i].test.bench.X0[0][j] = NV_Ith_S(initial_params, j) / conf->time_scaling;
             }
         }
         init = 0;
@@ -98,8 +98,8 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     {
         exptotal[0].test.bench.min_dom[i] /= conf->time_scaling;
         exptotal[0].test.bench.max_dom[i] /= conf->time_scaling;
-        
-        if (initial_params == NULL) 
+
+        if (initial_params == NULL)
         {
             exptotal[0].test.bench.X0[0][i] /= conf->time_scaling;
         }

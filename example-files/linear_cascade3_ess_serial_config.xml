@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <xml>
     <run>
         <typebench>customized</typebench>
@@ -45,7 +46,6 @@
         <!-- CeSS option: migration time -->
         <migration_max_time>10</migration_max_time>
     </parallelization>
-
     <!-- Observing only the terminal state makes the transfer function
          k1*k2/((s+k1)(s+k2)(s+k3)) symmetric under k1<->k2: both orderings fit
          the observed data identically but imply completely different hidden
@@ -70,5 +70,4 @@
             0.3150, 0.200, 0.07700
         </point>
     </problem>
-
 </xml>

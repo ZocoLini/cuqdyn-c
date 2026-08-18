@@ -1,5 +1,3 @@
-#include "uq_bands.h"
-
 #include <gsl/gsl_cdf.h>
 #include <math.h>
 #include <nvector/nvector_serial.h>
@@ -12,6 +10,7 @@
 #include "fim.h"
 #include "functions.h"
 #include "sensitivity.h"
+#include "uq_bands.h"
 
 /// Var[y_k(t_i)] = S_k(t_i) * Cov_p * S_k(t_i)', for every state and time.
 static SUNMatrix propagate(const Sensitivities sensitivities, SUNMatrix covariance, const long n_states, const long m,
@@ -53,8 +52,8 @@ static int is_observed(const int *observed_idx, const int n_obs, const long stat
 }
 
 int delta_method_bands(N_Vector parameters, N_Vector initial_condition, const sunrealtype t0, N_Vector times,
-                       TransposedStates media_tot, ObservedData observed_data, const int *observed_idx,
-                       const int n_obs, SUNMatrix loo_params, SUNMatrix q_low, SUNMatrix q_up, SUNMatrix *cov_p_out,
+                       TransposedStates media_tot, ObservedData observed_data, const int *observed_idx, const int n_obs,
+                       SUNMatrix loo_params, SUNMatrix q_low, SUNMatrix q_up, SUNMatrix *cov_p_out,
                        SUNMatrix *std_y_out, SUNMatrix *q_low_alt_out, SUNMatrix *q_up_alt_out)
 {
     const CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());

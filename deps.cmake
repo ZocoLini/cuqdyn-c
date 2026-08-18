@@ -4,13 +4,13 @@ include(FetchContent)
 
 find_package(GSL 2.7)
 
-if (NOT GSL_FOUND)
+if(NOT GSL_FOUND)
     set(GSL_DISABLE_TESTS 1)
     FetchContent_Declare(
-            gsl
-            GIT_REPOSITORY https://github.com/ampl/gsl.git
-            GIT_TAG v2.7.0
-            GIT_SHALLOW TRUE
+        gsl
+        GIT_REPOSITORY https://github.com/ampl/gsl.git
+        GIT_TAG v2.7.0
+        GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(gsl)
     set(GSL_INCLUDE_DIR ${gsl_SOURCE_DIR} ${gsl_BINARY_DIR})
@@ -33,10 +33,10 @@ set(HDF5_ENABLE_CPP_LIB OFF CACHE BOOL "" FORCE)
 set(HDF5_DEFAULT_API_VERSION v18 CACHE STRING "")
 
 FetchContent_Declare(
-        hdf5
-        GIT_REPOSITORY https://github.com/HDFGroup/hdf5.git
-        GIT_TAG hdf5-1_8_12
-        GIT_SHALLOW TRUE
+    hdf5
+    GIT_REPOSITORY https://github.com/HDFGroup/hdf5.git
+    GIT_TAG hdf5-1_8_12
+    GIT_SHALLOW TRUE
 )
 
 FetchContent_MakeAvailable(hdf5)
@@ -59,31 +59,32 @@ set(HAVE_HDF5 TRUE CACHE BOOL "Pretend we have HDF5" FORCE)
 # set(MATIO_WITH_MAT73 ON CACHE BOOL "" FORCE)
 # set(MATIO_SHARED OFF CACHE BOOL "" FORCE)
 # set(MATIO_BUILD_TESTING OFF CACHE BOOL "" FORCE)
-# 
+#
 # include_directories(${hdf5_SOURCE_DIR}/src ${hdf5_BINARY_DIR})
 # link_libraries(hdf5)
-# 
+#
 # FetchContent_Declare(
 #         matio
 #         GIT_REPOSITORY https://github.com/tbeu/matio.git
 #         GIT_TAG v1.5.28
 #         GIT_SHALLOW TRUE
 # )
-# 
+#
 # FetchContent_Populate(matio)
-# 
+#
 # execute_process(
 #         COMMAND sed -i "s|find_package(HDF5)|find_package(HDF5 CONFIG)|" ${matio_SOURCE_DIR}/cmake/thirdParties.cmake
 # )
-# 
+#
 # add_subdirectory(${matio_SOURCE_DIR} ${matio_BINARY_DIR})
 
 ### Building v7.30 of CVODES ###
 
 FetchContent_Declare(
-        cvodes
-        URL https://github.com/LLNL/sundials/releases/download/v7.3.0/cvodes-7.3.0.tar.gz
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    cvodes
+    URL
+        https://github.com/LLNL/sundials/releases/download/v7.3.0/cvodes-7.3.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
 FetchContent_MakeAvailable(cvodes)
@@ -93,7 +94,9 @@ FetchContent_MakeAvailable(cvodes)
 set(RUST_LIB_DIR "${PROJECT_SOURCE_DIR}/modules/cuqdyn-rs")
 set(RUST_TARGET_DIR "${RUST_LIB_DIR}/target/release")
 
-add_custom_target(rust_lib ALL
+add_custom_target(
+    rust_lib
+    ALL
     env RUSTFLAGS=-C target-cpu=native
     COMMAND cargo build --release
     WORKING_DIRECTORY ${RUST_LIB_DIR}
