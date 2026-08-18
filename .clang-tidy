@@ -9,12 +9,15 @@
 # DeprecatedOrUnsafeBufferHandling wants the C11 Annex K functions (fprintf_s
 # and friends), which glibc does not ship, and easily-swappable-parameters
 # flags every function taking two doubles in a row, which here is most of them.
+# casting-through-void only ever fires on OpenMPI's own macros: MPI_COMM_WORLD
+# and MPI_DOUBLE expand to a cast through void *, so every MPI call trips it.
 Checks: >
   -*,
   clang-analyzer-*,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
   bugprone-*,
   -bugprone-easily-swappable-parameters,
+  -bugprone-casting-through-void,
   performance-*
 
 WarningsAsErrors: '*'

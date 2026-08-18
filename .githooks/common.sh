@@ -66,8 +66,10 @@ fi
 # Which tools are actually reachable, resolved in a single round trip. Asking
 # per tool would mean one `docker compose exec` each, which is what made the
 # hooks feel slow.
-HOOK_TOOLS="clang-format cargo fprettify xmllint mdformat black shfmt gersemi clang-tidy shellcheck"
-AVAILABLE=" $("${RUN[@]}" "for t in $HOOK_TOOLS; do command -v \$t >/dev/null 2>&1 && printf '%s ' \$t; done" 2>/dev/null) "
+HOOK_TOOLS="clang-format cargo fprettify xmllint mdformat black shfmt gersemi clang-tidy shellcheck mpicc"
+AVAILABLE=" $("${RUN[@]}" \
+  "for t in $HOOK_TOOLS; do if command -v \$t >/dev/null 2>&1; then printf '%s ' \$t; fi; done" \
+  2>/dev/null) "
 
 available() {
   case "$AVAILABLE" in

@@ -238,7 +238,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
             // We also need to send the actual i to the master process
             MPI_Send(&i, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
             MPI_Send(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-            MPI_Send(SM_DATA_D(predicted_obs_states), predicted_obs_states_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+            MPI_Send(SM_DATA_D(predicted_obs_states), (int) predicted_obs_states_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
             MPI_Send(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
         }
         else
@@ -260,7 +260,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                 set_matrix_row(resid_loo, residuals, slaved_index, 0, NV_LENGTH_S(residuals));
 
                 // Receiving the predicted data matrix
-                MPI_Recv(SM_DATA_D(predicted_obs_states), predicted_obs_states_len, MPI_DOUBLE, slave, 2,
+                MPI_Recv(SM_DATA_D(predicted_obs_states), (int) predicted_obs_states_len, MPI_DOUBLE, slave, 2,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 matrix_array_set_index(media_matrix, slaved_index - 1, predicted_obs_states);
 
@@ -291,6 +291,10 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     {
         N_VDestroy(initial_condition);
         N_VDestroy(scaled_times);
+        N_VDestroy(initial_params);
+        destroy_matrix_array(media_matrix);
+        SUNMatDestroy(resid_loo);
+        SUNMatDestroy(predicted_params_matrix);
         destroy_cuqdyn_data(&data);
         return NULL;
     }
