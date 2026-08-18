@@ -5,13 +5,13 @@ on:
     branches: [main]
   pull_request:
 
-# A second push to the same branch makes the first run pointless.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
+  packages: write
 
 env:
   COMPOSE_PROJECT_NAME: cuqdyn-c
@@ -20,29 +20,64 @@ env:
   CARGO_TERM_COLOR: always
   RUN: docker compose run --rm -T cuqdyn_c
 
+# One job rather than one per step: clang-tidy needs the compile database and
+# ctest needs the binaries, so splitting them would mean either shipping half a
+# gigabyte of build directory between jobs or building three times over.
 jobs:
-  # clang-tidy needs compile_commands.json and the generated headers, so the
-  # build has to come first. The formatter has no such dependency, but keeping
-  # both halves of the lint in one job is worth more than the minutes saved by
-  # splitting them.
-  compile:
+  ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # scripts/get_module_version.sh reads the tags
 
-      - id: setup
-        uses: ./.github/actions/setup
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build every variant
+      - name: Image
         run: |
-          ${{ env.RUN }} ./scripts/build.sh serial
-          ${{ env.RUN }} ./scripts/build.sh mpi
+          IMAGE=ghcr.io/${{ github.repository }}/ci:${{ hashFiles('Dockerfile') }}
+          if docker pull -q "$IMAGE"; then
+            docker tag "$IMAGE" "$COMPOSE_PROJECT_NAME-cuqdyn_c:latest"
+          else
+            echo "No image for this Dockerfile yet, building it."
+            docker compose build
+            if [ "$GITHUB_REF" = refs/heads/main ]; then
+              docker tag "$COMPOSE_PROJECT_NAME-cuqdyn_c:latest" "$IMAGE"
+              docker push -q "$IMAGE"
+            fi
+          fi
 
-      # Only main writes, so branches share one warm cache instead of each
-      # leaving its own behind.
+      - id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build-serial
+            build-mpi
+            modules/cuqdyn-rs/target
+            .cargo-home
+          key: build-${{ hashFiles('deps.cmake', 'CMakeLists.txt', 'toolchains/*.cmake', 'modules/cuqdyn-rs/Cargo.lock') }}
+          restore-keys: build-
+
+      - run: sudo chown -R 1000:1000 "$GITHUB_WORKSPACE"
+
+      - name: compile
+        run: |
+          $RUN ./scripts/build.sh serial
+          $RUN ./scripts/build.sh mpi
+
+      - name: lint
+        run: |
+          $RUN ./.githooks/formatter
+          $RUN ./.githooks/linter < /dev/null
+
+      - name: test
+        run: $RUN ./scripts/test.sh
+
       - if: github.ref == 'refs/heads/main'
         uses: actions/cache/save@v4
         with:
@@ -51,35 +86,4 @@ jobs:
             build-mpi
             modules/cuqdyn-rs/target
             .cargo-home
-          key: ${{ steps.setup.outputs.cache-primary-key }}
-
-  lint:
-    runs-on: ubuntu-latest
-    needs: compile
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: ./.github/actions/setup
-
-      - name: Formatting
-        run: ${{ env.RUN }} ./.githooks/formatter
-
-      - name: Linters
-        run: ${{ env.RUN }} ./.githooks/linter < /dev/null
-
-  test:
-    runs-on: ubuntu-latest
-    needs: compile
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: ./.github/actions/setup
-
-      - name: ctest
-        run: ${{ env.RUN }} ./scripts/test.sh
+          key: ${{ steps.cache.outputs.cache-primary-key }}
