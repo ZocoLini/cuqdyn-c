@@ -38,7 +38,8 @@ jobs:
 
       - name: Image
         run: |
-          IMAGE=ghcr.io/${{ github.repository }}/ci:${{ hashFiles('Dockerfile') }}
+          # ghcr.io rejects uppercase, and the owner here is ZocoLini.
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/ci:${{ hashFiles('Dockerfile') }}
           if docker pull -q "$IMAGE"; then
             docker tag "$IMAGE" "$COMPOSE_PROJECT_NAME-cuqdyn_c:latest"
           else
