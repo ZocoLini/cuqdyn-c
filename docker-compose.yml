@@ -9,3 +9,14 @@ services:
         volumes:
             - .:/home/ubuntu/workspace
         working_dir: /home/ubuntu/workspace
+        environment:
+            # Passed through rather than hardcoded: CI turns incremental
+            # compilation off to keep the build cache small, a developer
+            # rebuilding all day wants it on.
+            - CARGO_INCREMENTAL
+            - CARGO_TERM_COLOR
+            # Unset locally, so cargo uses the home rustup installed it into.
+            # CI points it inside the workspace, which is the only directory the
+            # container shares with the runner and therefore the only one that
+            # can be cached between runs.
+            - CARGO_HOME

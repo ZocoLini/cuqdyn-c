@@ -54,9 +54,9 @@ fi
 echo "${YELLOW}==> clang-tidy${NC}"
 
 BUILD_DIR=""
-for candidate in build-serial build-mpi build-debug; do
+for candidate in build/*/; do
   if [ -f "$candidate/compile_commands.json" ]; then
-    BUILD_DIR="$candidate"
+    BUILD_DIR="${candidate%/}"
     break
   fi
 done

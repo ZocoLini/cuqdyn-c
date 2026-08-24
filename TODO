@@ -3,7 +3,6 @@
 - Debug sin compilar siquiera.
 - Eliminar variante MPI2 por simplicidad.      -> Borja
 - MemSanitizer                                 -> Borja
-- Montar una CI como dios manda                -> Borja
 - Fuga restante: ~0.7 KB por evaluación, dentro de sacess. No bloquea, pero limita maxevaluation. -> Borja
 - Bootstrap trayectorial.
 - Usar solo un ODE solver                      -> Borja

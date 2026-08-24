@@ -1,23 +1,91 @@
 #!/bin/bash
+set -euo pipefail
 
-build-proyect() {
-  VARIANT=$1
-  TOOLCHAIN=$VARIANT
+if [ -t 1 ]; then
+  YELLOW=$'\033[0;33m'
+  RED=$'\033[0;31m'
+  NC=$'\033[0m'
+else
+  YELLOW=""
+  RED=""
+  NC=""
+fi
 
-  if [ "$VARIANT" = "debug " ]; then
-    VARIANT="serial"
-    TOOLCHAIN="debug"
+VARIANTS=(serial mpi)
+BUILD_TYPE=debug
+REBUILD=0
+TARGETS=()
+
+usage() {
+  cat <<EOF
+Usage: scripts/build.sh [variant...] [debug|release] [rebuild]
+
+  variant   ${VARIANTS[*]}, defaults to all of them
+  debug     no optimisation, debug symbols, assertions on. The default
+  release   optimised, assertions off
+  rebuild   discard the existing build directory first
+
+Builds land in build/<type>-<variant>, for instance build/debug-serial.
+EOF
+}
+
+for arg in "$@"; do
+  case "$arg" in
+  debug | release) BUILD_TYPE=$arg ;;
+  rebuild) REBUILD=1 ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    # shellcheck disable=SC2076
+    if [[ " ${VARIANTS[*]} " =~ " $arg " ]]; then
+      TARGETS+=("$arg")
+    else
+      echo "${RED}Unknown argument: $arg${NC}"
+      usage
+      exit 1
+    fi
+    ;;
+  esac
+done
+
+[ ${#TARGETS[@]} -eq 0 ] && TARGETS=("${VARIANTS[@]}")
+
+# The toolchains hardcode -O3 in CMAKE_C_FLAGS, and cmake emits the per-config
+# flags after those, so -O0 here wins on the command line. -UNDEBUG keeps
+# assertions alive whatever the toolchain said.
+if [ "$BUILD_TYPE" = debug ]; then
+  CMAKE_TYPE_ARGS=(
+    -DCMAKE_BUILD_TYPE=Debug
+    -DCMAKE_C_FLAGS_DEBUG="-O0 -g -UNDEBUG"
+    -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -UNDEBUG"
+    -DCMAKE_Fortran_FLAGS_DEBUG="-O0 -g"
+  )
+  echo ""
+  echo "${YELLOW}Building in DEBUG: no optimisation, debug symbols, assertions on.${NC}"
+  echo "${YELLOW}Runs will be markedly slower. Use 'scripts/build.sh release' for an${NC}"
+  echo "${YELLOW}optimised build.${NC}"
+  echo ""
+else
+  CMAKE_TYPE_ARGS=(-DCMAKE_BUILD_TYPE=Release)
+fi
+
+# One directory per build type and variant, so switching between debug and
+# release does not throw the other one away.
+build_variant() {
+  local variant=$1
+  local dir="build/$BUILD_TYPE-$variant"
+
+  if [ "$REBUILD" = 1 ]; then
+    rm -rf "$dir"
   fi
-
-  if [ ! -d "build-$VARIANT/" ]; then
-    mkdir "build-$VARIANT"
-  elif [ "$2" = "rebuild" ]; then
-    rm -rf "build-${VARIANT}/*"
-  fi
+  mkdir -p "$dir"
 
   (
-    cd "build-$VARIANT" || exit 1
-    cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/"$TOOLCHAIN"_toolchain.cmake ..
+    cd "$dir" || exit 1
+    cmake -DCMAKE_TOOLCHAIN_FILE=../../toolchains/"$variant"_toolchain.cmake \
+      "${CMAKE_TYPE_ARGS[@]}" ../..
     make -j "$(nproc)"
   )
 }
@@ -26,28 +94,15 @@ if [ -d "/home/cesga" ]; then
   module load cesga/2025 gcc/system openmpi/5.0.7 rust/1.88.0
 fi
 
-variants=(
-  "serial"
-  "mpi"
-  "mpi2"
-  "debug"
-)
+pids=()
+for variant in "${TARGETS[@]}"; do
+  build_variant "$variant" &
+  pids+=($!)
+done
 
-if [ "$1" = "rebuild" ]; then
-  for variant in "${variants[@]}"; do
-    build-proyect "$variant" "rebuild" &
-  done
-  wait
-elif ! [ "$1" = "" ]; then
-  if ! [[ ${variants[*]} =~ $1 ]]; then
-    echo "$1 is not a valid variant. Please use one of the following: ${variants[*]} or rebuild"
-    exit 1
-  else
-    build-proyect "$1"
-  fi
-else
-  for variant in "${variants[@]}"; do
-    build-proyect "$variant" &
-  done
-  wait
-fi
+status=0
+for pid in "${pids[@]}"; do
+  wait "$pid" || status=1
+done
+
+exit "$status"

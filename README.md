@@ -134,7 +134,8 @@ After building using the `scripts/build.sh` script, you can execute this command
 ```bash
 mkdir output
 VARIANT=serial
-./build-${VARIANT}/modules/cli/cli solve \
+BUILD_TYPE=debug
+./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
     -c example-files/lotka_volterra_cuqdyn_config.xml \
     -s example-files/lotka_volterra_ess_${VARIANT}_config.xml \
     -d example-files/lotka_volterra_paper_data.txt \
@@ -144,7 +145,8 @@ VARIANT=serial
 ```bash
 mkdir output
 VARIANT=serial
-./build-${VARIANT}/modules/cli/cli solve \
+BUILD_TYPE=debug
+./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
     -c example-files/alpha_pinene_cuqdyn_config.xml \
     -s example-files/alpha_pinene_ess_${VARIANT}_config.xml \
     -d example-files/alpha_pinene_paper_data.txt \
@@ -154,7 +156,8 @@ VARIANT=serial
 ```bash
 mkdir output
 VARIANT=serial
-./build-${VARIANT}/modules/cli/cli solve \
+BUILD_TYPE=debug
+./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
     -c example-files/logistic_model_cuqdyn_config.xml \
     -s example-files/logistic_model_ess_${VARIANT}_config.xml \
     -d example-files/logistic_model_paper_data.txt \
@@ -168,7 +171,8 @@ with `NaN` in the columns of the states that are never measured.
 ```bash
 mkdir -p output/linear-cascade
 VARIANT=serial
-./build-${VARIANT}/modules/cli/cli solve \
+BUILD_TYPE=debug
+./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
     -c example-files/linear_cascade_cuqdyn_config.xml \
     -s example-files/linear_cascade_ess_${VARIANT}_config.xml \
     -d example-files/linear_cascade_paper_data.txt \
@@ -178,7 +182,8 @@ VARIANT=serial
 ```bash
 mkdir -p output/lotka-volterra
 VARIANT=serial
-./build-${VARIANT}/modules/cli/cli solve \
+BUILD_TYPE=debug
+./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
     -c example-files/lv2_partobs_cuqdyn_config.xml \
     -s example-files/lv2_partobs_ess_${VARIANT}_config.xml \
     -d example-files/lv2_partobs_paper_data.txt \
@@ -190,7 +195,8 @@ NF-kB is the largest case: 15 states, 29 parameters, 10 of the states measured.
 ```bash
 mkdir -p output/nfkb
 VARIANT=serial
-./build-${VARIANT}/modules/cli/cli solve \
+BUILD_TYPE=debug
+./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
     -c example-files/nfkb_cuqdyn_config.xml \
     -s example-files/nfkb_ess_${VARIANT}_config.xml \
     -d example-files/nfkb_paper_data.txt \
@@ -212,7 +218,7 @@ Everything above also runs inside the container:
 
 ```bash
 docker compose up -d
-docker compose exec cuqdyn_c ./build-serial/modules/cli/cli solve \
+docker compose exec cuqdyn_c ./build/debug-serial/modules/cli/cli solve \
     -c example-files/lv2_partobs_cuqdyn_config.xml \
     -s example-files/lv2_partobs_ess_serial_config.xml \
     -d example-files/lv2_partobs_paper_data.txt \
@@ -232,13 +238,13 @@ This will save a graphic representation for each y(t) in different png files ins
 To get information about all the options the cli supports, you can run the following command:
 
 ```bash
-./build-{variant}/modules/cli/cli help
+./build/{type}-{variant}/modules/cli/cli help
 ```
 
 You can also run
 
 ```bash
-./build-{variant}/modules/cli/cli version
+./build/{type}-{variant}/modules/cli/cli version
 ```
 
 to get the version of the cuqdyn-c lib, sacess lib and cli you are using.

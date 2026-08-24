@@ -1,33 +1,27 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-execute_variant() {
-  variant="$1"
-
-  BUILD_DIR="build-$variant"
-
-  if [ ! -d "$BUILD_DIR/" ]; then
-    exit 0
-  fi
-
-  rm -rf "$BUILD_DIR/tests/data/*"
-  cp -r tests/data/* "$BUILD_DIR/tests/data/"
+# Whatever scripts/build.sh has produced, rather than a hardcoded list.
+run_suite() {
+  local dir=$1
 
   (
-    cd "$BUILD_DIR" || exit 1
-    ctest
+    cd "$dir" || exit 1
+    ctest --timeout 900
   )
-
 }
 
-variants=(
-  "serial"
-  "mpi"
-  "mpi2"
-)
-
-for variant in "${variants[@]}"; do
-  execute_variant "$variant" &
+status=0
+ran=0
+for dir in build/*/; do
+  [ -f "$dir/CTestTestfile.cmake" ] || continue
+  echo "==> ${dir%/}"
+  ran=1
+  run_suite "$dir" || status=1
 done
 
-wait
+if [ "$ran" = 0 ]; then
+  echo "Nothing built yet. Run scripts/build.sh first."
+fi
+
+exit "$status"

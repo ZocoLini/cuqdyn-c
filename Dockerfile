@@ -32,9 +32,17 @@ RUN pip install --no-cache-dir --break-system-packages \
     gersemi \
     mdformat
 
+# The repository is bind-mounted from the host, so its owner is whatever UID
+# checked it out. Without this git refuses to operate on it, which breaks every
+# hook the moment CI runs them in here.
+RUN git config --system --add safe.directory '*'
+
 USER ubuntu
 WORKDIR /home/ubuntu
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+# The default profile ships rust-docs, nearly a gigabyte nobody reads in a
+# container. Minimal drops it, and the two components the hooks actually use are
+# asked for by name.
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal -c rustfmt -c clippy
 
 ENV PATH="/home/ubuntu/.cargo/bin:${PATH}"
