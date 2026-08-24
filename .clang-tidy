@@ -1,0 +1,25 @@
+# Checks kept deliberately narrow so the hook stays adoptable.
+#
+#   clang-analyzer-*  the reason to run clang-tidy at all: leaks, null
+#                     dereferences, dead stores, uninitialised reads
+#   bugprone-*        genuine footguns rather than style
+#   performance-*     currently clean, so it stays clean
+#
+# Two are switched off because they fire constantly without finding anything:
+# DeprecatedOrUnsafeBufferHandling wants the C11 Annex K functions (fprintf_s
+# and friends), which glibc does not ship, and easily-swappable-parameters
+# flags every function taking two doubles in a row, which here is most of them.
+# casting-through-void only ever fires on OpenMPI's own macros: MPI_COMM_WORLD
+# and MPI_DOUBLE expand to a cast through void *, so every MPI call trips it.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-casting-through-void,
+  performance-*
+
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*/modules/(cuqdyn-c|cli)/(src|include)/.*'
+FormatStyle: file

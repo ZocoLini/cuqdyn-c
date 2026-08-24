@@ -14,8 +14,23 @@ RUN apt-get update && \
     gdb \
     libpapi-dev papi-tools \
     libgsl-dev \
-    gfortran && \
+    gfortran \
+    python3-pip \
+    shfmt \
+    shellcheck \
+    clang-tidy \
+    libxml2-utils && \
     rm -rf /var/lib/apt/lists/*
+
+# Formatters used by .githooks/pre-commit. Keeping them in the image means the
+# hook works without every contributor installing seven tools by hand: when one
+# is missing locally it is run in here instead.
+RUN pip install --no-cache-dir --break-system-packages \
+    clang-format \
+    fprettify \
+    black \
+    gersemi \
+    mdformat
 
 USER ubuntu
 WORKDIR /home/ubuntu

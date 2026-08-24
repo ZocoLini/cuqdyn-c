@@ -126,8 +126,8 @@ void *obj_func(double *x, void *data)
 
     if (SM_COLUMNS_D(exptotal->yexp) != cols)
     {
-        fprintf(stderr, "ERROR: yexp has %ld time points but the ODE result has %ld\n",
-                SM_COLUMNS_D(exptotal->yexp), cols);
+        fprintf(stderr, "ERROR: yexp has %ld time points but the ODE result has %ld\n", SM_COLUMNS_D(exptotal->yexp),
+                cols);
         exit(-1);
     }
 
@@ -160,7 +160,7 @@ void *obj_func(double *x, void *data)
     res->size_j = 1;
     res->J = J;
     res->value = *J;
-    res->size_r = n_obs * cols;
+    res->size_r = (int) (n_obs * cols);
     res->R = R;
     // No constraints are declared, and deallocateoutputfunction_ only frees g
     // when there are, so allocating it here would leak once per evaluation.

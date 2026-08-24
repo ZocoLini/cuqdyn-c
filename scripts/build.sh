@@ -1,30 +1,29 @@
 #!/bin/bash
 
 build-proyect() {
-    VARIANT=$1
-    TOOLCHAIN=$VARIANT
+  VARIANT=$1
+  TOOLCHAIN=$VARIANT
 
-    if [ "$VARIANT" = "debug " ]; then
-      VARIANT="serial"
-      TOOLCHAIN="debug"
-    fi
-        
+  if [ "$VARIANT" = "debug " ]; then
+    VARIANT="serial"
+    TOOLCHAIN="debug"
+  fi
 
-    if [ ! -d "build-$VARIANT/" ]; then
-      mkdir "build-$VARIANT"
-    elif [ "$2" = "rebuild" ]; then
-      rm -rf "build-${VARIANT}/*"
-    fi
+  if [ ! -d "build-$VARIANT/" ]; then
+    mkdir "build-$VARIANT"
+  elif [ "$2" = "rebuild" ]; then
+    rm -rf "build-${VARIANT}/*"
+  fi
 
-    (
-      cd "build-$VARIANT" || exit 1
-      cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/"$TOOLCHAIN"_toolchain.cmake ..
-      make -j "$(nproc)"
-    )
+  (
+    cd "build-$VARIANT" || exit 1
+    cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/"$TOOLCHAIN"_toolchain.cmake ..
+    make -j "$(nproc)"
+  )
 }
 
 if [ -d "/home/cesga" ]; then
-    module load cesga/2025 gcc/system openmpi/5.0.7 rust/1.88.0
+  module load cesga/2025 gcc/system openmpi/5.0.7 rust/1.88.0
 fi
 
 variants=(
@@ -35,17 +34,17 @@ variants=(
 )
 
 if [ "$1" = "rebuild" ]; then
-    for variant in "${variants[@]}"; do
-      build-proyect "$variant" "rebuild" &
-    done
-    wait
+  for variant in "${variants[@]}"; do
+    build-proyect "$variant" "rebuild" &
+  done
+  wait
 elif ! [ "$1" = "" ]; then
-    if ! [[ ${variants[*]} =~ $1 ]]; then
-        echo "$1 is not a valid variant. Please use one of the following: ${variants[*]} or rebuild"
-        exit 1
-    else
-        build-proyect "$1"
-    fi
+  if ! [[ ${variants[*]} =~ $1 ]]; then
+    echo "$1 is not a valid variant. Please use one of the following: ${variants[*]} or rebuild"
+    exit 1
+  else
+    build-proyect "$1"
+  fi
 else
   for variant in "${variants[@]}"; do
     build-proyect "$variant" &

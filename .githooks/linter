@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=.githooks/common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+echo ""
+
+# git feeds the refs being pushed on stdin, one line per ref. Read them once:
+# they say both whether there is anything to lint and which files changed.
+REFS=""
+if [ ! -t 0 ]; then
+  REFS="$(cat)"
+fi
+
+if [ -n "$REFS" ] && ! printf '%s\n' "$REFS" | awk '{print $2}' | grep -qE '[^0]'; then
+  echo "${GREEN}Only branch deletions pushed, nothing to lint${NC}"
+  echo ""
+  exit 0
+fi
+
+echo "${YELLOW}Linting before pushing${NC}"
+echo "${YELLOW}(skip with 'git push --no-verify')${NC}"
+
+SKIPPED=0
+
+# Records a check that could not run. A gap in someone's setup warns rather than
+# refusing their push, so every reason to skip goes through here and gets
+# counted the same way.
+skip() {
+  echo "${YELLOW}   WARNING: $*${NC}"
+  SKIPPED=$((SKIPPED + 1))
+}
+
+skip_missing() { skip "$1 not found, skipping this check. $DOCKER_HINT"; }
+
+# --- clippy ------------------------------------------------------------------
+CLIPPY_LOG=/tmp/cuqdyn-prepush-clippy.log
+echo ""
+echo "${YELLOW}==> clippy${NC}"
+if ! available cargo; then
+  skip_missing cargo
+elif ! "${RUN[@]}" "cd modules/cuqdyn-rs && cargo clippy --all-targets -- -D warnings" \
+     > "$CLIPPY_LOG" 2>&1; then
+  echo "${RED}ERROR: clippy reported problems. Last lines:${NC}"
+  tail -25 "$CLIPPY_LOG"
+  echo ""
+  echo "${RED}Push aborted. Full log: $CLIPPY_LOG${NC}"
+  exit 1
+fi
+
+# --- clang-tidy --------------------------------------------------------------
+echo "${YELLOW}==> clang-tidy${NC}"
+
+BUILD_DIR=""
+for candidate in build-serial build-mpi build-debug; do
+  if [ -f "$candidate/compile_commands.json" ]; then
+    BUILD_DIR="$candidate"
+    break
+  fi
+done
+
+# The MPI blocks are guarded by #ifdef, so a serial compile database hides them
+# and roughly ninety lines of cuqdyn.c are never analysed. build-mpi's own
+# database does not help: it records mpicc, whose implicit -I paths never reach
+# the file, so mpi.h comes out unresolved. Adding -DMPI and the include paths on
+# top of whichever database exists reaches the same code, and works for someone
+# who only ever builds the serial variant. Absent mpicc only costs MPI coverage.
+TIDY_MPI_ARGS=""
+if available mpicc; then
+  TIDY_MPI_ARGS="--extra-arg=-DMPI $("${RUN[@]}" 'mpicc --showme:incdirs' 2>/dev/null |
+    tr ' ' '\n' | sed 's|^|--extra-arg=-I|' | tr '\n' ' ')"
+fi
+
+mapfile -t TIDY_FILES < <(owned '\.c$')
+
+if ! available clang-tidy; then
+  skip_missing clang-tidy
+elif [ -z "$BUILD_DIR" ]; then
+  skip "no compile_commands.json found. Build once with './scripts/build.sh serial'."
+elif [ ${#TIDY_FILES[@]} -eq 0 ]; then
+  skip "no C sources found."
+else
+  if [ -n "$TIDY_MPI_ARGS" ]; then
+    echo "   ${#TIDY_FILES[@]} file(s), against $BUILD_DIR, MPI branches included"
+  else
+    echo "   ${#TIDY_FILES[@]} file(s), against $BUILD_DIR"
+  fi
+  TIDY_LOG=/tmp/cuqdyn-prepush-tidy.log
+  if ! "${RUN[@]}" "clang-tidy -p $BUILD_DIR --quiet $TIDY_MPI_ARGS ${TIDY_FILES[*]}" \
+    >"$TIDY_LOG" 2>&1; then
+    echo "${RED}ERROR: clang-tidy reported problems:${NC}"
+    grep -E "(warning|error):" "$TIDY_LOG" | head -15
+    echo ""
+    echo "${RED}Push aborted. Full log: $TIDY_LOG${NC}"
+    exit 1
+  fi
+fi
+
+# --- shellcheck ---------------------------------------------------------------
+# The hooks themselves included: they are the scripts most likely to be edited
+# without ever being run against an odd path or an unset variable.
+echo "${YELLOW}==> shellcheck${NC}"
+# Everything in .githooks/ is shell by design, so the glob keeps any hook added
+# later covered without anyone remembering to list it here.
+mapfile -t SH_FILES < <({ owned '\.sh$'; ls .githooks/* 2>/dev/null; } | sort -u)
+
+if ! available shellcheck; then
+  skip_missing shellcheck
+else
+  echo "   ${#SH_FILES[@]} file(s)"
+  SHELL_LOG=/tmp/cuqdyn-prepush-shellcheck.log
+  # -x so the hooks' `. common.sh` is followed instead of reported as unreadable.
+  if ! "${RUN[@]}" "shellcheck -x ${SH_FILES[*]}" > "$SHELL_LOG" 2>&1; then
+    echo "${RED}ERROR: shellcheck reported problems:${NC}"
+    grep -E "^(In |.*SC[0-9]+)" "$SHELL_LOG" | head -15
+    echo ""
+    echo "${RED}Push aborted. Full log: $SHELL_LOG${NC}"
+    exit 1
+  fi
+fi
+
+echo ""
+if [ "$SKIPPED" -gt 0 ]; then
+  echo "${YELLOW}Linting passed, $SKIPPED check(s) skipped for missing tools${NC}"
+else
+  echo "${GREEN}Linting passed${NC}"
+fi
+echo ""
+exit 0

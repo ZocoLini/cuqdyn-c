@@ -1,4 +1,5 @@
 #include "bench_options.h"
+
 #include <stdlib.h>
 #include <string.h>
 

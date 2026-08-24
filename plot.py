@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"
 INK_2 = "#52514e"
-OBSERVED = "#2a78d6"    # categorical slot 1
+OBSERVED = "#2a78d6"  # categorical slot 1
 UNOBSERVED = "#eb6834"  # categorical slot 2
 
 
@@ -28,7 +28,7 @@ def read_data(filepath):
     while i < len(lines):
         line = lines[i]
 
-        if line.startswith('[') and line.endswith(']'):
+        if line.startswith("[") and line.endswith("]"):
             section = line[1:-1]
             i += 1
 
@@ -46,17 +46,16 @@ def read_data(filepath):
             matrix = []
             for _ in range(rows):
                 values = list(map(float, lines[i].split(" ")))
-                assert len(values) == cols, f"Expected {cols} columns but got {len(values)} for section {section}."
+                assert (
+                    len(values) == cols
+                ), f"Expected {cols} columns but got {len(values)} for section {section}."
                 matrix.append(values if cols > 1 else values[0])
                 i += 1
 
             if not isinstance(matrix[0], (list, tuple)):
                 matrix = [[x] for x in matrix]
 
-            sections[section] = {
-                "shape": (rows, cols),
-                "data": matrix
-            }
+            sections[section] = {"shape": (rows, cols), "data": matrix}
 
         else:
             i += 1
@@ -105,8 +104,15 @@ output_folder = ruta.parent
 for j in range(num_columns):
     is_observed = j in observed
     color = OBSERVED if is_observed else UNOBSERVED
-    kind = "conformal (observado)" if is_observed else (
-        "delta/HybridCov (no observado)" if fim_low is not None else "delta/FIM (no observado)")
+    kind = (
+        "conformal (observado)"
+        if is_observed
+        else (
+            "delta/HybridCov (no observado)"
+            if fim_low is not None
+            else "delta/FIM (no observado)"
+        )
+    )
 
     fig, ax = plt.subplots(figsize=(8, 5), facecolor=SURFACE)
     ax.set_facecolor(SURFACE)
@@ -118,20 +124,48 @@ for j in range(num_columns):
     ax.plot(times, lower, color=color, linewidth=2, zorder=4)
     ax.plot(times, upper, color=color, linewidth=2, zorder=4, label=f"banda {kind}")
     if loo_median is not None:
-        ax.plot(times, [row[j] for row in loo_median], color=color, linewidth=2,
-                linestyle=(0, (1, 1.6)), zorder=5, label="mediana leave-one-out")
+        ax.plot(
+            times,
+            [row[j] for row in loo_median],
+            color=color,
+            linewidth=2,
+            linestyle=(0, (1, 1.6)),
+            zorder=5,
+            label="mediana leave-one-out",
+        )
 
     if fim_low is not None and not is_observed:
-        ax.plot(times, [row[j] for row in fim_low], color=INK, linewidth=1.4,
-                linestyle=(0, (5, 2.5)), zorder=5)
-        ax.plot(times, [row[j] for row in fim_up], color=INK, linewidth=1.4,
-                linestyle=(0, (5, 2.5)), zorder=5, label="banda FIM (comparacion)")
+        ax.plot(
+            times,
+            [row[j] for row in fim_low],
+            color=INK,
+            linewidth=1.4,
+            linestyle=(0, (5, 2.5)),
+            zorder=5,
+        )
+        ax.plot(
+            times,
+            [row[j] for row in fim_up],
+            color=INK,
+            linewidth=1.4,
+            linestyle=(0, (5, 2.5)),
+            zorder=5,
+            label="banda FIM (comparacion)",
+        )
 
     if media_tot is not None:
-        ax.plot(times, [row[j] for row in media_tot], color=INK, linewidth=1.4,
-                zorder=6, label="ajuste global")
+        ax.plot(
+            times,
+            [row[j] for row in media_tot],
+            color=INK,
+            linewidth=1.4,
+            zorder=6,
+            label="ajuste global",
+        )
 
-    ax.set_title(f"y{j}  ·  {kind}", color=INK, fontsize=12, fontweight="bold", loc="left")
+    ax.set_title(
+        f"y{j}  ·  {kind}", color=INK, fontsize=12, fontweight="bold", loc="left"
+    )
     ax.set_xlabel("tiempo", color=INK_2)
     ax.set_ylabel("valor", color=INK_2)
     ax.grid(True, color="#e6e5e0", linewidth=0.8, zorder=0)

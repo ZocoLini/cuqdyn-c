@@ -63,4 +63,3 @@ pub unsafe extern "C" fn eval_f_exprs(
 
     context.eval_f_exprs(t, y, ydot, p)
 }
-

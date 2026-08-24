@@ -1,9 +1,8 @@
 #define DATA_TXT "data/test_data.txt"
 
+#include <assert.h>
 #include <nvector/nvector_serial.h>
 #include <stdio.h>
-#include <assert.h>
-
 
 #include "data_reader.h"
 
@@ -28,7 +27,7 @@ void test_read_data_txt()
 
     assert(y != NULL);
     assert(t != NULL);
-    
+
     for (int i = 0; i < SM_ROWS_D(y); ++i)
     {
         assert(NV_Ith_S(t, i) == i);

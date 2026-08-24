@@ -9,10 +9,10 @@
 #include <string.h>
 
 #include "config.h"
-#include "uq_bands.h"
 #include "matlab.h"
 #include "ode_solver.h"
 #include "sunmatrix/sunmatrix_dense.h"
+#include "uq_bands.h"
 #ifdef MPI
 #include <mpi.h>
 #endif
@@ -62,14 +62,13 @@ void destroy_cuqdyn_result(CuqdynResult *result)
 
 CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, const char *output_file)
 {
-    int nproc;
     int rank;
 
 #if defined(MPI2) || defined(MPI)
+    int nproc;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #else
-    nproc = 1;
     rank = 0;
 #endif
     CuqdynConf *config = get_cuqdyn_conf(get_cuqdyn_context());
@@ -127,14 +126,13 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         // covariance the hybrid method takes from this ensemble.
         predicted_params_matrix = NewDenseMatrix(m - 1, config->ode_expr.p_count);
 
-        N_Vector texp = copy_vector_remove_indices(scaled_times, create_array((long[]){}, 0));
-        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]){}, 0));
+        N_Vector texp = copy_vector_remove_indices(scaled_times, create_array((long[]) {}, 0));
+        SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]) {}, 0));
 
-        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
+        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
 
-        N_Vector predicted_params =
-                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, NULL,
-                                   data.observed_idx);
+        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition,
+                                                       NULL, data.observed_idx);
 
         // The solver dimension comes from the sacess config while p_count comes
         // from the cuqdyn config. A mismatch used to overflow initial_params.
@@ -145,6 +143,15 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                     "p_count=%ld. They must match.\n",
                     NV_LENGTH_S(predicted_params), NV_LENGTH_S(initial_params));
             N_VDestroy(predicted_params);
+            N_VDestroy(texp);
+            SUNMatDestroy(yexp);
+            N_VDestroy(tmp_initial_condition);
+            N_VDestroy(initial_condition);
+            N_VDestroy(scaled_times);
+            N_VDestroy(initial_params);
+            destroy_matrix_array(media_matrix);
+            SUNMatDestroy(resid_loo);
+            SUNMatDestroy(predicted_params_matrix);
             destroy_cuqdyn_data(&data);
             return NULL;
         }
@@ -171,9 +178,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     {
         if (rank == 0)
         {
-            fprintf(stderr,
-                    "ERROR: %d processes do not divide m - 1 = %ld. Use a process count that divides it.\n", nproc,
-                    m - 1);
+            fprintf(stderr, "ERROR: %d processes do not divide m - 1 = %ld. Use a process count that divides it.\n",
+                    nproc, m - 1);
         }
 
         N_VDestroy(initial_condition);
@@ -198,16 +204,15 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     for (long i = start_index; i < end_index; ++i)
     {
-        LongArray indices_to_remove = create_array((long[]){i + 1}, 1);
+        LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
 
         N_Vector texp = copy_vector_remove_indices(scaled_times, indices_to_remove);
         SUNMatrix yexp = copy_matrix_remove_columns(observed_data, indices_to_remove);
 
-        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]){}, 0));
+        N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
 
-        N_Vector predicted_params =
-                execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition, initial_params,
-                                   data.observed_idx);
+        N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition,
+                                                       initial_params, data.observed_idx);
 
         // Saving the ode solution data obtained with the predicted params
         TransposedStates predicted_obs_states = solve_ode(predicted_params, initial_condition, t0, scaled_times);
@@ -233,7 +238,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
             // We also need to send the actual i to the master process
             MPI_Send(&i, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
             MPI_Send(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-            MPI_Send(SM_DATA_D(predicted_obs_states), predicted_obs_states_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+            MPI_Send(SM_DATA_D(predicted_obs_states), (int) predicted_obs_states_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
             MPI_Send(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
         }
         else
@@ -255,8 +260,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
                 set_matrix_row(resid_loo, residuals, slaved_index, 0, NV_LENGTH_S(residuals));
 
                 // Receiving the predicted data matrix
-                MPI_Recv(SM_DATA_D(predicted_obs_states), predicted_obs_states_len, MPI_DOUBLE, slave, 2, MPI_COMM_WORLD,
-                         MPI_STATUS_IGNORE);
+                MPI_Recv(SM_DATA_D(predicted_obs_states), (int) predicted_obs_states_len, MPI_DOUBLE, slave, 2,
+                         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 matrix_array_set_index(media_matrix, slaved_index - 1, predicted_obs_states);
 
                 // Receiving the predicted params
@@ -286,19 +291,23 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     {
         N_VDestroy(initial_condition);
         N_VDestroy(scaled_times);
+        N_VDestroy(initial_params);
+        destroy_matrix_array(media_matrix);
+        SUNMatDestroy(resid_loo);
+        SUNMatDestroy(predicted_params_matrix);
         destroy_cuqdyn_data(&data);
         return NULL;
     }
 
     // media_matrix is transposed so predicted data median is also transposed
     TransposedStates predicted_data_median = matrix_array_get_median(media_matrix);
-    
+
     N_Vector predicted_params_median = get_matrix_cols_median(predicted_params_matrix);
     for (int i = 0; i < NV_LENGTH_S(predicted_params_median); ++i) // Parameters are also affected by the time scaling
     {
         NV_Ith_S(predicted_params_median, i) = NV_Ith_S(predicted_params_median, i) * config->time_scaling;
     }
-    
+
     const double alp = config->alp;
 
     // Bands cover every state, not just the measured ones.
@@ -402,7 +411,7 @@ void destroy_matrix_array(MatrixArray array)
         SUNMatDestroy(array.data[i]);
     }
 
-    free(array.data);
+    free((void *) array.data);
 }
 
 SUNMatrix matrix_array_get_index(MatrixArray array, long i)
@@ -465,7 +474,6 @@ SUNMatrix matrix_array_get_median(MatrixArray matrix_array)
     long max_z = matrix_array.len;
 
     SUNMatrix medians_matrix = NewDenseMatrix(rows, cols);
-    sunrealtype *medians = SM_DATA_D(medians_matrix);
 
     sunrealtype values[max_z];
 

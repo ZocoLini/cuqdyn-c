@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Lotka-Volterra, prey (y0) observed and predator (y1) hidden.
      Mirrors EXAMPLES/LV/prob_mod_dynamics_LV.m. -->
 <cuqdyn-config>

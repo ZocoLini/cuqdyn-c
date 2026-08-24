@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=.githooks/common.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+echo ""
+
+echo "${YELLOW}Running formatter over the whole tree${NC}"
+
+# Reports a check that could not run. A gap in someone's setup warns rather
+# than refusing their commit.
+skip() {
+  echo "${YELLOW}   WARNING: $1 not found, skipping this check. $DOCKER_HINT${NC}"
+  SKIPPED=$((SKIPPED + 1))
+}
+
+SKIPPED=0
+
+# Reports the reformat and stops the commit, so the author reviews what changed
+# instead of committing a diff they never saw.
+reformatted() {
+  echo ""
+  echo "${YELLOW}Files were reformatted. Run 'git add .' and commit again.${NC}"
+  exit 1
+}
+
+# --- C / C++ -----------------------------------------------------------------
+# .clang-format at the repository root is the single source of style.
+mapfile -t C_FILES < <(owned '\.(c|h|cpp|hpp|cc)$')
+if [ ${#C_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> clang-format (check)${NC}"
+  if ! available clang-format; then
+    skip clang-format
+  elif ! "${RUN[@]}" "clang-format --dry-run --Werror ${C_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying clang-format...${NC}"
+    "${RUN[@]}" "clang-format -i ${C_FILES[*]}"
+    reformatted
+  fi
+fi
+
+# --- Rust --------------------------------------------------------------------
+mapfile -t RS_FILES < <(owned '\.rs$')
+if [ ${#RS_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> cargo fmt (check)${NC}"
+  # cargo fmt works on the crate, not on a file list.
+  if ! available cargo; then
+    skip cargo
+  elif ! "${RUN[@]}" "cd modules/cuqdyn-rs && cargo fmt --all -- --check" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying cargo fmt...${NC}"
+    "${RUN[@]}" "cd modules/cuqdyn-rs && cargo fmt --all"
+    reformatted
+  fi
+fi
+
+# --- Fortran -----------------------------------------------------------------
+# Every .f/.f90 in the tree currently belongs to the vendored sacess library, so
+# this only starts doing anything if the project grows Fortran of its own.
+mapfile -t F_FILES < <(owned '\.([fF]|f90|F90|f77|for)$')
+if [ ${#F_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> fprettify (check)${NC}"
+  if ! available fprettify; then
+    skip fprettify
+  elif [ -n "$("${RUN[@]}" "fprettify --diff ${F_FILES[*]}" 2>/dev/null)" ]; then
+    echo "${RED}ERROR: Formatting issues detected. Applying fprettify...${NC}"
+    "${RUN[@]}" "fprettify ${F_FILES[*]}"
+    reformatted
+  fi
+fi
+
+# --- Markdown ----------------------------------------------------------------
+mapfile -t MD_FILES < <(owned '\.md$')
+if [ ${#MD_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> mdformat (check)${NC}"
+  if ! available mdformat; then
+    skip mdformat
+  elif ! "${RUN[@]}" "mdformat --check ${MD_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying mdformat...${NC}"
+    "${RUN[@]}" "mdformat ${MD_FILES[*]}" >/dev/null
+    reformatted
+  fi
+fi
+
+# --- Python ------------------------------------------------------------------
+mapfile -t PY_FILES < <(owned '\.py$')
+if [ ${#PY_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> black (check)${NC}"
+  if ! available black; then
+    skip black
+  elif ! "${RUN[@]}" "black --check --quiet ${PY_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying black...${NC}"
+    "${RUN[@]}" "black --quiet ${PY_FILES[*]}" >/dev/null
+    reformatted
+  fi
+fi
+
+# --- Shell -------------------------------------------------------------------
+mapfile -t SH_FILES < <(owned '\.sh$')
+if [ ${#SH_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> shfmt (check)${NC}"
+  if ! available shfmt; then
+    skip shfmt
+  elif ! "${RUN[@]}" "shfmt --diff --indent 2 ${SH_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying shfmt...${NC}"
+    "${RUN[@]}" "shfmt --write --indent 2 ${SH_FILES[*]}" >/dev/null
+    reformatted
+  fi
+fi
+
+# --- CMake -------------------------------------------------------------------
+mapfile -t CMAKE_FILES < <(owned '(\.cmake|CMakeLists\.txt)$')
+if [ ${#CMAKE_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> gersemi (check)${NC}"
+  if ! available gersemi; then
+    skip gersemi
+  elif ! "${RUN[@]}" "gersemi --check ${CMAKE_FILES[*]}" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying gersemi...${NC}"
+    "${RUN[@]}" "gersemi --in-place ${CMAKE_FILES[*]}" >/dev/null
+    reformatted
+  fi
+fi
+
+# --- XML ---------------------------------------------------------------------
+# xmllint reindents structure and leaves text nodes alone, which matters here:
+# modules/cuqdyn-rs/src/context.rs:463 splits <ode_expr> on newlines, so one
+# equation per line is load-bearing and a formatter that reflowed it would fold
+# a 15-state model into a single equation.
+mapfile -t XML_FILES < <(owned '\.xml$')
+if [ ${#XML_FILES[@]} -gt 0 ]; then
+  echo "${YELLOW}==> xmllint (check)${NC}"
+  # The whole loop runs inside a single invocation: 46 files times one docker
+  # exec each would dominate the hook's runtime. XMLLINT_INDENT is set inside
+  # the command so it reaches xmllint whichever side RUN runs on.
+  # $f is the loop variable of the shell RUN starts, so it must survive as
+  # literal text rather than expanding here.
+  # shellcheck disable=SC2016
+  xml_fmt='XMLLINT_INDENT="    " xmllint --format "$f"'
+  xml_check="for f in ${XML_FILES[*]}; do $xml_fmt | diff -q - \"\$f\" >/dev/null || exit 1; done"
+  xml_apply="for f in ${XML_FILES[*]}; do $xml_fmt >\"\$f.fmt\" && mv \"\$f.fmt\" \"\$f\"; done"
+
+  if ! available xmllint; then
+    skip xmllint
+  elif ! "${RUN[@]}" "$xml_check" >/dev/null 2>&1; then
+    echo "${RED}ERROR: Formatting issues detected. Applying xmllint...${NC}"
+    "${RUN[@]}" "$xml_apply"
+    reformatted
+  fi
+fi
+
+echo ""
+if [ "$SKIPPED" -gt 0 ]; then
+  echo "${YELLOW}Formatting passed, $SKIPPED check(s) skipped for missing tools${NC}"
+else
+  echo "${GREEN}All formatting checks passed${NC}"
+fi
+echo ""
+exit 0

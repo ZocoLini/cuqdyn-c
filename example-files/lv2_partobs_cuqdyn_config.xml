@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Lotka-Volterra with partial observability: the prey (y0) is measured at
      every time point and the predator (y1) is never measured. The prey gets
      conformal bands and the predator delta-method ones. -->
@@ -12,7 +11,8 @@
         (p0 - p1 * y1) * y0
         (p2 * y0 - p3) * y1
     </ode_expr>
-    <alp>0.025</alp> <!-- 95% two-sided bands -->
+    <alp>0.025</alp>
+    <!-- 95% two-sided bands -->
     <cost>
         <!-- Synthetic data with 10% noise; sigma is the known measurement scale. -->
         <residual_model>known_sigma</residual_model>

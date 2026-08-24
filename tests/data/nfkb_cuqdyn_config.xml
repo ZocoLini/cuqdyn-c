@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- NF-kB with partial observability: 15 states, 10 of them measured directly.
      This replaces the old states_transformer setup, where the observables were
      combinations of states; upstream CUQDyn1_Plus selects states by index. -->

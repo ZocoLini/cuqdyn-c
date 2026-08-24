@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+
 #include "config.h"
 
 
@@ -22,7 +23,8 @@ int main()
     char *exp_expr = "p0 * y0 * (1 - y0 / p1)";
     int i = 0;
 
-    while (exp_expr[i] != '\0') {
+    while (exp_expr[i] != '\0')
+    {
         assert(exp_expr[i] == config->ode_expr.exprs[0][i]);
         i++;
     }

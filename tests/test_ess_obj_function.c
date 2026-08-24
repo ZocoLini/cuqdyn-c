@@ -1,7 +1,7 @@
+#include "config.h"
 #include "data_reader.h"
 #include "functions.h"
 #include "matlab.h"
-#include "config.h"
 #include "method_module/structure_paralleltestbed.h"
 #include "sunmatrix/sunmatrix_dense.h"
 

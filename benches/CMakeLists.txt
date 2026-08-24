@@ -17,11 +17,13 @@ FetchContent_MakeAvailable(nanobench)
 add_library(bench_options bench_options.c)
 
 add_library(bench_wrapper bench_wrapper.cpp)
-target_link_libraries(bench_wrapper PUBLIC bench_options PRIVATE nanobench ${PAPI_LIB})
-
-foreach(bench_name
-    bench_solve_ode
+target_link_libraries(
+    bench_wrapper
+    PUBLIC bench_options
+    PRIVATE nanobench ${PAPI_LIB}
 )
+
+foreach(bench_name bench_solve_ode)
     add_executable(${bench_name} ${bench_name}.c)
     target_link_libraries(${bench_name} PRIVATE cuqdyn-c bench_wrapper)
 endforeach()

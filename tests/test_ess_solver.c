@@ -14,14 +14,14 @@
 #include <assert.h>
 #include <config.h>
 #include <cuqdyn.h>
+#include <math.h>
 #include <stdio.h>
 #include <sunmatrix/sunmatrix_dense.h>
-#include <math.h>
-#include "nvector/nvector_serial.h"
 
 #include "data_reader.h"
 #include "ess_solver.h"
 #include "matlab.h"
+#include "nvector/nvector_serial.h"
 
 void lotka_volterra_ess(char *conf_file);
 void alpha_pinene_ess(char *conf_file);

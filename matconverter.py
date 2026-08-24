@@ -1,6 +1,7 @@
 import sys
 import scipy.io
 
+
 def mat_to_txt(mat_file, txt_file):
     # Cargar el archivo .mat
     data = scipy.io.loadmat(mat_file)
@@ -13,6 +14,7 @@ def mat_to_txt(mat_file, txt_file):
                 continue
             f.write(f"Variable: {key}\n")
             f.write(f"Contenido:\n{value}\n\n")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

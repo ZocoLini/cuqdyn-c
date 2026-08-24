@@ -131,9 +131,9 @@ int handle_solve(int argc, char *argv[])
         SUNMatrix q_up = cuqdyn_result->q_up;
         N_Vector times = cuqdyn_result->times;
 
-        char *output_file_path = malloc(strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1);
-        strcpy(output_file_path, output_dir);
-        strcat(output_file_path, "/cuqdyn-results.txt");
+        const size_t output_file_path_len = strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1;
+        char *output_file_path = malloc(output_file_path_len);
+        snprintf(output_file_path, output_file_path_len, "%s/cuqdyn-results.txt", output_dir);
 
         FILE *output_file = fopen(output_file_path, "w");
         if (output_file == NULL)
