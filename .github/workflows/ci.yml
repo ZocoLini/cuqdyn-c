@@ -62,15 +62,16 @@ jobs:
 
       - run: sudo chown -R 1000:1000 "$GITHUB_WORKSPACE"
 
+      - name: format
+        run: $RUN ./.githooks/formatter
+
       - name: compile
         run: |
           $RUN ./scripts/build.sh serial
           $RUN ./scripts/build.sh mpi
 
       - name: lint
-        run: |
-          $RUN ./.githooks/formatter
-          $RUN ./.githooks/linter < /dev/null
+        run: $RUN ./.githooks/linter < /dev/null
 
       - name: test
         run: $RUN ./scripts/test.sh
