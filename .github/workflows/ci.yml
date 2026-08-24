@@ -54,8 +54,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            build-serial
-            build-mpi
+            build
             modules/cuqdyn-rs/target
             .cargo-home
           key: build-${{ hashFiles('deps.cmake', 'CMakeLists.txt', 'toolchains/*.cmake', 'modules/cuqdyn-rs/Cargo.lock') }}
@@ -80,8 +79,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            build-serial
-            build-mpi
+            build
             modules/cuqdyn-rs/target
             .cargo-home
           key: ${{ steps.cache.outputs.cache-primary-key }}
