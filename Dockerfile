@@ -37,6 +37,14 @@ RUN pip install --no-cache-dir --break-system-packages \
 # hook the moment CI runs them in here.
 RUN git config --system --add safe.directory '*'
 
+ARG UID=1000
+ARG GID=1000
+RUN if [ "$UID:$GID" != "1000:1000" ]; then \
+    groupmod -g "$GID" ubuntu && \
+    usermod -u "$UID" -g "$GID" ubuntu && \
+    chown -R "$UID:$GID" /home/ubuntu; \
+    fi
+
 USER ubuntu
 WORKDIR /home/ubuntu
 
