@@ -1,161 +1,209 @@
 # Validating the C port against the MATLAB reference
 
-The C/Rust code is a transpilation of the MATLAB in `CUQDyn1_Plus/` and
-`CUQDyn/`. This directory checks that the transpilation is faithful.
+The C/Rust code in this repository is a transpilation of the MATLAB in
+`CUQDyn1_Plus/` and `CUQDyn/`. This directory checks that the transpilation
+is faithful. **Current status: every deterministic layer is green** — 79/79
+kernel checks and 71/71 pipeline checks across the 4 models of the preprint
+(Lotka-Volterra, alpha-pinene, SIR and NF-kB).
 
-## The problem with comparing end to end
+## Why a naive end-to-end comparison does not work
 
 The obvious validation — run the CLI, run `CUQDyn1_Plus.m`, diff the bands —
-does not work, because eSS is a stochastic global optimiser. Two runs of the
-*same* implementation with different seeds already produce different `θ̂`,
-different LOO ensembles, and therefore different bands. A diff between C and
-MATLAB would be dominated by optimiser noise, and a real transpilation bug
-worth a few percent would be invisible underneath it.
+fails, because eSS is a stochastic global optimiser: two runs of the *same*
+implementation with different seeds already produce different parameters and
+different bands. In a direct MATLAB-vs-C diff, optimiser noise buries any
+real transpilation bug.
 
-So the validation is layered, cheapest and sharpest first.
+The fix is to compare in layers, removing the noise wherever possible:
 
 | Layer | What it compares | Optimiser noise | Status |
 |---|---|---|---|
-| 1 | Deterministic kernels on identical inputs | none | **implemented here** |
-| 2 | Trajectory sensitivities: CVODES vs complex-step | none | not yet |
-| 3 | ODE integration at fixed parameters | none | done ad hoc in 2025 |
-| 4 | Full pipeline with `θ̂` and the LOO ensemble injected | none | not yet |
-| 5 | Full pipeline, many seeds, distributions compared | dominant | not yet |
+| 1 | Algebra kernels (FIM, quantiles...) on identical inputs | none | ✅ **79/79** (`golden/`) |
+| 3 | ODE trajectory **and sensitivities** at fixed parameters: ode15s/complex-step vs CVODES | none | ✅ green on all 4 models (`baseline/`) |
+| 4 | The UQ stage alone, with MATLAB's fitted parameters and LOO ensemble **injected** into the C code | none | ✅ green on all 4 models (`baseline/`) |
+| 5 | Full pipeline, N seeds per side, distributions compared | dominant (it is what is measured) | tooling ready, campaign pending |
 
-Layer 1 is where transpilation bugs actually live: `fim.c` alone is 471 lines
-of GSL linear algebra standing in for about 60 lines of MATLAB.
+(The original layer 2 — standalone sensitivities — was absorbed into layer 3.)
 
-## Layer 1: golden vectors
+Key results of layers 3-4 (details and tolerances in `baseline/README.md`):
 
-`gen_golden.m` calls the MATLAB kernels on fixed synthetic inputs and writes
-both the inputs and the outputs to `golden/`. `test_golden.c` feeds the same
-inputs to the C kernels and compares.
+- **Conformal bands: machine-exact** on all 4 models.
+- Trajectories and sensitivities agree to 1e-7..1e-4 (two correct
+  integrators at rtol 1e-6).
+- Delta-method bands of hidden states: 1e-5 (2.9% on NF-kB, consistent with
+  its cond(FIM) ~ 3e8).
+- End-to-end with matched budgets: parameters agree to 0.01-1.7% on
+  LV2/SIR/AP; on NF-kB they spread because of the problem's own
+  non-identifiability, not the code.
 
-Crucially, none of these kernels touch MEIGO or the ODE solver — they are pure
-linear algebra — so the golden vectors can be generated without a working
-MEIGO install, and the comparison is exact up to floating-point library
-differences (LAPACK vs GSL).
+## What is stored in each directory
 
-### Covered
-
-- `cuqdyn_fim_covariance` — 9 cases: log and natural parameterization, both
-  covariance methods, `sigma2 ≠ 1`, an exactly rank-deficient Jacobian, the
-  non-positive-parameter fallback, an ill-conditioned system in the spirit of
-  NF-kB, and a larger random problem. Compares `Cov_p`, `Cov_log`, the
-  singular values, rank, ridge, condition number and rank tolerance.
-- The hybrid covariance `D_FIM · R_LOO · D_FIM` — 4 cases, including a frozen
-  parameter (zero-variance column) and the two-refit minimum.
-- `cuqdyn_residual_variance` — 4 cases, including the degrees-of-freedom clamp.
-- `quantile` — 6 vectors × 9 probabilities. The C reimplements MATLAB's
-  interpolated quantile in `matlab.c`, and the conformal bands depend on it
-  directly, so its edge cases (even/odd length, probabilities outside
-  `[0.5/n, (n-0.5)/n]`, single element) matter.
-
-### Deliberately not covered, and why
-
-- **The weak-direction reliability diagnostic.** MATLAB's
-  `cuqdyn_fim_covariance` also returns `max_weak_fraction` and
-  `any_unreliable_bands` from `local_reliability()`. The C port never computes
-  them: `weak_fraction_threshold` is parsed from the XML and threaded all the
-  way to `FimOptions` but never read, and `FimResult.v` is filled and freed
-  without being used. There is nothing to compare. `test_golden.c` prints a
-  `NOT IMPLEMENTED IN C` line wherever a golden case carries the expected
-  value, so the gap does not quietly disappear.
-- **The parametric bootstrap** (paper §2.7). Not ported at all; tracked in
-  `TODO` as "Bootstrap trayectorial".
-- **The PSD clamp branch** of the hybrid covariance. None of the four
-  generated ensembles produced a negative eigenvalue, so that branch is still
-  unexercised. Constructing an ensemble that reliably triggers it is worth
-  doing.
-
-## Running it
-
-Generate the golden vectors (needs MATLAB; the reference was produced with
-R2024a):
-
-```bash
-cd validation
-matlab -batch "gen_golden"
+```
+validation/
+├── gen_golden.m       MATLAB script that (re)generates golden/
+├── test_golden.c      C comparator for layer 1 (the validation_golden ctest)
+├── golden/            LAYER-1 REFERENCE DATA ("golden vectors").
+│                      One folder per test case (fim_01_small_log, hyb_01_plain,
+│                      var_01_estimated, qnt_01...). Each folder holds the plain-text
+│                      INPUTS fed to the MATLAB kernel (J.txt, theta.txt, opts.txt...)
+│                      and the OUTPUTS MATLAB produced for them (expect_*.txt).
+│                      test_golden.c re-runs the C kernels on the same inputs and
+│                      compares against expect_*. If a check fails, the C algebra
+│                      diverged from MATLAB on that exact input.
+│
+└── baseline/          LAYERS 3-5 MATERIAL, one level up in realism.
+    ├── gen_baseline.m       MATLAB generator (seeded, sequential) of matlab/<model>/
+    ├── test_baseline.c      C comparator for layers 3+4 (the baseline_* ctests)
+    ├── matlab/<model>/      THE MATLAB REFERENCE per model (lv2, ap, sir, nfkb),
+    │   │                    all plain text so no one needs MATLAB to consume it:
+    │   ├── layer3/          trajectory + complex-step sensitivities at the TRUE
+    │   │                    parameters (traj.txt, sens.txt, theta_fixed.txt).
+    │   │                    No optimiser involved at all.
+    │   ├── layer4/          one seeded CUQDyn1_Plus run: fitted parameters
+    │   │                    (theta_hat.txt), the whole LOO ensemble
+    │   │                    (loo_params.txt, media_matrix.txt, resid_loo.txt),
+    │   │                    the bands (q_low/q_up.txt), cov_p.txt, std_y.txt.
+    │   │                    test_baseline.c injects these into the C band code
+    │   │                    and compares its output against the MATLAB bands.
+    │   └── times/y0/truth/sigma/meta/tol.txt   shared context + the comparison
+    │                        tolerances (editable without regenerating anything)
+    ├── c_<model>_seed1_results.txt   reference C runs (full pipeline,
+    │                        SACESS_SEED=1) the figures were rendered from
+    ├── matlab_<model>_hybrid_uq_plot.png / c_<model>_seed1_hybrid_uq_plot.png
+    │                        the side-by-side band figures, one pair per model
+    ├── plot_c_results_matlab_style.py   renders any cuqdyn-results.txt like MATLAB
+    ├── ap_partobs_*         the AP partially-observed example (data + configs);
+    │                        lives here until promoted to example-files/
+    ├── nfkb_cuqdyn_fullsigma.xml   NF-kB config with full-precision sigmas
+    ├── nfkb_ess_serial_2e4.xml     NF-kB eSS config with the MATLAB-matched budget
+    ├── run_c_seeds.sh / compare_baseline.py / drago_baseline.sbatch   layer-5
+    │                        tooling: N seeded C runs, distribution report, SLURM
+    └── write_expected_output.m   generates the reference tests/test_cuqdyn_algo.c
+                             can compare against (files land outside validation/)
 ```
 
-`golden/` is committed, so this only needs re-running when the MATLAB
-reference changes.
+In one sentence each: **`golden/` = frozen inputs+outputs of the MATLAB
+algebra kernels; `baseline/matlab/` = frozen trajectories, ensembles and bands
+of full seeded MATLAB runs.** Everything else is the machinery to generate
+them (MATLAB side) or compare against them (C side).
 
-Then build and run the comparison. On CESGA the default `cargo` in `PATH` is
-1.45.1 from 2020 and cannot build the crate, and `scripts/build.sh` does not
-load a Rust module, so load one explicitly:
+## Running the validation
+
+The only build prerequisite: the top-level `CMakeLists.txt` does not register
+this directory yet; add one line after `add_subdirectory(tests)`:
+
+```cmake
+add_subdirectory(validation)
+```
+
+Then build and test as usual (on CESGA, first
+`module load cesga/2025 gcc/13.4.0 openmpi/5.0.7 rust/1.88.0` — the default
+system cargo is from 2020 and cannot build the crate):
 
 ```bash
-module load cesga/2025 gcc/13.4.0 openmpi/5.0.7 rust/1.88.0
 mkdir -p build-serial && cd build-serial
 cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/serial_toolchain.cmake ..
 make -j 8
-ctest -R validation_golden --output-on-failure
+ctest -R "validation_golden|baseline" --output-on-failure
 ```
 
-Or run the binary directly for the full per-check table:
+- `validation_golden` — layer 1. A failure = a transpilation bug in the
+  algebra.
+- `baseline_lv2` / `baseline_ap` / `baseline_sir` / `baseline_nfkb` — layers
+  3+4 per model. They report SKIP when the MATLAB exports are absent (they
+  are included in this branch, so they should actually run).
+
+For the per-check table, run the binaries directly:
 
 ```bash
 ./build-serial/validation/test_golden validation/golden 1e-9
+./build-serial/validation/baseline/test_baseline validation/baseline/matlab/lv2 \
+    example-files/lv2_partobs_cuqdyn_config.xml example-files/lv2_partobs_paper_data.txt
 ```
 
 The exit code is the number of failing comparisons.
 
-## Result as of 2026-08-18
+**Nobody needs MATLAB for any of the above**: the references are exported as
+plain text under `golden/` and `baseline/matlab/`. MATLAB (R2024a) is only
+needed to *regenerate* them (`gen_golden.m`, `baseline/gen_baseline.m`) when
+the MATLAB reference itself changes.
 
-**79 checks, 0 failed**, against MATLAB R2024a, built with `gcc/13.4.0` on
-ft3.cesga.es. Every well-conditioned case agrees to `1e-14` relative or better
-— i.e. to floating-point noise. The deterministic UQ mathematics is a faithful
-transpilation.
+## Where the figures are
 
-## Interpreting the tolerance
+In `baseline/`, one pair per model with the same layout (shaded band + best
+fit + data markers; blue = observed/conformal state, orange = hidden/delta):
 
-The default is `1e-9` relative, scaled by the largest magnitude in the
-expected array rather than element-wise — element-wise ratios explode on
-entries that are legitimately near zero.
+| Model | MATLAB | C (seed 1) |
+|---|---|---|
+| Lotka-Volterra | `matlab_lv2_hybrid_uq_plot.png` | `c_lv2_seed1_hybrid_uq_plot.png` |
+| Alpha-pinene | `matlab_ap_hybrid_uq_plot.png` | `c_ap_seed1_hybrid_uq_plot.png` |
+| SIR | `matlab_sir_hybrid_uq_plot.png` | `c_sir_seed1_hybrid_uq_plot.png` |
+| NF-kB (15 panels) | `matlab_nfkb_hybrid_uq_plot.png` | `c_nfkb_seed1_hybrid_uq_plot.png` |
 
-One case carries its own tolerance, and the reason matters:
+The `c_*_seed1_results.txt` files next to them are the C outputs those
+figures were rendered from; any `cuqdyn-results.txt` can be re-rendered the
+same way:
 
-`fim_04_rank_deficient` builds a `J` whose third column is exactly the sum of
-the other two, so `J'J` is singular and the only thing making it invertible is
-the ridge, `1e-12 * smax^2 = 2.02e-10`. That leaves
-`cond(J'J + ridge*I) = 1.0e12`, and inverting a matrix that ill-conditioned
-amplifies rounding by `eps * cond = 2.2e-4`. LAPACK and GSL cannot agree to
-better than that however faithful the port is. The observed difference is
-`9.5e-6`, comfortably inside the bound, so the case is given a `1e-3`
-tolerance derived from the conditioning rather than fitted to the observed
-number. **A difference beyond `1e-3` there would be a genuine defect.**
+```bash
+python3 validation/baseline/plot_c_results_matlab_style.py <results.txt> <data.txt> <out.png>
+```
 
-The wider lesson is about the method, not the port: when the FIM is rank
-deficient and `relative_ridge` is used, the covariance is numerically
-meaningless well above the `1e-5` level in *either* implementation. That is
-the concrete form of the paper's warning that "for weakly identifiable
-systems, the numerical covariance is necessarily regularization-dependent",
-and it is an argument for reading the rank and condition number that
-`delta_bands.c` already prints.
+One visible convention: both sides clamp the lower band at 0 when plotting
+(populations cannot be negative), so panels are comparable one to one.
 
-Note that `fim_07_ill_conditioned` (`cond(J) ~ 1.7e7`) needs no such
-allowance — it agrees to `1e-19`. Ill-conditioning in `J` alone is survivable;
-exact rank deficiency plus a tiny ridge is not.
+## Layer 1 in detail: the golden vectors
 
-## Build gotcha on CESGA
+`gen_golden.m` calls the MATLAB kernels on fixed synthetic inputs and writes
+both inputs and outputs to `golden/`. `test_golden.c` feeds the same inputs
+to the C kernels and compares. None of these kernels touch MEIGO or the ODE
+solver — they are pure linear algebra — so the comparison is exact up to
+library differences (LAPACK vs GSL).
 
-Incremental builds on the Lustre scratch filesystem have produced a
-`libcuqdyn-c.a` whose archive index was missing entries for members that were
-present in the archive (`matlab.c.o`, `ode_solver.c.o`), so the link failed
-with `undefined reference to quantile` / `solve_ode` while `nm` showed the
-symbols defined. If that happens, force a fresh archive:
+Covered: `cuqdyn_fim_covariance` (9 cases: log/natural parameterization,
+both covariance methods, an exactly rank-deficient Jacobian, the
+non-positive-parameter fallback, an ill-conditioned NF-kB-style system), the
+hybrid covariance (4 cases), the residual variance (4) and `quantile` (6
+vectors × 9 probabilities — the conformal bands depend on it directly).
+
+**How to read the tolerances.** The default is 1e-9 relative, scaled by the
+largest magnitude of the expected array (element-wise ratios explode on
+entries that are legitimately near zero). One case carries its own tolerance,
+derived from theory rather than fitted to the observed number:
+`fim_04_rank_deficient` builds an exactly singular J where only the ridge
+(2e-10) makes J'J invertible; at cond = 1e12, LAPACK and GSL cannot agree
+better than eps·cond ≈ 2e-4 however faithful the port is, so its tolerance is
+1e-3. The lesson belongs to the *method*, not the port: **with a
+near-singular FIM the numerical covariance is regularisation-dependent in any
+implementation** — which is why `delta_bands.c` prints the rank and condition
+number, and why on NF-kB the meaningful comparison is the bands, not the
+element-wise covariance.
+
+## What the validation deliberately does NOT cover
+
+- **The weak-direction reliability diagnostic** (`local_reliability()` in
+  MATLAB): not ported to C — `weak_fraction_threshold` is parsed from the XML
+  but never read. `test_golden.c` prints `NOT IMPLEMENTED IN C` where it
+  would apply, so the gap cannot quietly disappear.
+- **The parametric bootstrap** (paper §2.7): not ported; tracked in TODO.
+- **The PSD-clamp branch** of the hybrid covariance: none of the generated
+  ensembles produces a negative eigenvalue, so it remains unexercised.
+- **The MPI path** (LOO loop sharding) and `uq_method=hybridcov` end to end.
+
+## Build gotcha on CESGA (Lustre)
+
+Incremental builds on the scratch filesystem have occasionally produced a
+`libcuqdyn-c.a` with a corrupted archive index (symbols present but not
+indexed → `undefined reference to quantile / solve_ode`). Fix:
 
 ```bash
 rm -f build-serial/modules/cuqdyn-c/libcuqdyn-c.a
 make cuqdyn-c
 ```
 
-Check with `nm -s libcuqdyn-c.a | sed -n '/Archive index/,/^$/p' | wc -l` —
-a healthy archive currently has 49 index entries, the broken one had 36.
+## What a green run proves, and what it does not
 
-## What a green run does and does not prove
-
-It proves the deterministic UQ mathematics was transpiled correctly. It says
-nothing about the ODE integration, the sensitivities, the eSS interface, or
-the MPI sharding — those are layers 2 to 5 and are still open.
+It proves that the C UQ mathematics, the integration, the sensitivities and
+the band-building stage reproduce MATLAB (layers 1-4, deterministic). What
+remains outside is the internal search logic of sacess/eSS — a separately
+published library — whose equivalence can only be claimed statistically
+(layer 5), plus the paths listed in the section above.
