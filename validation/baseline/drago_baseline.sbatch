@@ -32,8 +32,14 @@ MATLAB_MODULE="${MATLAB_MODULE:-matlab}"
 
 module load "$MATLAB_MODULE"
 
-# Repo root = two levels up from this script's directory.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Under sbatch the script runs from a spool COPY, so BASH_SOURCE points away
+# from the repo; SLURM_SUBMIT_DIR (the directory sbatch was invoked from,
+# i.e. the repo root) is the reliable anchor there.
+if [ -n "${SLURM_SUBMIT_DIR:-}" ]; then
+    SCRIPT_DIR="$SLURM_SUBMIT_DIR/validation/baseline"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 cd "$SCRIPT_DIR"
 
 if [ -n "${SLURM_ARRAY_TASK_ID:-}" ]; then
