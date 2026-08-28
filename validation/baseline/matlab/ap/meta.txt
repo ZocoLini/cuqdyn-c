@@ -1,0 +1,9 @@
+model ap
+alp 0.050000000000000003
+nstates 5
+n_params 5
+n_obs 4
+m 9
+maxeval 10000
+noise_pct 0
+matlab_version 24.1.0.2689473 (R2024a) Update 6

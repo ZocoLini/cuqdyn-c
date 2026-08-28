@@ -1,0 +1,9 @@
+model nfkb
+alp 0.050000000000000003
+nstates 15
+n_params 29
+n_obs 10
+m 37
+maxeval 20000
+noise_pct 5
+matlab_version 24.1.0.2689473 (R2024a) Update 6
