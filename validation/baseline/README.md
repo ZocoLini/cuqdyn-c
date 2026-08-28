@@ -40,6 +40,23 @@ es un bug en la matemática de bandas. Checks: `conformal q_low/q_up` (deben
 ser exactas), `delta q_low/q_up` de estados ocultos, `cov_p`, `std_y`, y dos
 cross-checks de configuración (`alp`, `sigma XML vs MATLAB`).
 
+**Capa 2.5 — replay del coste sobre una búsqueda real (determinista).**
+Materializa la idea del "generador de números aleatorios compartido": TODA la
+aleatoriedad vive en MATLAB. `cost_replay/gen_cost_replay.m` corre UN ajuste
+MEIGO/eSS sembrado con el coste envuelto en un grabador, y congela cada punto
+θ_k que el optimizador decidió evaluar (≈2e4 puntos que cubren exactamente la
+región que visita una búsqueda real) junto con su coste MATLAB J_k. El arnés
+C (`cost_replay/test_cost_replay.c`, ctest `cost_replay_lv2`) re-evalúa el
+coste C (CVODES + `cuqdyn_residual_weight`) en la MISMA secuencia y compara J
+punto a punto — sin optimizador en C, así que es 100% determinista. Con esto
+queda validada la función de coste *dentro del bucle de optimización*, que
+era la única pieza que las capas 2-3 no cubrían. (Un puente vivo C→MEIGO vía
+Engine no sería determinista: los costes difieren a nivel de redondeo y una
+sola comparación volteada divergiría la búsqueda sin haber bug; congelar la
+secuencia da la misma cobertura sin ese canal de divergencia.)
+Resultado actual (lv2): **20.126/20.126 evaluaciones dentro de 1e-3** (media
+4.2e-5, máx 5.2e-4, 0 fallos de integración).
+
 **Capa 4 — end-to-end estadístico (con ruido, es lo que se mide).**
 Cada lado corre el pipeline completo N veces con semillas distintas (MATLAB:
 `gen_baseline(modelo, 4, 1:N)`; C: `run_c_seeds.sh modelo N`, que fija
