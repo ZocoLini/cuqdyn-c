@@ -121,7 +121,12 @@ def param_table(mat_seeds, c_seeds, key, title):
     med_m, med_c = np.median(m, axis=0), np.median(c, axis=0)
     lo_m, hi_m = iqr(m)
     lo_c, hi_c = iqr(c)
-    overlap = (lo_m <= hi_c) & (lo_c <= hi_m)
+    # A strongly identified problem collapses both IQRs to near-zero width at
+    # slightly offset points; strict interval intersection then reports "NO"
+    # for medians that agree to 4 digits. Count as agreement either real
+    # overlap or medians within 0.1% of each other.
+    med_close = np.abs(med_c - med_m) <= 1e-3 * np.maximum(np.abs(med_m), 1e-300)
+    overlap = ((lo_m <= hi_c) & (lo_c <= hi_m)) | med_close
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio = np.where(med_m != 0, med_c / med_m, np.nan)
 
@@ -135,8 +140,9 @@ def param_table(mat_seeds, c_seeds, key, title):
             f"| {ratio[j]:.3f} | {'si' if overlap[j] else '**NO**'} |")
     lines.append("")
     n_no = int((~overlap).sum())
-    lines.append(f"IQRs sin solapar: **{n_no} / {m.shape[1]}**. "
-                 "Con >=10 semillas por lado, mas de un par sin solapar merece mirarse.")
+    lines.append(f"Parametros en desacuerdo (sin solape de IQR y medianas a >0.1%): "
+                 f"**{n_no} / {m.shape[1]}**. "
+                 "Con >=10 semillas por lado, mas de uno merece mirarse.")
     lines.append("")
     return lines, overlap
 

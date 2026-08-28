@@ -15,7 +15,7 @@ Ambos lados corren el pipeline completo con su propio optimizador estocastico; l
 | p4 | 0.0003672 [0.0003672, 0.0003672] | 0.0003672 [0.0003671, 0.0003673] | 1.000 | si |
 | p5 | 5.935e-05 [5.935e-05, 5.935e-05] | 5.934e-05 [5.932e-05, 5.939e-05] | 1.000 | si |
 
-IQRs sin solapar: **0 / 5**. Con >=10 semillas por lado, mas de un par sin solapar merece mirarse.
+Parametros en desacuerdo (sin solape de IQR y medianas a >0.1%): **0 / 5**. Con >=10 semillas por lado, mas de uno merece mirarse.
 
 ### Mediana de parametros del ensemble LOO
 
@@ -27,7 +27,7 @@ IQRs sin solapar: **0 / 5**. Con >=10 semillas por lado, mas de un par sin solap
 | p4 | 0.0003616 [0.0003616, 0.0003616] | 0.0003615 [0.0003615, 0.0003616] | 1.000 | si |
 | p5 | 5.94e-05 [5.94e-05, 5.94e-05] | 5.932e-05 [5.93e-05, 5.934e-05] | 0.999 | **NO** |
 
-IQRs sin solapar: **1 / 5**. Con >=10 semillas por lado, mas de un par sin solapar merece mirarse.
+Parametros en desacuerdo (sin solape de IQR y medianas a >0.1%): **1 / 5**. Con >=10 semillas por lado, mas de uno merece mirarse.
 
 ### Bandas por estado
 
