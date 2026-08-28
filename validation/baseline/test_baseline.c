@@ -1,10 +1,10 @@
 /*
- * Layers 3 and 4 of the MATLAB-baseline comparison.
+ * Layers 2 and 3 of the MATLAB-baseline comparison.
  *
- * Layer 3: integrate the ODE and its sensitivities at FIXED parameters and
+ * Layer 2: integrate the ODE and its sensitivities at FIXED parameters and
  *          compare against MATLAB's ode15s trajectory and complex-step
  *          sensitivities. No optimiser on either side.
- * Layer 4: take theta_hat and the whole LOO ensemble from a seeded MATLAB
+ * Layer 3: take theta_hat and the whole LOO ensemble from a seeded MATLAB
  *          run and replay ONLY the UQ stage in C (conformal_bands +
  *          delta_method_bands), so the band mathematics is compared on
  *          identical inputs, free of eSS noise.
@@ -150,20 +150,20 @@ static void diff_add(Diff *d, double got, double expected)
 
 static double diff_rel(const Diff *d) { return d->max_abs / (d->scale > 1e-300 ? d->scale : 1.0); }
 
-/* ------------------------------------------------------------- layer 3 -- */
+/* ------------------------------------------------------------- layer 2 -- */
 
-static void run_layer3(const char *dir, const CuqdynData *data, const CuqdynConf *conf, double tol_traj,
+static void run_layer2(const char *dir, const CuqdynData *data, const CuqdynConf *conf, double tol_traj,
                        double tol_sens)
 {
     char path[1024];
 
-    snprintf(path, sizeof(path), "%s/layer3/theta_fixed.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer2/theta_fixed.txt", dir);
     if (!file_exists(path))
     {
-        printf("layer 3: not present, skipping\n");
+        printf("layer 2: not present, skipping\n");
         return;
     }
-    printf("layer 3: ODE + sensitivities at fixed parameters\n");
+    printf("layer 2: ODE + sensitivities at fixed parameters\n");
 
     SUNMatrix theta_m = read_matrix(path);
     const long n_params = SM_ROWS_D(theta_m);
@@ -174,7 +174,7 @@ static void run_layer3(const char *dir, const CuqdynData *data, const CuqdynConf
     }
     SUNMatDestroy(theta_m);
 
-    snprintf(path, sizeof(path), "%s/layer3/traj.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer2/traj.txt", dir);
     SUNMatrix traj_exp = read_matrix(path); /* m x nstates */
     const long m = SM_ROWS_D(traj_exp);
     const long n_states = SM_COLUMNS_D(traj_exp);
@@ -183,7 +183,7 @@ static void run_layer3(const char *dir, const CuqdynData *data, const CuqdynConf
     if (m != NV_LENGTH_S(data->times) || n_states != data->n_states)
     {
         printf("  %-28s export is %ldx%ld but the data file has m=%ld, n_states=%ld  **FAIL**\n",
-               "layer3 shape", m, n_states, (long) NV_LENGTH_S(data->times), data->n_states);
+               "layer2 shape", m, n_states, (long) NV_LENGTH_S(data->times), data->n_states);
         g_checks++;
         g_failures++;
         SUNMatDestroy(traj_exp);
@@ -215,7 +215,7 @@ static void run_layer3(const char *dir, const CuqdynData *data, const CuqdynConf
     }
 
     /* --- sensitivities --- */
-    snprintf(path, sizeof(path), "%s/layer3/sens.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer2/sens.txt", dir);
     FILE *f = fopen(path, "r");
     if (f == NULL)
     {
@@ -274,7 +274,7 @@ static void run_layer3(const char *dir, const CuqdynData *data, const CuqdynConf
     (void) conf;
 }
 
-/* ------------------------------------------------------------- layer 4 -- */
+/* ------------------------------------------------------------- layer 3 -- */
 
 static int is_observed(const int *observed_idx, const int n_obs, const long state)
 {
@@ -288,18 +288,18 @@ static int is_observed(const int *observed_idx, const int n_obs, const long stat
     return 0;
 }
 
-static void run_layer4(const char *dir, const CuqdynData *data, const CuqdynConf *conf, double tol_conf,
+static void run_layer3(const char *dir, const CuqdynData *data, const CuqdynConf *conf, double tol_conf,
                        double tol_delta, double tol_covp)
 {
     char path[1024];
 
-    snprintf(path, sizeof(path), "%s/layer4/theta_hat.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/theta_hat.txt", dir);
     if (!file_exists(path))
     {
-        printf("layer 4: not present, skipping\n");
+        printf("layer 3: not present, skipping\n");
         return;
     }
-    printf("layer 4: UQ stage replayed on the MATLAB ensemble\n");
+    printf("layer 3: UQ stage replayed on the MATLAB ensemble\n");
 
     const long n_states = conf->ode_expr.y_count;
     const long n_params = conf->ode_expr.p_count;
@@ -370,7 +370,7 @@ static void run_layer4(const char *dir, const CuqdynData *data, const CuqdynConf
     }
 
     /* --- load the MATLAB ensemble --- */
-    snprintf(path, sizeof(path), "%s/layer4/theta_hat.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/theta_hat.txt", dir);
     SUNMatrix theta_m = read_matrix(path);
     N_Vector theta_hat = New_Serial(n_params);
     for (long i = 0; i < n_params; ++i)
@@ -379,10 +379,10 @@ static void run_layer4(const char *dir, const CuqdynData *data, const CuqdynConf
     }
     SUNMatDestroy(theta_m);
 
-    snprintf(path, sizeof(path), "%s/layer4/loo_params.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/loo_params.txt", dir);
     SUNMatrix loo_params = read_matrix(path); /* (m-1) x n_params */
 
-    snprintf(path, sizeof(path), "%s/layer4/resid_loo.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/resid_loo.txt", dir);
     SUNMatrix resid_matlab = read_matrix(path); /* (m-1) x n_obs */
 
     /* C convention: m rows, row 0 unused. */
@@ -397,7 +397,7 @@ static void run_layer4(const char *dir, const CuqdynData *data, const CuqdynConf
     SUNMatDestroy(resid_matlab);
 
     /* media_matrix: (m-1) blocks of m x nstates -> transposed per-LOO copies */
-    snprintf(path, sizeof(path), "%s/layer4/media_matrix.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/media_matrix.txt", dir);
     FILE *f = fopen(path, "r");
     if (f == NULL)
     {
@@ -433,7 +433,7 @@ static void run_layer4(const char *dir, const CuqdynData *data, const CuqdynConf
     SUNMatDestroy(block);
     fclose(f);
 
-    snprintf(path, sizeof(path), "%s/layer4/media_tot.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/media_tot.txt", dir);
     SUNMatrix media_tot_row = read_matrix(path); /* m x nstates */
     TransposedStates media_tot = NewDenseMatrix(n_states, m);
     for (long i = 0; i < m; ++i)
@@ -445,7 +445,7 @@ static void run_layer4(const char *dir, const CuqdynData *data, const CuqdynConf
     }
     SUNMatDestroy(media_tot_row);
 
-    snprintf(path, sizeof(path), "%s/layer4/q_low.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/q_low.txt", dir);
     SUNMatrix q_low_exp = read_matrix(path);
     if (SM_ROWS_D(q_low_exp) != m || SM_COLUMNS_D(q_low_exp) != n_states)
     {
@@ -453,11 +453,11 @@ static void run_layer4(const char *dir, const CuqdynData *data, const CuqdynConf
                 SM_COLUMNS_D(q_low_exp), m, n_states);
         exit(2);
     }
-    snprintf(path, sizeof(path), "%s/layer4/q_up.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/q_up.txt", dir);
     SUNMatrix q_up_exp = read_matrix(path);
-    snprintf(path, sizeof(path), "%s/layer4/cov_p.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/cov_p.txt", dir);
     SUNMatrix cov_p_exp = read_matrix(path);
-    snprintf(path, sizeof(path), "%s/layer4/std_y.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/std_y.txt", dir);
     SUNMatrix std_y_exp = read_matrix(path); /* m x nstates */
 
     /* --- replay the UQ stage exactly as cuqdyn_algo does --- */
@@ -591,9 +591,9 @@ int main(int argc, char *argv[])
     const char *data_file = argv[3];
 
     char path[1024];
-    snprintf(path, sizeof(path), "%s/layer3/theta_fixed.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer2/theta_fixed.txt", dir);
     const int have3 = file_exists(path);
-    snprintf(path, sizeof(path), "%s/layer4/theta_hat.txt", dir);
+    snprintf(path, sizeof(path), "%s/layer3/theta_hat.txt", dir);
     const int have4 = file_exists(path);
 
     if (!have3 && !have4)
@@ -618,11 +618,11 @@ int main(int argc, char *argv[])
     }
 
     snprintf(path, sizeof(path), "%s/tol.txt", dir);
-    const double tol_traj = read_kv_double(path, "layer3_traj", 1e-4);
-    const double tol_sens = read_kv_double(path, "layer3_sens", 5e-3);
-    const double tol_conf = read_kv_double(path, "layer4_conformal", 1e-9);
-    const double tol_delta = read_kv_double(path, "layer4_delta", 1e-2);
-    const double tol_covp = read_kv_double(path, "layer4_covp", tol_delta);
+    const double tol_traj = read_kv_double(path, "layer2_traj", 1e-4);
+    const double tol_sens = read_kv_double(path, "layer2_sens", 5e-3);
+    const double tol_conf = read_kv_double(path, "layer3_conformal", 1e-9);
+    const double tol_delta = read_kv_double(path, "layer3_delta", 1e-2);
+    const double tol_covp = read_kv_double(path, "layer3_covp", tol_delta);
 
     printf("baseline dir : %s\n", dir);
     printf("config       : %s\n", config_file);
@@ -630,11 +630,11 @@ int main(int argc, char *argv[])
 
     if (have3)
     {
-        run_layer3(dir, &data, conf, tol_traj, tol_sens);
+        run_layer2(dir, &data, conf, tol_traj, tol_sens);
     }
     if (have4)
     {
-        run_layer4(dir, &data, conf, tol_conf, tol_delta, tol_covp);
+        run_layer3(dir, &data, conf, tol_conf, tol_delta, tol_covp);
     }
 
     printf("\n%d checks, %d failed\n", g_checks, g_failures);

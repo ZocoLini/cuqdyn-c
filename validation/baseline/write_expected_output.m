@@ -1,7 +1,7 @@
 function write_expected_output()
 %WRITE_EXPECTED_OUTPUT Emit the MATLAB reference file test_cuqdyn_algo.c reads.
 %
-% Runs (or reuses) the seeded layer-4 LV2 baseline and writes
+% Runs (or reuses) the seeded layer-3 LV2 baseline and writes
 %
 %     example-files/lv2_partobs_expected_output.txt
 %     tests/data/lv2_partobs_expected_output.txt
@@ -17,11 +17,11 @@ function write_expected_output()
 
 here = fileparts(mfilename('fullpath'));
 repo = fullfile(here, '..', '..');
-l4 = fullfile(here, 'matlab', 'lv2', 'layer4');
+l4 = fullfile(here, 'matlab', 'lv2', 'layer3');
 
 if ~exist(fullfile(l4, 'theta_hat.txt'), 'file')
-    fprintf('No layer-4 export found; running gen_baseline(''lv2'', 4) first...\n');
-    gen_baseline('lv2', 4);
+    fprintf('No layer-3 export found; running gen_baseline(''lv2'', [2 3]) first...\n');
+    gen_baseline('lv2', [2 3]);
 end
 
 theta_hat = read_m(fullfile(l4, 'theta_hat.txt'));

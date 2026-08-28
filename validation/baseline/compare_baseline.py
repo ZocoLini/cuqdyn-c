@@ -15,7 +15,7 @@ Usage:
     python3 compare_baseline.py nfkb --matlab-dir path/ --c-dir path/
 
 Writes report_<model>.md next to this script and, when matplotlib is
-available, a PNG per figure. Exit code 0 always: layer 5 is a report to be
+available, a PNG per figure. Exit code 0 always: layer 4 is a report to be
 read, not a gate - the numbers need a human eye precisely because optimiser
 noise is part of what is being measured.
 """
@@ -67,11 +67,11 @@ def parse_c_results(path):
 
 def load_matlab_seeds(root):
     seeds = []
-    layer5 = os.path.join(root, "layer5")
-    if not os.path.isdir(layer5):
-        sys.exit(f"No layer5/ under {root} - run gen_baseline('<model>', 5, seeds) first")
-    for name in sorted(os.listdir(layer5)):
-        d = os.path.join(layer5, name)
+    layer4 = os.path.join(root, "layer4")
+    if not os.path.isdir(layer4):
+        sys.exit(f"No layer4/ under {root} - run gen_baseline('<model>', 4, seeds) first")
+    for name in sorted(os.listdir(layer4)):
+        d = os.path.join(layer4, name)
         if not name.startswith("seed_") or not os.path.isfile(os.path.join(d, "q_up.txt")):
             continue
         seeds.append({
@@ -81,7 +81,7 @@ def load_matlab_seeds(root):
             "q_up": read_matrix(os.path.join(d, "q_up.txt")),
         })
     if not seeds:
-        sys.exit(f"layer5/ under {root} has no finished seed_* directories")
+        sys.exit(f"layer4/ under {root} has no finished seed_* directories")
     return seeds
 
 
@@ -217,7 +217,7 @@ def maybe_plots(mat_seeds, c_seeds, outstem):
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("model", choices=["lv2", "nfkb"])
+    ap.add_argument("model", choices=["lv2", "ap", "sir", "nfkb"])
     ap.add_argument("--matlab-dir", default=None, help="default: <here>/matlab/<model>")
     ap.add_argument("--c-dir", default=None, help="default: <here>/c/<model>")
     args = ap.parse_args()
