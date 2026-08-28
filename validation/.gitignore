@@ -1,0 +1,6 @@
+# MATLAB run byproducts: the plain-text exports are the reference,
+# the .mat workspaces are regenerable.
+**/matlab_run/
+ess_report.mat
+__pycache__/
+*.log
