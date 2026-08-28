@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-MODEL="${1:?usage: run_c_seeds.sh lv2|nfkb [n_seeds]}"
+MODEL="${1:?usage: run_c_seeds.sh lv2|ap|sir|nfkb [n_seeds]}"
 NSEEDS="${2:-10}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,13 +24,25 @@ case "$MODEL" in
         ESS="$REPO/example-files/lv2_partobs_ess_serial_config.xml"
         DATA="$REPO/example-files/lv2_partobs_paper_data.txt"
         ;;
+    ap)
+        # Self-contained in validation/baseline until promoted to example-files.
+        CONF="$SCRIPT_DIR/ap_partobs_cuqdyn_config.xml"
+        ESS="$SCRIPT_DIR/ap_partobs_ess_serial_config.xml"
+        DATA="$SCRIPT_DIR/ap_partobs_paper_data.txt"
+        ;;
+    sir)
+        CONF="$REPO/example-files/sir_cuqdyn_config.xml"
+        ESS="$REPO/example-files/sir_ess_serial_config.xml"
+        DATA="$REPO/example-files/sir_paper_data.txt"
+        ;;
     nfkb)
-        CONF="$REPO/example-files/nfkb_cuqdyn_config.xml"
-        ESS="$REPO/example-files/nfkb_ess_serial_config.xml"
+        # Full-precision sigmas + the MATLAB-matched 2e4 budget.
+        CONF="$SCRIPT_DIR/nfkb_cuqdyn_fullsigma.xml"
+        ESS="$SCRIPT_DIR/nfkb_ess_serial_2e4.xml"
         DATA="$REPO/example-files/nfkb_paper_data.txt"
         ;;
     *)
-        echo "Unknown model '$MODEL' (use lv2 or nfkb)" >&2
+        echo "Unknown model '$MODEL' (use lv2, ap, sir or nfkb)" >&2
         exit 1
         ;;
 esac

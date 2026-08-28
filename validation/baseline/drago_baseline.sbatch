@@ -10,12 +10,12 @@
 # Usage from the repo root on drago:
 #
 #   # Layers 3+4 for both models (two quick jobs):
-#   sbatch --export=ALL,MODEL=lv2,LAYERS="[3 4]"  validation/baseline/drago_baseline.sbatch
-#   sbatch --export=ALL,MODEL=nfkb,LAYERS="[3 4]" validation/baseline/drago_baseline.sbatch
+#   sbatch --export=ALL,MODEL=lv2,LAYERS="[2 3]"  validation/baseline/drago_baseline.sbatch
+#   sbatch --export=ALL,MODEL=nfkb,LAYERS="[2 3]" validation/baseline/drago_baseline.sbatch
 #
 #   # Layer 5, one seed per array task (NF-kB is the expensive one):
-#   sbatch --array=1-10 --export=ALL,MODEL=lv2,LAYERS=5  validation/baseline/drago_baseline.sbatch
-#   sbatch --array=1-20 --export=ALL,MODEL=nfkb,LAYERS=5 validation/baseline/drago_baseline.sbatch
+#   sbatch --array=1-10 --export=ALL,MODEL=lv2,LAYERS=4  validation/baseline/drago_baseline.sbatch
+#   sbatch --array=1-20 --export=ALL,MODEL=nfkb,LAYERS=4 validation/baseline/drago_baseline.sbatch
 #
 # Each layer-5 array task writes its own seed_<k>/ directory, so tasks are
 # independent and re-runnable; finished seeds are skipped.
@@ -27,7 +27,7 @@
 set -euo pipefail
 
 MODEL="${MODEL:?set MODEL=lv2 or MODEL=nfkb via --export}"
-LAYERS="${LAYERS:-[3 4]}"
+LAYERS="${LAYERS:-[2 3]}"
 MATLAB_MODULE="${MATLAB_MODULE:-matlab}"
 
 module load "$MATLAB_MODULE"

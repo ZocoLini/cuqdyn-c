@@ -1,4 +1,4 @@
-layer3_traj 1e-4
-layer3_sens 5e-3
-layer4_conformal 1e-9
-layer4_delta 1e-2
+layer2_traj 1e-4
+layer2_sens 5e-3
+layer3_conformal 1e-9
+layer3_delta 1e-2

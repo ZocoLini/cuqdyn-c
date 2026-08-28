@@ -14,18 +14,17 @@ implementation with different seeds already produce different parameters and
 different bands. In a direct MATLAB-vs-C diff, optimiser noise buries any
 real transpilation bug.
 
-The fix is to compare in layers, removing the noise wherever possible:
+The fix is to compare in layers, removing the noise wherever possible.
+Each layer freezes everything the previous one could not:
 
-| Layer | What it compares | Optimiser noise | Status |
-|---|---|---|---|
-| 1 | Algebra kernels (FIM, quantiles...) on identical inputs | none | ✅ **79/79** (`golden/`) |
-| 3 | ODE trajectory **and sensitivities** at fixed parameters: ode15s/complex-step vs CVODES | none | ✅ green on all 4 models (`baseline/`) |
-| 4 | The UQ stage alone, with MATLAB's fitted parameters and LOO ensemble **injected** into the C code | none | ✅ green on all 4 models (`baseline/`) |
-| 5 | Full pipeline, N seeds per side, distributions compared | dominant (it is what is measured) | tooling ready, campaign pending |
+| Layer | Name | What is actually done | A failure means | Optimiser noise | Status |
+|---|---|---|---|---|---|
+| 1 | **Algebra kernels** | MATLAB's pure-math functions (`cuqdyn_fim_covariance`, the hybrid covariance, `cuqdyn_residual_variance`, `quantile`) were run once on fixed synthetic inputs and their inputs+outputs frozen in `golden/`. `test_golden.c` re-runs the C counterparts (`fim.c`, `matlab.c`) on the same inputs and diffs the outputs. | a transpilation bug in the linear algebra | none | ✅ **79/79** |
+| 2 | **Integration & sensitivities** | MATLAB integrates each model with `ode15s` at the TRUE parameters and derives dy/dθ by complex step (exact); both are frozen in `baseline/matlab/<m>/layer2/`. `test_baseline.c` integrates the same ODE with CVODES, computes CVODES forward sensitivities, and diffs trajectory and each dy/dθ_k block. | wrong RHS (e.g. parameter order), integrator config, or broken sensitivities | none | ✅ 4/4 models |
+| 3 | **UQ replay** | One seeded full MATLAB run per model; its fitted θ̂, the entire LOO ensemble (per-refit trajectories, held-out residuals, refit parameters) and the resulting bands are frozen in `baseline/matlab/<m>/layer3/`. `test_baseline.c` **injects** θ̂ and the ensemble into the C band code (`conformal_bands()`, `delta_method_bands()`) and diffs bands, `Cov_p` and `std_y` against MATLAB's. Identical inputs → the optimiser is out of the equation. | a bug in the band mathematics (conformal quantiles, FIM covariance, delta propagation) | none | ✅ 4/4 models |
+| 4 | **Statistical end-to-end** | Each side runs the FULL pipeline N times with different seeds (MATLAB: `gen_baseline(model, 4, 1:N)`; C: `run_c_seeds.sh model N`). `compare_baseline.py` compares the *distributions*: per-parameter median/IQR, band-width ratios per state, empirical coverage of the true trajectory. This is the only layer that exercises the eSS interface itself. | a systematic bias in the optimiser coupling — or nothing: two correct implementations still differ run to run | dominant (it is what is measured) | tooling ready, campaign running |
 
-(The original layer 2 — standalone sensitivities — was absorbed into layer 3.)
-
-Key results of layers 3-4 (details and tolerances in `baseline/README.md`):
+Key results of layers 2-3 (details and tolerances in `baseline/README.md`):
 
 - **Conformal bands: machine-exact** on all 4 models.
 - Trajectories and sensitivities agree to 1e-7..1e-4 (two correct
@@ -51,15 +50,15 @@ validation/
 │                      compares against expect_*. If a check fails, the C algebra
 │                      diverged from MATLAB on that exact input.
 │
-└── baseline/          LAYERS 3-5 MATERIAL, one level up in realism.
+└── baseline/          LAYERS 2-4 MATERIAL, one level up in realism.
     ├── gen_baseline.m       MATLAB generator (seeded, sequential) of matlab/<model>/
-    ├── test_baseline.c      C comparator for layers 3+4 (the baseline_* ctests)
+    ├── test_baseline.c      C comparator for layers 2+3 (the baseline_* ctests)
     ├── matlab/<model>/      THE MATLAB REFERENCE per model (lv2, ap, sir, nfkb),
     │   │                    all plain text so no one needs MATLAB to consume it:
-    │   ├── layer3/          trajectory + complex-step sensitivities at the TRUE
+    │   ├── layer2/          trajectory + complex-step sensitivities at the TRUE
     │   │                    parameters (traj.txt, sens.txt, theta_fixed.txt).
     │   │                    No optimiser involved at all.
-    │   ├── layer4/          one seeded CUQDyn1_Plus run: fitted parameters
+    │   ├── layer3/          one seeded CUQDyn1_Plus run: fitted parameters
     │   │                    (theta_hat.txt), the whole LOO ensemble
     │   │                    (loo_params.txt, media_matrix.txt, resid_loo.txt),
     │   │                    the bands (q_low/q_up.txt), cov_p.txt, std_y.txt.
@@ -76,7 +75,7 @@ validation/
     │                        lives here until promoted to example-files/
     ├── nfkb_cuqdyn_fullsigma.xml   NF-kB config with full-precision sigmas
     ├── nfkb_ess_serial_2e4.xml     NF-kB eSS config with the MATLAB-matched budget
-    ├── run_c_seeds.sh / compare_baseline.py / drago_baseline.sbatch   layer-5
+    ├── run_c_seeds.sh / compare_baseline.py / drago_baseline.sbatch   layer-4
     │                        tooling: N seeded C runs, distribution report, SLURM
     └── write_expected_output.m   generates the reference tests/test_cuqdyn_algo.c
                              can compare against (files land outside validation/)
@@ -110,7 +109,7 @@ ctest -R "validation_golden|baseline" --output-on-failure
 - `validation_golden` — layer 1. A failure = a transpilation bug in the
   algebra.
 - `baseline_lv2` / `baseline_ap` / `baseline_sir` / `baseline_nfkb` — layers
-  3+4 per model. They report SKIP when the MATLAB exports are absent (they
+  2+3 per model. They report SKIP when the MATLAB exports are absent (they
   are included in this branch, so they should actually run).
 
 For the per-check table, run the binaries directly:
@@ -203,7 +202,7 @@ make cuqdyn-c
 ## What a green run proves, and what it does not
 
 It proves that the C UQ mathematics, the integration, the sensitivities and
-the band-building stage reproduce MATLAB (layers 1-4, deterministic). What
+the band-building stage reproduce MATLAB (layers 1-3, deterministic). What
 remains outside is the internal search logic of sacess/eSS — a separately
 published library — whose equivalence can only be claimed statistically
-(layer 5), plus the paths listed in the section above.
+(layer 4), plus the paths listed in the section above.

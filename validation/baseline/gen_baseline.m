@@ -1,10 +1,10 @@
 function gen_baseline(model, layers, seeds, outdir)
 %GEN_BASELINE Export a MATLAB baseline for the C port, as plain text.
 %
-%   gen_baseline('lv2')                 layers 3 and 4, default output dir
-%   gen_baseline('nfkb', [3 4])         same, NF-kB
-%   gen_baseline('lv2', 5, 1:10)        layer 5, seeds 1..10
-%   gen_baseline('nfkb', 5, 7)          layer 5, only seed 7 (for SLURM arrays)
+%   gen_baseline('lv2')                 layers 2 and 3, default output dir
+%   gen_baseline('nfkb', [2 3])         same, NF-kB
+%   gen_baseline('lv2', 4, 1:10)        layer 4, seeds 1..10
+%   gen_baseline('nfkb', 4, 7)          layer 4, only seed 7 (for SLURM arrays)
 %
 % Models:
 %   'lv2'   Lotka-Volterra, 2 states, prey observed / predator hidden.
@@ -15,14 +15,14 @@ function gen_baseline(model, layers, seeds, outdir)
 %           example-files/nfkb_* pair.
 %
 % Layers (see validation/README.md for the layering rationale):
-%   3  ODE trajectory + complex-step sensitivities at FIXED true parameters.
-%      No optimiser at all. This is what pins down CVODES-vs-complex-step.
-%   4  One full seeded CUQDyn1_Plus run with parallelism disabled. Exports
-%      theta_hat, the LOO ensemble, residuals, bands, Cov_p, std_y - enough
-%      for the C harness to replay the whole UQ stage deterministically.
-%   5  N full runs, one per seed. Exports per-seed theta_hat, median params
-%      and bands, for a distribution-level comparison against N C runs
-%      (compare_baseline.py does that part).
+%   2  INTEGRATION: ODE trajectory + complex-step sensitivities at FIXED true
+%      parameters. No optimiser at all. Pins down CVODES-vs-complex-step.
+%   3  UQ REPLAY: one full seeded CUQDyn1_Plus run with parallelism disabled.
+%      Exports theta_hat, the LOO ensemble, residuals, bands, Cov_p, std_y -
+%      enough for the C harness to replay the whole UQ stage deterministically.
+%   4  STATISTICAL END-TO-END: N full runs, one per seed. Exports per-seed
+%      theta_hat, median params and bands, for a distribution-level comparison
+%      against N C runs (compare_baseline.py does that part).
 %
 % Everything is written as plain text ("rows cols" header + %.17g values,
 % the same format validation/golden uses), so the C side needs no MATLAB.
@@ -34,7 +34,7 @@ function gen_baseline(model, layers, seeds, outdir)
 if nargin < 1
     error('gen_baseline:model', 'Usage: gen_baseline(''lv2''|''nfkb'', [layers], [seeds], [outdir])');
 end
-if nargin < 2 || isempty(layers), layers = [3 4]; end
+if nargin < 2 || isempty(layers), layers = [2 3]; end
 if nargin < 3 || isempty(seeds),  seeds  = 1:10; end
 
 here = fileparts(mfilename('fullpath'));
@@ -53,7 +53,7 @@ if isempty(meigoPath)
 end
 if isfolder(meigoPath)
     addpath(genpath(meigoPath));
-elseif any(ismember(layers, [4 5]))
+elseif any(ismember(layers, [3 4]))
     error('gen_baseline:meigo', ...
         'MEIGO64 not found (looked in %s). Set MEIGO64_PATH. Layers 4/5 need it.', meigoPath);
 end
@@ -128,22 +128,22 @@ fprintf(fid, 'noise_pct %g\n', pb.noise_pct);
 fprintf(fid, 'matlab_version %s\n', version);
 fclose(fid);
 
-%% ------------------------------------------------------------- layer 3 --
-if ismember(3, layers)
-    fprintf('=== Layer 3: ODE + complex-step sensitivities at true parameters ===\n');
-    l3 = fullfile(outdir, 'layer3');
-    if ~exist(l3, 'dir'), mkdir(l3); end
+%% ------------------------------------------------------------- layer 2 --
+if ismember(2, layers)
+    fprintf('=== Layer 2: ODE + complex-step sensitivities at true parameters ===\n');
+    l2 = fullfile(outdir, 'layer2');
+    if ~exist(l2, 'dir'), mkdir(l2); end
 
     theta = pb.true_params(:);
-    write_matrix(fullfile(l3, 'theta_fixed.txt'), theta);
+    write_matrix(fullfile(l2, 'theta_fixed.txt'), theta);
 
     sol = ODE_solve(y0, times, theta.', pb.dynamics, ode_opts);
     traj = sol(:, 2:end);
-    write_matrix(fullfile(l3, 'traj.txt'), traj);
+    write_matrix(fullfile(l2, 'traj.txt'), traj);
 
     % Complex-step sensitivities, verbatim from fast_compute_hybrid_uncertainty.
     h = 1e-20;
-    fid = fopen(fullfile(l3, 'sens.txt'), 'w');
+    fid = fopen(fullfile(l2, 'sens.txt'), 'w');
     fprintf(fid, '%d %d %d\n', m, pb.nstates, pb.n_params);
     for k = 1:pb.n_params
         p_c = theta.';
@@ -156,19 +156,19 @@ if ismember(3, layers)
         end
     end
     fclose(fid);
-    fprintf('Layer 3 written to %s\n', l3);
+    fprintf('Layer 2 written to %s\n', l2);
 end
 
-%% ------------------------------------------------------------- layer 4 --
-if ismember(4, layers)
-    fprintf('=== Layer 4: one seeded CUQDyn1_Plus run (this calls MEIGO) ===\n');
-    l4 = fullfile(outdir, 'layer4');
-    if ~exist(l4, 'dir'), mkdir(l4); end
+%% ------------------------------------------------------------- layer 3 --
+if ismember(3, layers)
+    fprintf('=== Layer 3: one seeded CUQDyn1_Plus run (this calls MEIGO) ===\n');
+    l3 = fullfile(outdir, 'layer3');
+    if ~exist(l3, 'dir'), mkdir(l3); end
 
     seed = 20260819;
     rng(seed, 'twister');
 
-    resultDir = fullfile(l4, 'matlab_run');
+    resultDir = fullfile(l3, 'matlab_run');
     if ~exist(resultDir, 'dir'), mkdir(resultDir); end
 
     res = CUQDyn1_Plus(pb.cost, pb.dynamics, pb.nstates, pb.n_params, ...
@@ -176,18 +176,18 @@ if ismember(4, layers)
         times, all_state_data, y0, observed_data, observed_idx, ...
         resultDir, meigo_opts);
 
-    write_matrix(fullfile(l4, 'theta_hat.txt'), res.parameters_init(:));
-    write_matrix(fullfile(l4, 'loo_params.txt'), res.loo_params);
-    write_matrix(fullfile(l4, 'resid_loo.txt'), res.resid_loo);
-    write_matrix(fullfile(l4, 'media_tot.txt'), res.media_tot);
-    write_matrix(fullfile(l4, 'q_low.txt'), res.UQ_lower);
-    write_matrix(fullfile(l4, 'q_up.txt'), res.UQ_upper);
-    write_matrix(fullfile(l4, 'cov_p.txt'), res.Cov_p);
-    write_matrix(fullfile(l4, 'std_y.txt'), res.std_y);
-    write_matrix(fullfile(l4, 'observed_data.txt'), observed_data);
+    write_matrix(fullfile(l3, 'theta_hat.txt'), res.parameters_init(:));
+    write_matrix(fullfile(l3, 'loo_params.txt'), res.loo_params);
+    write_matrix(fullfile(l3, 'resid_loo.txt'), res.resid_loo);
+    write_matrix(fullfile(l3, 'media_tot.txt'), res.media_tot);
+    write_matrix(fullfile(l3, 'q_low.txt'), res.UQ_lower);
+    write_matrix(fullfile(l3, 'q_up.txt'), res.UQ_upper);
+    write_matrix(fullfile(l3, 'cov_p.txt'), res.Cov_p);
+    write_matrix(fullfile(l3, 'std_y.txt'), res.std_y);
+    write_matrix(fullfile(l3, 'observed_data.txt'), observed_data);
 
     % media_matrix is m x nstates x (m-1); flat blocks, custom header.
-    fid = fopen(fullfile(l4, 'media_matrix.txt'), 'w');
+    fid = fopen(fullfile(l3, 'media_matrix.txt'), 'w');
     fprintf(fid, '%d %d %d\n', m - 1, m, pb.nstates);
     for k = 1:(m - 1)
         for i = 1:m
@@ -202,22 +202,22 @@ if ismember(4, layers)
     wres = cuqdyn_weight_residuals(res_full, opts.cost);
     sigma2 = cuqdyn_residual_variance(wres, pb.n_params, opts.cost);
 
-    fid = fopen(fullfile(l4, 'meta4.txt'), 'w');
+    fid = fopen(fullfile(l3, 'meta4.txt'), 'w');
     fprintf(fid, 'seed %d\n', seed);
     fprintf(fid, 'sigma2 %.17g\n', sigma2);
     fclose(fid);
 
-    fprintf('Layer 4 written to %s\n', l4);
+    fprintf('Layer 3 written to %s\n', l3);
 end
 
-%% ------------------------------------------------------------- layer 5 --
-if ismember(5, layers)
-    fprintf('=== Layer 5: %d seeded full runs ===\n', numel(seeds));
-    l5 = fullfile(outdir, 'layer5');
-    if ~exist(l5, 'dir'), mkdir(l5); end
+%% ------------------------------------------------------------- layer 4 --
+if ismember(4, layers)
+    fprintf('=== Layer 4: %d seeded full runs ===\n', numel(seeds));
+    l4 = fullfile(outdir, 'layer4');
+    if ~exist(l4, 'dir'), mkdir(l4); end
 
     for s = seeds(:).'
-        sdir = fullfile(l5, sprintf('seed_%d', s));
+        sdir = fullfile(l4, sprintf('seed_%d', s));
         if exist(fullfile(sdir, 'q_up.txt'), 'file')
             fprintf('seed %d already done, skipping\n', s);
             continue;
@@ -239,7 +239,7 @@ if ismember(5, layers)
         write_matrix(fullfile(sdir, 'q_up.txt'), res.UQ_upper);
         fprintf('seed %d done\n', s);
     end
-    fprintf('Layer 5 written to %s\n', l5);
+    fprintf('Layer 4 written to %s\n', l4);
 end
 
 fprintf('\nBaseline export complete: %s\n', outdir);
@@ -265,7 +265,7 @@ switch lower(model)
         pb.noise_pct = 10;
         % The example script uses the default budget (n_params*500 = 2000);
         % the C config example-files/lv2_partobs_ess_serial_config.xml uses
-        % 2e4. The baseline matches the C side so layer 5 compares like with
+        % 2e4. The baseline matches the C side so layer 4 compares like with
         % like.
         pb.maxeval = 2e4;
     case 'nfkb'
@@ -345,16 +345,16 @@ end
 
 function write_tolerances(path, model)
 % Comparison tolerances for the C harness, per model. Rationale:
-%   layer3_traj      both sides integrate at RelTol 1e-6; two correct solvers
+%   layer2_traj      both sides integrate at RelTol 1e-6; two correct solvers
 %                    (ode15s vs CVODES BDF) agree to roughly that order.
-%   layer3_sens      sensitivities amplify integration error; CVODES also uses
+%   layer2_sens      sensitivities amplify integration error; CVODES also uses
 %                    internal finite differences for the sensitivity RHS while
 %                    MATLAB's complex step is exact, so this is the loosest
 %                    deterministic layer. Differences well beyond it point at
 %                    the TODO item "verificar sensitivities".
-%   layer4_conformal identical inputs, identical quantile algorithm: anything
+%   layer3_conformal identical inputs, identical quantile algorithm: anything
 %                    beyond float round-trip noise is a transpilation bug.
-%   layer4_delta     inherits layer3_sens through J and S, then goes through
+%   layer3_delta     inherits layer2_sens through J and S, then goes through
 %                    the FIM inverse. For NF-kB (cond ~ 6e8) the covariance is
 %                    regularisation-dominated, hence the much looser bound -
 %                    read failures there together with the printed rank and
@@ -362,31 +362,31 @@ function write_tolerances(path, model)
 fid = fopen(path, 'w');
 switch lower(model)
     case 'lv2'
-        fprintf(fid, 'layer3_traj 1e-4\n');
-        fprintf(fid, 'layer3_sens 5e-3\n');
-        fprintf(fid, 'layer4_conformal 1e-9\n');
-        fprintf(fid, 'layer4_delta 1e-2\n');
+        fprintf(fid, 'layer2_traj 1e-4\n');
+        fprintf(fid, 'layer2_sens 5e-3\n');
+        fprintf(fid, 'layer3_conformal 1e-9\n');
+        fprintf(fid, 'layer3_delta 1e-2\n');
     case 'nfkb'
-        fprintf(fid, 'layer3_traj 5e-4\n');
-        fprintf(fid, 'layer3_sens 1e-2\n');
-        fprintf(fid, 'layer4_conformal 1e-9\n');
-        fprintf(fid, 'layer4_delta 1e-1\n');
+        fprintf(fid, 'layer2_traj 5e-4\n');
+        fprintf(fid, 'layer2_sens 1e-2\n');
+        fprintf(fid, 'layer3_conformal 1e-9\n');
+        fprintf(fid, 'layer3_delta 1e-1\n');
         % cond(FIM) ~ 3e8: the element-wise covariance is regularisation-
         % dominated in the weak directions on BOTH sides, so it is excluded
         % from the gate; bands and std_y remain the meaningful comparison.
-        fprintf(fid, 'layer4_covp 1e3\n');
+        fprintf(fid, 'layer3_covp 1e3\n');
     case 'ap'
         % Long horizon (t up to 36420) with tiny rate constants; the
         % integration error accumulates more than in lv2, so slightly wider.
-        fprintf(fid, 'layer3_traj 5e-4\n');
-        fprintf(fid, 'layer3_sens 1e-2\n');
-        fprintf(fid, 'layer4_conformal 1e-9\n');
-        fprintf(fid, 'layer4_delta 5e-2\n');
+        fprintf(fid, 'layer2_traj 5e-4\n');
+        fprintf(fid, 'layer2_sens 1e-2\n');
+        fprintf(fid, 'layer3_conformal 1e-9\n');
+        fprintf(fid, 'layer3_delta 5e-2\n');
     case 'sir'
-        fprintf(fid, 'layer3_traj 1e-4\n');
-        fprintf(fid, 'layer3_sens 5e-3\n');
-        fprintf(fid, 'layer4_conformal 1e-9\n');
-        fprintf(fid, 'layer4_delta 1e-2\n');
+        fprintf(fid, 'layer2_traj 1e-4\n');
+        fprintf(fid, 'layer2_sens 5e-3\n');
+        fprintf(fid, 'layer3_conformal 1e-9\n');
+        fprintf(fid, 'layer3_delta 1e-2\n');
 end
 fclose(fid);
 end
