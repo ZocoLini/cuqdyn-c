@@ -38,3 +38,16 @@ add_test(NAME baseline_sir
 
 set_tests_properties(baseline_lv2 baseline_nfkb baseline_ap baseline_sir
                      PROPERTIES SKIP_RETURN_CODE 77)
+
+# Layer 2.5: the C cost function replayed over a recorded MATLAB eSS search.
+# All randomness lives on the MATLAB side (the frozen evaluation sequence);
+# the replay itself is fully deterministic.
+add_executable(test_cost_replay cost_replay/test_cost_replay.c)
+target_link_libraries(test_cost_replay cuqdyn-c)
+target_compile_options(test_cost_replay PRIVATE -O0 -g -UNDEBUG)
+
+add_test(NAME cost_replay_lv2
+         COMMAND test_cost_replay ${CMAKE_CURRENT_SOURCE_DIR}/cost_replay/lv2_evals.txt
+                 ${EXAMPLES}/lv2_partobs_cuqdyn_config.xml
+                 ${EXAMPLES}/lv2_partobs_paper_data.txt)
+set_tests_properties(cost_replay_lv2 PROPERTIES SKIP_RETURN_CODE 77)
