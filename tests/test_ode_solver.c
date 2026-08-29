@@ -43,10 +43,14 @@ void test_lotka_volterra()
     NV_Ith_S(times, 8) = 5.0;
 
     N_Vector parameters = New_Serial(4);
+    // With the corrected LV convention (dy2 = (p2*y0 - p3)*y1, matching
+    // prob_mod_dynamics_LV.m) the interaction rate is p2 and the death rate
+    // p3, so the values swap slots relative to the old, swapped model. The
+    // trajectory - and the expected values below - are unchanged.
     NV_Ith_S(parameters, 0) = 0.5;
     NV_Ith_S(parameters, 1) = 0.02;
-    NV_Ith_S(parameters, 2) = 0.5;
-    NV_Ith_S(parameters, 3) = 0.02;
+    NV_Ith_S(parameters, 2) = 0.02;
+    NV_Ith_S(parameters, 3) = 0.5;
 
     N_Vector initial_values = New_Serial(2);
     NV_Ith_S(initial_values, 0) = 10;

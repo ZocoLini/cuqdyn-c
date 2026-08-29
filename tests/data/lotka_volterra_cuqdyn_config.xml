@@ -6,6 +6,6 @@
     </tolerances>
     <ode_expr y_count="2" p_count="4">
        y0 * (p0 - p1 * y1)
-       -y1 * (p2 - p3 * y0)
+       (p2 * y0 - p3) * y1
     </ode_expr>
 </cuqdyn-config>

@@ -274,7 +274,7 @@ impl CuqdynConfigRs {
                 p_count: 4,
                 expr: StringVec(vec![
                     "y0 * (p0 - p1 * y1)".to_string(),
-                    "-y1 * (p2 - p3 * y0)".to_string(),
+                    "y1 * (p2 * y0 - p3)".to_string(),
                 ]),
             },
             time_scaling: 1.0,
@@ -839,8 +839,11 @@ mod tests {
         for _ in 0..10_000 {
             context.eval_f_exprs(0.0, &y, &mut ydot, &params);
 
+            // dy1 = y1*(p1 - p2*y2) = 1*(1-2) = -1
+            // dy2 = y2*(p3*y1 - p4) = 1*(3-4) = -1, per prob_mod_dynamics_LV.m.
+            // The old expectation (+1) encoded the p3/p4 swap this fixes.
             assert_eq!(ydot[0], -1.0);
-            assert_eq!(ydot[1], 1.0);
+            assert_eq!(ydot[1], -1.0);
         }
     }
 

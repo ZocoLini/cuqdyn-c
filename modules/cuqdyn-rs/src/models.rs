@@ -50,8 +50,7 @@ impl<'e> GenericModel<'e> {
         let mut exprs = Vec::new();
 
         for s in cuqdyn_conf.ode_expr().expr().iter() {
-            let expr =
-                Expr::compile(s, &ctx).unwrap_or_else(|_| panic!("{}", "unable to compile {s}"));
+            let expr = Expr::compile(s, &ctx).unwrap_or_else(|_| panic!("unable to compile {s}"));
             exprs.push(expr);
         }
 
@@ -74,9 +73,9 @@ impl Model for GenericModel<'_> {
         }
 
         for (i, expr) in self.exprs.iter().enumerate() {
-            ydot[i] = expr.eval(&self.ctx, &mut self.stack).unwrap_or_else(|_| {
-                panic!("{}", "Error evaluating model expression with index {i}")
-            });
+            ydot[i] = expr
+                .eval(&self.ctx, &mut self.stack)
+                .unwrap_or_else(|_| panic!("Error evaluating model expression with index {i}"));
 
             if !ydot[i].is_finite() {
                 let def = env::var("CUQDYN_DEF_YDOT")
@@ -103,7 +102,10 @@ struct LotkaVolterra;
 impl Model for LotkaVolterra {
     fn eval(&mut self, _t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]) {
         ydot[0] = y[0] * (p[0] - p[1] * y[1]);
-        ydot[1] = -y[1] * (p[2] - p[3] * y[0]);
+        // Matches prob_mod_dynamics_LV.m: dy2 = (p3*y1 - p4)*y2. The previous
+        // form swapped the roles of p3 and p4, so fitted parameters were not
+        // comparable component-wise with the MATLAB reference.
+        ydot[1] = y[1] * (p[2] * y[0] - p[3]);
     }
 }
 
