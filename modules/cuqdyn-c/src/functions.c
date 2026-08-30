@@ -110,7 +110,7 @@ void *obj_func(double *x, void *data)
 
     const sunrealtype t0 = NV_Ith_S(texp, 0);
 
-    TransposedStates result = solve_ode(parameters, exptotal->initial_values, t0, texp);
+    TransposedStates result = solve_ode(parameters, exptotal->initial_values, t0, texp, NULL);
     if (result == NULL)
     {
         fprintf(stderr, "ERROR: the ODE solver failed inside the objective function\n");

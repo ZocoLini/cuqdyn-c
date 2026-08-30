@@ -5,6 +5,5 @@
 - MemSanitizer                                 -> Borja
 - Fuga restante: ~0.7 KB por evaluación, dentro de sacess. No bloquea, pero limita maxevaluation. -> Borja
 - Bootstrap trayectorial.
-- Usar solo un ODE solver                      -> Borja
 - Verificar que lo de las Sensitivities ete bien implementado
 - Eliminar librerias misqp y xml2              -> David
