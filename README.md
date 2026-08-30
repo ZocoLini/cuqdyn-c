@@ -1,7 +1,10 @@
 # Uncertainty Quantification in Dynamic Models of Biological Systems Using Conformal Prediction
 
-This project is a transpilation of the Matlab project defined in this [paper](https://zenodo.org/records/13838652),
-extended with the **CUQDyn1_Plus** method for partially observed systems.
+This project is a Rust/C port of the [CUQDyn1_Plus MATLAB toolbox](https://doi.org/10.5281/zenodo.21473592),
+which combines parameter estimation and uncertainty quantification (UQ) in ordinary differential equation (ODE)
+models where only a subset of state variables are experimentally observed. Methodology described in
+[Portela & Banga (2026) Hybrid Framework for Uncertainty Quantification in Partially Observed Dynamic Biological
+Systems](https://doi.org/10.48550/arXiv.2607.20044).
 
 ## Index
 
