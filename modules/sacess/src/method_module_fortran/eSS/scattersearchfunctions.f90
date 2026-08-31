@@ -2740,7 +2740,7 @@ CONTAINS
             fbest = minval(problem1%F0)
             ALLOCATE(iiim(1))
             iiim = minloc(problem1%F0)
-            iii = iiim(1)
+            iii = MAX(iiim(1), 1)
             if (ALLOCATED(xbest)) DEALLOCATE(xbest) 
             ALLOCATE(xbest(nvar))
             xbest = problem1%X0(:,iii)
