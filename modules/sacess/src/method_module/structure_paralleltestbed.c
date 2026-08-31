@@ -136,6 +136,13 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
 	(*exptotal).test.log_percentage = NULL;
 	(*exptotal).test.output_gant_log = NULL;
 	(*exptotal).test.result_output = NULL;
+	exptotal->execution.transconst = NULL;
+	exptotal->test.bench.logindex = NULL;
+	exptotal->test.bench.log_max_dom = NULL;
+	exptotal->test.bench.log_min_dom = NULL;
+	exptotal->random = NULL;
+	exptotal->seed = NULL;
+	exptotal->contadorseed = 0;
 
     exptotal->texp = texp;
     exptotal->yexp = yexp;
@@ -432,6 +439,33 @@ void destroyexp(experiment_total *exp) {
     if ((*exp).test.result_output != NULL) {
         free((*exp).test.result_output);
         (*exp).test.result_output=NULL;
+    }
+
+    if ((*exp).execution.transconst != NULL) {
+        free((*exp).execution.transconst);
+        (*exp).execution.transconst=NULL;
+    }
+    if ((*exp).test.bench.logindex != NULL) {
+        free((*exp).test.bench.logindex);
+        (*exp).test.bench.logindex=NULL;
+    }
+    if ((*exp).test.bench.log_max_dom != NULL) {
+        free((*exp).test.bench.log_max_dom);
+        (*exp).test.bench.log_max_dom=NULL;
+    }
+    if ((*exp).test.bench.log_min_dom != NULL) {
+        free((*exp).test.bench.log_min_dom);
+        (*exp).test.bench.log_min_dom=NULL;
+    }
+
+    if ((*exp).random != NULL) {
+        gsl_rng_free((gsl_rng *) (*exp).random);
+        (*exp).random=NULL;
+    }
+    if ((*exp).seed != NULL) {
+        free((*exp).seed);
+        (*exp).seed=NULL;
+        (*exp).contadorseed=0;
     }
 
 }
