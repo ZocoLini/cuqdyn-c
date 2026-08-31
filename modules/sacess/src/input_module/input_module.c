@@ -58,6 +58,28 @@ xmlNodePtr extract_init_node(xmlNodePtr cur, const char *name) {
     return end_cur;
 } 
 
+static char **uniq_allocs = NULL;
+static int uniq_allocs_len = 0;
+static int uniq_allocs_cap = 0;
+
+static void track_uniq_alloc(char *p) {
+    if (p == NULL) return;
+    if (uniq_allocs_len == uniq_allocs_cap) {
+        uniq_allocs_cap = (uniq_allocs_cap == 0) ? 64 : uniq_allocs_cap * 2;
+        uniq_allocs = (char **) realloc(uniq_allocs, uniq_allocs_cap * sizeof(char *));
+    }
+    uniq_allocs[uniq_allocs_len++] = p;
+}
+
+void free_uniq_allocs(void) {
+    int i;
+    for (i = 0; i < uniq_allocs_len; i++) free(uniq_allocs[i]);
+    free(uniq_allocs);
+    uniq_allocs = NULL;
+    uniq_allocs_len = 0;
+    uniq_allocs_cap = 0;
+}
+
 char*  extract_element_uniq(xmlDocPtr doc, xmlNodePtr cur, const char *name ) {
     xmlChar *key;
     xmlChar *output;
@@ -76,6 +98,7 @@ char*  extract_element_uniq(xmlDocPtr doc, xmlNodePtr cur, const char *name ) {
         }
         cur = cur->next;
     }
+    track_uniq_alloc((char *) output);
     return (char *) output;
 }
 
@@ -223,7 +246,7 @@ int extract_element_test(xmlDocPtr doc, xmlNodePtr *root, experiment_testbed *te
         perror(error17);
         exit(17);
     }
-    test->bench.type = removeSpace(extract_element_uniq(doc,cur,name_bench_type));
+    test->bench.type = strdup(removeSpace(extract_element_uniq(doc,cur,name_bench_type)));
     
     if (extract_element_uniq(doc, cur, idbench) == NULL) {
         perror(error18);
@@ -556,7 +579,7 @@ int extract_element_method_ScatterSearch(xmlDocPtr doc, xmlNodePtr *root, experi
         } else  method->loptions->evalmax = 5000;
         
         if ( extract_element_uniq(doc,cur2,solverc) != NULL ) {
-            method->loptions->solver = removeSpace(extract_element_uniq(doc,cur2,solverc));
+            method->loptions->solver = strdup(removeSpace(extract_element_uniq(doc,cur2,solverc)));
             if (( strcmp(method->loptions->solver, "nl2sol.dn2gb")!=0) && 
 		( strcmp(method->loptions->solver, "nl2sol.dn2fb")!=0) &&
                 (strcmp(method->loptions->solver, "dhc")!=0) &&
@@ -570,7 +593,7 @@ int extract_element_method_ScatterSearch(xmlDocPtr doc, xmlNodePtr *root, experi
         
         if (( extract_element_uniq(doc,cur2,finishc) != NULL ) &&
             (strcmp(removeSpace(extract_element_uniq(doc,cur2,finishc)),"default")!=0)){
-            method->loptions->finish = removeSpace(extract_element_uniq(doc,cur2,finishc));
+            method->loptions->finish = strdup(removeSpace(extract_element_uniq(doc,cur2,finishc)));
         } else  method->loptions->finish = NULL;
 
         if (( extract_element_uniq(doc,cur2,bestxc) != NULL )  &&
@@ -852,6 +875,7 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
     }
     xmlFree(value);       
     xmlFreeDoc(doc);
+    free_uniq_allocs();
     
     return 1;    
     
@@ -958,7 +982,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(max_dom);
 
 // MIN DOMAIN
     // min_dom = (char *) malloc(SIZE_STRING*sizeof(char));
@@ -979,7 +1002,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(min_dom);
 // CONSTRAINTS MIN
     if (extract_element_uniq(doc, cur, cl_s) != NULL){
     // min_const = (char *) malloc(SIZE_STRING*sizeof(char));
@@ -1000,7 +1022,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(min_const);
     }
 // CONSTRAINTS MAX
     if (extract_element_uniq(doc, cur, cu_s) != NULL){
@@ -1022,7 +1043,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(max_const);
     }
 
 // INIT POINT
