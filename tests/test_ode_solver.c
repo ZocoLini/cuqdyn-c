@@ -7,165 +7,145 @@
 #include <sunmatrix/sunmatrix_dense.h>
 #include <time.h>
 
+#include "example_files.h"
 #include "ode_solver.h"
 
-void test_lotka_volterra();
-void test_alpha_pienene();
-void test_logistic_model();
+#define MAX_TIMES 16
+#define MAX_PARAMETERS 8
+#define MAX_STATES 8
+#define MAX_CHECKS 8
 
-int main(void)
+typedef struct
 {
-    test_lotka_volterra();
-    printf("\tTest 1 (Lotka-Volterra α = γ = 0.5, β = δ = 0.02 and y(0) = (10, 5)) passed\n");
+    long state;
+    long time;
+    sunrealtype expected;
+    sunrealtype tolerance;
+} StateCheck;
 
-    test_alpha_pienene();
-    printf("\tTest 2 (Alpha pinene) passed\n");
+typedef struct
+{
+    const char *model;
+    const char *description;
 
-    test_logistic_model();
-    printf("\tTest 3 (Logistic model) passed\n");
+    sunrealtype parameters[MAX_PARAMETERS];
+    sunrealtype initial_values[MAX_STATES];
+    sunrealtype times[MAX_TIMES];
+    StateCheck checks[MAX_CHECKS];
 
-    return 0;
+    int n_times;
+    int n_parameters;
+    int n_states;
+    int n_checks;
+} Scenario;
+
+static const Scenario SCENARIOS[] = {
+        {
+                .model = "lotka-volterra",
+                .description = "Lotka-Volterra a = g = 0.5, b = d = 0.02 and y(0) = (10, 5)",
+                .n_times = 9,
+                .times = {1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0},
+                .n_parameters = 4,
+                .parameters = {0.5, 0.02, 0.5, 0.02},
+                .n_states = 2,
+                .initial_values = {10, 5},
+                .n_checks = 4,
+                .checks =
+                        {
+                                {0, 0, 15.10, 0.01},
+                                {1, 0, 3.883, 0.001},
+                                {0, 6, 53.79, 0.01},
+                                {1, 6, 5.456, 0.001},
+                        },
+        },
+        {
+                .model = "alpha-pinene",
+                .description = "Alpha-pinene",
+                .n_times = 9,
+                .times = {0, 1230, 3060, 4920, 7800, 10680, 15030, 22620, 36420},
+                .n_parameters = 5,
+                .parameters = {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5},
+                .n_states = 5,
+                .initial_values = {100, 0, 0, 0, 0},
+                .n_checks = 4,
+                .checks =
+                        {
+                                {0, 0, 100, 0.01},
+                                {2, 0, 0, 0.001},
+                                {0, 6, 2.510e+01, 2},
+                                {1, 6, 4.814e+01, 2},
+                        },
+        },
+        {
+                .model = "logistic",
+                .description = "Logistic model",
+                .n_times = 11,
+                .times = {0, 10, 20, 20, 40, 50, 60, 70, 80, 90, 100},
+                .n_parameters = 2,
+                .parameters = {0.1, 100},
+                .n_states = 1,
+                .initial_values = {10},
+                .n_checks = 3,
+                .checks =
+                        {
+                                {0, 0, 10, 0.01},
+                                {0, 5, 9.428e+01, 0.01},
+                                {0, 6, 9.782e+01, 0.01},
+                        },
+        },
+};
+
+static const int N_SCENARIOS = sizeof(SCENARIOS) / sizeof(SCENARIOS[0]);
+
+static N_Vector to_vector(const sunrealtype *values, const int len)
+{
+    N_Vector vector = New_Serial(len);
+
+    for (int i = 0; i < len; ++i)
+    {
+        NV_Ith_S(vector, i) = values[i];
+    }
+
+    return vector;
 }
 
-void test_lotka_volterra()
+static void run_scenario(const Scenario *scenario)
 {
-    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/lotka-volterra/cuqdyn-fim.xml");
+    CuqDynContext context = init_cuqdyn_context_from_file(example_conf(scenario->model));
 
-    N_Vector times = New_Serial(9);
-    NV_Ith_S(times, 0) = 1.0;
-    NV_Ith_S(times, 1) = 1.5;
-    NV_Ith_S(times, 2) = 2.0;
-    NV_Ith_S(times, 3) = 2.5;
-    NV_Ith_S(times, 4) = 3.0;
-    NV_Ith_S(times, 5) = 3.5;
-    NV_Ith_S(times, 6) = 4.0;
-    NV_Ith_S(times, 7) = 4.5;
-    NV_Ith_S(times, 8) = 5.0;
-
-    N_Vector parameters = New_Serial(4);
-    NV_Ith_S(parameters, 0) = 0.5;
-    NV_Ith_S(parameters, 1) = 0.02;
-    NV_Ith_S(parameters, 2) = 0.5;
-    NV_Ith_S(parameters, 3) = 0.02;
-
-    N_Vector initial_values = New_Serial(2);
-    NV_Ith_S(initial_values, 0) = 10;
-    NV_Ith_S(initial_values, 1) = 5;
+    N_Vector times = to_vector(scenario->times, scenario->n_times);
+    N_Vector parameters = to_vector(scenario->parameters, scenario->n_parameters);
+    N_Vector initial_values = to_vector(scenario->initial_values, scenario->n_states);
 
     const sunrealtype t0 = 0.0;
 
     TransposedStates result = solve_ode(parameters, initial_values, t0, times, NULL);
 
     assert(result != NULL);
+    assert(SM_COLUMNS_D(result) == scenario->n_times);
+    assert(SM_ROWS_D(result) == scenario->n_states);
 
-    const int rows = SM_ROWS_D(result);
-    const int cols = SM_COLUMNS_D(result);
+    for (int i = 0; i < scenario->n_checks; ++i)
+    {
+        const StateCheck check = scenario->checks[i];
 
-    assert(cols == 9);
-    assert(rows == 2);
-
-    assert(fabs(SM_ELEMENT_D(result, 0, 0) - 15.10) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 1, 0) - 3.883) < 0.001);
-    assert(fabs(SM_ELEMENT_D(result, 0, 6) - 53.79) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 1, 6) - 5.456) < 0.001);
+        assert(fabs(SM_ELEMENT_D(result, check.state, check.time) - check.expected) < check.tolerance);
+    }
 
     destroy_cuqdyn_context(context);
     SUNMatDestroy(result);
+    N_VDestroy(times);
     N_VDestroy(parameters);
+    N_VDestroy(initial_values);
 }
 
-void test_alpha_pienene()
+int main(void)
 {
-    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/alpha-pinene/cuqdyn-fim.xml");
+    for (int i = 0; i < N_SCENARIOS; ++i)
+    {
+        run_scenario(&SCENARIOS[i]);
+        printf("\tTest %d (%s) passed\n", i + 1, SCENARIOS[i].description);
+    }
 
-    N_Vector times = New_Serial(9);
-    NV_Ith_S(times, 0) = 0;
-    NV_Ith_S(times, 1) = 1230;
-    NV_Ith_S(times, 2) = 3060;
-    NV_Ith_S(times, 3) = 4920;
-    NV_Ith_S(times, 4) = 7800;
-    NV_Ith_S(times, 5) = 10680;
-    NV_Ith_S(times, 6) = 15030;
-    NV_Ith_S(times, 7) = 22620;
-    NV_Ith_S(times, 8) = 36420;
-
-    N_Vector parameters = New_Serial(5);
-    NV_Ith_S(parameters, 0) = 5.93e-5;
-    NV_Ith_S(parameters, 1) = 2.96e-5;
-    NV_Ith_S(parameters, 2) = 2.05e-5;
-    NV_Ith_S(parameters, 3) = 2.75e-5;
-    NV_Ith_S(parameters, 4) = 4.00e-5;
-
-    N_Vector initial_values = New_Serial(5);
-    NV_Ith_S(initial_values, 0) = 100;
-    NV_Ith_S(initial_values, 1) = 0;
-    NV_Ith_S(initial_values, 2) = 0;
-    NV_Ith_S(initial_values, 3) = 0;
-    NV_Ith_S(initial_values, 4) = 0;
-
-    const sunrealtype t0 = 0.0;
-
-    SUNMatrix result = solve_ode(parameters, initial_values, t0, times, NULL);
-
-    assert(result != NULL);
-
-    const int rows = SM_ROWS_D(result);
-    const int cols = SM_COLUMNS_D(result);
-
-    assert(cols == 9);
-    assert(rows == 5);
-
-    assert(fabs(SM_ELEMENT_D(result, 0, 0) - 100) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 2, 0) - 0) < 0.001);
-    assert(fabs(SM_ELEMENT_D(result, 0, 6) - 2.510e+01) < 2);
-    assert(fabs(SM_ELEMENT_D(result, 1, 6) - 4.814e+01) < 2);
-
-    destroy_cuqdyn_context(context);
-    SUNMatDestroy(result);
-    N_VDestroy(parameters);
-}
-
-void test_logistic_model()
-{
-    CuqDynContext context = init_cuqdyn_context_from_file(EXAMPLES_DIR "/logistic/cuqdyn-fim.xml");
-
-    N_Vector times = New_Serial(11);
-    NV_Ith_S(times, 0) = 0;
-    NV_Ith_S(times, 1) = 10;
-    NV_Ith_S(times, 2) = 20;
-    NV_Ith_S(times, 3) = 20;
-    NV_Ith_S(times, 4) = 40;
-    NV_Ith_S(times, 5) = 50;
-    NV_Ith_S(times, 6) = 60;
-    NV_Ith_S(times, 7) = 70;
-    NV_Ith_S(times, 8) = 80;
-    NV_Ith_S(times, 9) = 90;
-    NV_Ith_S(times, 10) = 100;
-
-    N_Vector parameters = New_Serial(2);
-    NV_Ith_S(parameters, 0) = 0.1;
-    NV_Ith_S(parameters, 1) = 100;
-
-    N_Vector initial_values = New_Serial(1);
-    NV_Ith_S(initial_values, 0) = 10;
-
-    const sunrealtype t0 = 0.0;
-
-    SUNMatrix result = solve_ode(parameters, initial_values, t0, times, NULL);
-
-    assert(result != NULL);
-
-    const int rows = SM_ROWS_D(result);
-    const int cols = SM_COLUMNS_D(result);
-
-    assert(cols == 11);
-    assert(rows == 1);
-
-    assert(fabs(SM_ELEMENT_D(result, 0, 0) - 10) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 0, 5) - 9.428e+01) < 0.01);
-    assert(fabs(SM_ELEMENT_D(result, 0, 6) - 9.782e+01) < 0.01);
-
-    destroy_cuqdyn_context(context);
-    SUNMatDestroy(result);
-    N_VDestroy(parameters);
+    return 0;
 }

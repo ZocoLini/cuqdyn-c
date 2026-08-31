@@ -2,13 +2,11 @@
 #include <stdio.h>
 
 #include "config.h"
-
-
-#define CUQDYN_CONF EXAMPLES_DIR "/logistic/cuqdyn-fim.xml"
+#include "example_files.h"
 
 int main()
 {
-    CuqDynContext context = init_cuqdyn_context_from_file(CUQDYN_CONF);
+    CuqDynContext context = init_cuqdyn_context_from_file(example_conf("logistic"));
 
     CuqdynConf *config = get_cuqdyn_conf(context);
 

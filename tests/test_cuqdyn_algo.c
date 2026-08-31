@@ -4,10 +4,7 @@
 #include <stdio.h>
 
 #include "config.h"
-
-#ifndef EXAMPLES_DIR
-#error "EXAMPLES_DIR must point at example-files/ (set by tests/CMakeLists.txt)"
-#endif
+#include "example_files.h"
 
 /*
  * End-to-end runs over the shipped examples.
@@ -19,7 +16,7 @@
  */
 typedef struct
 {
-    const char *folder;
+    const char *model;
     const char *cuqdyn_config;
     const char *description;
     long n_states;
@@ -53,17 +50,12 @@ static const int N_SCENARIOS = sizeof(SCENARIOS) / sizeof(SCENARIOS[0]);
 
 static void run_scenario(const Scenario *scenario)
 {
-    char data_file[512];
-    char cuqdyn_config_file[512];
-    char sacess_config_file[512];
-
-    snprintf(data_file, sizeof(data_file), EXAMPLES_DIR "/%s/data.txt", scenario->folder);
-    snprintf(cuqdyn_config_file, sizeof(cuqdyn_config_file), EXAMPLES_DIR "/%s/%s", scenario->folder,
-             scenario->cuqdyn_config);
-    snprintf(sacess_config_file, sizeof(sacess_config_file), EXAMPLES_DIR "/%s/sacess-serial.xml", scenario->folder);
+    const char *cuqdyn_config_file = example_file(scenario->model, scenario->cuqdyn_config);
+    const char *sacess_config_file = example_sacess_conf(scenario->model);
+    const char *data_file = example_data(scenario->model);
 
     // Written inside the build tree so a test run never dirties the examples.
-    char *output_file = "cuqdyn_output";
+    const char *output_file = "cuqdyn_output";
 
     CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
 
