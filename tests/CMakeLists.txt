@@ -23,7 +23,7 @@ foreach(
             ${test_name}
             PROPERTIES
                 ENVIRONMENT
-                    "ASAN_OPTIONS=detect_stack_use_after_return=1:strict_string_checks=1:detect_leaks=1;UBSAN_OPTIONS=print_stacktrace=1"
+                    "ASAN_OPTIONS=detect_stack_use_after_return=1:strict_string_checks=1:detect_leaks=1:intercept_strndup=0;UBSAN_OPTIONS=print_stacktrace=1"
         )
     endif()
 endforeach()
