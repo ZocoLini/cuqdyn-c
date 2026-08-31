@@ -18,3 +18,8 @@ foreach(
     )
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
+
+add_test(
+    NAME test_module_version
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/test_module_version.sh
+)

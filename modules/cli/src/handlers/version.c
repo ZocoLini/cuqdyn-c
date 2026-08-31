@@ -1,6 +1,7 @@
 #include <handlers/handlers.h>
 #include <stdio.h>
 
+#include "cli_version.h"
 #include "cuqdyn_version.h"
 #include "sacess_version.h"
 

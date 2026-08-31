@@ -1,0 +1,13 @@
+execute_process(
+    COMMAND bash ${SOURCE_DIR}/scripts/get_module_version.sh ${MODULE}
+    WORKING_DIRECTORY ${SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_VERSION
+    RESULT_VARIABLE TAG_RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(NOT TAG_RESULT EQUAL 0 OR GIT_VERSION STREQUAL "")
+    set(GIT_VERSION "dev")
+endif()
+
+configure_file(${TEMPLATE} ${HEADER})
