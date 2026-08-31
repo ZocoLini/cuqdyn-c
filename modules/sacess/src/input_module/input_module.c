@@ -552,6 +552,13 @@ int extract_element_method_ScatterSearch(xmlDocPtr doc, xmlNodePtr *root, experi
             (strcmp(removeSpace(extract_element_uniq(doc,cur2,tolc)),"default")!=0))
         {
             method->loptions->tol = atoi(extract_element_uniq(doc,cur2,tolc)); 
+            if (( method->loptions->tol != 1) &&
+                ( method->loptions->tol != 2) &&
+                ( method->loptions->tol != 3))
+            {
+                perror(error44);
+                exit(44);
+            }
         } else method->loptions->tol = -1;
 
         if (( extract_element_uniq(doc,cur2,iterprintc) != NULL ) &&
