@@ -28,7 +28,7 @@ CONTAINS
         CHARACTER(kind=C_CHAR, len=20), POINTER  :: del, fin, sol
         CHARACTER(kind=C_CHAR, len=20), TARGET  :: del2, fin2, sol2
         REAL (C_DOUBLE) :: tolf,tolx,prob_bound, tolc
-        REAL (C_FLOAT)  :: thfactor, maxdistfactor
+        REAL (C_DOUBLE) :: thfactor, maxdistfactor
         REAL (C_DOUBLE) :: balance
         INTEGER :: returninitsol,ii,numbersol,counter
         REAL(KIND=SELECTED_REAL_KIND(P=PRECISION_D,R=RANGE_D)), DIMENSION(:,:), ALLOCATABLE :: XX0
