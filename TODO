@@ -1,8 +1,6 @@
 - Validacion del metodo traspilado.  -> David y Marta
 - MPI sin ejercitar con observabilidad parcial
 - Debug sin compilar siquiera.
-- Eliminar variante MPI2 por simplicidad.      -> Borja
-- Fuga restante: ~0.7 KB por evaluación, dentro de sacess. No bloquea, pero limita maxevaluation. -> Borja
 - Bootstrap trayectorial.
 - Verificar que lo de las Sensitivities ete bien implementado
 - Eliminar librerias misqp y xml2              -> David
