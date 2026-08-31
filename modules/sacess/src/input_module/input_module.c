@@ -552,6 +552,18 @@ int extract_element_method_ScatterSearch(xmlDocPtr doc, xmlNodePtr *root, experi
             (strcmp(removeSpace(extract_element_uniq(doc,cur2,tolc)),"default")!=0))
         {
             method->loptions->tol = atoi(extract_element_uniq(doc,cur2,tolc)); 
+            /* tol names one of three tolerance levels, the way local.tol does in
+               MEIGO. ssm_optset reads anything below zero as "not given" and
+               keeps the default, so the levels themselves start at one, and a
+               value outside them reaches call_dhc with no branch to take. This
+               is checked here for the same reason solver is below. */
+            if (( method->loptions->tol != 1) &&
+                ( method->loptions->tol != 2) &&
+                ( method->loptions->tol != 3))
+            {
+                perror(error44);
+                exit(44);
+            }
         } else method->loptions->tol = -1;
 
         if (( extract_element_uniq(doc,cur2,iterprintc) != NULL ) &&

@@ -28,7 +28,7 @@
         </global_options>
         <local_options>
             <solver>dhc</solver>
-            <tol>0</tol>
+            <tol>2</tol>
             <evalmax>9e3</evalmax>
             <iterprint>0</iterprint>
             <n1>1</n1>
