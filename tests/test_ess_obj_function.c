@@ -3,6 +3,7 @@
 #include "example_files.h"
 #include "functions.h"
 #include "matlab.h"
+#include "method_module/evaluationinterface.h"
 #include "method_module/structure_paralleltestbed.h"
 #include "sunmatrix/sunmatrix_dense.h"
 
@@ -29,7 +30,11 @@ int main()
 
     printf("Value %lf", out->value);
 
+    deallocateoutputfunction_(out, exp_total);
     destroyexp(exp_total);
+    free(exp_total);
+    N_VDestroy(data.initial_values);
+    free(data.observed_idx);
     destroy_cuqdyn_context(context);
 
     return 0;
