@@ -851,6 +851,7 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             extract_element_problem(doc, &root, exptotal,  &exptotal->test);
     }
     xmlFree(value);       
+    xmlFreeDoc(doc);
     
     return 1;    
     
