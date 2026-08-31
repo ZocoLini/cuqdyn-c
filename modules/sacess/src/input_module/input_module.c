@@ -114,6 +114,7 @@ int  count_element_multi(xmlDocPtr doc, xmlNodePtr cur, const char *name) {
     while (cur_pre != NULL) {
         if ((!xmlStrcmp(cur_pre->name, (const xmlChar *)name)))  {
             key = xmlNodeListGetString(doc,cur_pre->xmlChildrenNode, 1);
+            xmlFree(key);
             hit++;
         }
         cur_pre = cur_pre->next;
@@ -749,7 +750,6 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             exptotal->methodScatterSearch = (experiment_method_ScatterSearch *) malloc(sizeof (experiment_method_ScatterSearch));
             extract_element_method_ScatterSearch(doc, &root, exptotal->methodScatterSearch);                        
             exptotal->methodDE=NULL;
-            exptotal->methodScatterSearch->eSSversion = (char *) calloc(500, sizeof(char));
             
             if (strcmp((const char *) value, "ScatterSearch") == 0) {
                 exptotal->methodScatterSearch->eSSversion = "ScatterSearch";
@@ -1078,7 +1078,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     for (i=0;i<test->bench.number_init_sol;i++) {
 	free(vector_char[i]);
     }
-   // free(vector_char);
+    free(vector_char);
  
     return 1;
 }

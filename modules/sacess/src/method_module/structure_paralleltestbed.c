@@ -328,6 +328,22 @@ void destroyexp(experiment_total *exp) {
     }
 #endif
 
+    if (exp->execution.nameMatlab != NULL) {
+        free(exp->execution.nameMatlab);
+        exp->execution.nameMatlab = NULL;
+    }
+    if (exp->test.bench.X0 != NULL) {
+        int k;
+        for (k = 0; k < exp->test.bench.number_init_sol; k++) {
+            free(exp->test.bench.X0[k]);
+        }
+        free(exp->test.bench.X0);
+        exp->test.bench.X0 = NULL;
+    }
+    if (exp->test.bench.F0 != NULL) {
+        free(exp->test.bench.F0);
+        exp->test.bench.F0 = NULL;
+    }
     if (exp->test.bench.max_dom != NULL) {
         free(exp->test.bench.max_dom);
         exp->test.bench.max_dom = NULL;
@@ -352,8 +368,23 @@ void destroyexp(experiment_total *exp) {
     }
 
     if (exp->methodScatterSearch != NULL) {
+        if (exp->methodScatterSearch->loptions != NULL) {
+            free(exp->methodScatterSearch->loptions->solver);
+            free(exp->methodScatterSearch->loptions->finish);
+            free(exp->methodScatterSearch->loptions);
+        }
+        free(exp->methodScatterSearch->uoptions);
+        free(exp->methodScatterSearch->goptions);
         free(exp->methodScatterSearch);
         exp->methodScatterSearch = NULL;
+    }
+    if (exp->execution.file != NULL) {
+        free(exp->execution.file);
+        exp->execution.file = NULL;
+    }
+    if (exp->test.bench.type != NULL) {
+        free(exp->test.bench.type);
+        exp->test.bench.type = NULL;
     }
     if (exp->par_st != NULL) {
         free(exp->par_st);
