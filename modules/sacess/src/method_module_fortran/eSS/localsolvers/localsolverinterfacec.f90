@@ -48,6 +48,10 @@ CONTAINS
            thres = 1d-8
         else if (opts1%localoptions%tol .EQ. 3) then
            thres = 1d-10
+        else
+           ! See call_dhc in localsolver.f90: any other value left thres
+           ! unassigned, and dhc reads it as its stopping threshold.
+           thres = 1d-8
         end if
         CALL dhc(problem1,exp1,opts1,fitnessfunction,x0,initsize,thres,budget,eval, fval)
         numeval = numeval + eval

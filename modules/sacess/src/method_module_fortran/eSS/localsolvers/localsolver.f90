@@ -75,6 +75,15 @@ CONTAINS
             thres = 1d-8
         else if (opts1%localoptions%tol .EQ. 3) then    
             thres = 1d-10
+        else
+            ! Only 1, 2 and 3 name a tolerance, and ssm_default picks 2 when the
+            ! configuration leaves it out. Anything else used to fall through
+            ! with thres never assigned: dhc then compared ABS(vr) against
+            ! whatever the stack held. Read as a large number it returned at
+            ! once, so the local search looked like a no-op; read as zero the
+            ! loop could not end, since the budget check leaves through
+            ! vr = thres/10 and ABS(0) .GE. 0 stays true.
+            thres = 1d-8
         end if
         
         CALL dhc(problem1,exp1,opts1,fitnessfunction,x0,initsize,thres,budget, eval, fval)
@@ -120,6 +129,10 @@ CONTAINS
                      acc = opts1%useroptions%tolc
         else if (opts1%localoptions%tol .EQ. 3) then
                     acc = opts1%useroptions%tolc/100
+        else
+                    ! Same fall-through as call_dhc above, reaching misqp as an
+                    ! unassigned accuracy.
+                    acc = opts1%useroptions%tolc
         end if
 
         
