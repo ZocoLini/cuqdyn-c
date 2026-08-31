@@ -10,7 +10,7 @@
 #include "method_module/common_solver_operations.h"
 #include "method_module/solversinterface.h"
 
-#if defined(MPI2) || defined(MPI)
+#ifdef MPI
 #include <mpi.h>
 #endif
 
@@ -31,7 +31,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 
     CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
 
-#if defined(MPI2) || defined(MPI)
+#ifdef MPI
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #else

@@ -23,6 +23,10 @@ file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c)
 add_library(cuqdyn-c ${LIB_SRC})
 add_dependencies(cuqdyn-c rust_lib)
 
+if(CUQDYN_MPI)
+    target_compile_definitions(cuqdyn-c PUBLIC MPI)
+endif()
+
 target_include_directories(
     cuqdyn-c
     PUBLIC

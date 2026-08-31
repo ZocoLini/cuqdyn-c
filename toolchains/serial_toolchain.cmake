@@ -6,5 +6,7 @@ set(CMAKE_Fortran_FLAGS
     "-O3 -cpp -DGNU -fallow-argument-mismatch -std=gnu -march=native"
 )
 
+set(CUQDYN_MPI OFF)
+
 set(MISQP_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/deps/misqp/gnu")
 set(LIBRARIES "")
