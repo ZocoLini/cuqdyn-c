@@ -75,6 +75,8 @@ CONTAINS
             thres = 1d-8
         else if (opts1%localoptions%tol .EQ. 3) then    
             thres = 1d-10
+        else
+            thres = 1d-8
         end if
         
         CALL dhc(problem1,exp1,opts1,fitnessfunction,x0,initsize,thres,budget, eval, fval)
@@ -120,6 +122,8 @@ CONTAINS
                      acc = opts1%useroptions%tolc
         else if (opts1%localoptions%tol .EQ. 3) then
                     acc = opts1%useroptions%tolc/100
+        else
+                    acc = opts1%useroptions%tolc
         end if
 
         
