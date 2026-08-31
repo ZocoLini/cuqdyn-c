@@ -51,9 +51,9 @@ Trajectory sensitivities come from CVODES forward sensitivity analysis
 Matlab toolbox — CVODES cannot integrate in complex arithmetic, but it computes
 `dy/dtheta` natively in a single augmented integration.
 
-Two ready-to-run partially observed examples ship in `example-files/`:
-`linear_cascade` (2 states, downstream one measured) and `lv2_partobs`
-(Lotka-Volterra with the prey measured and the predator hidden). See
+Four ready-to-run partially observed examples ship in `example-files/`:
+`linear-cascade`, `linear-cascade3`, `lv2-partobs` (Lotka-Volterra with the prey
+measured and the predator hidden) and `sir`. See
 [Using the CLI](#using-the-cli).
 
 > **Note on the optimiser budget.** The conformal bands come from the LOO
@@ -132,89 +132,81 @@ docker compose up
 
 ## Using the CLI
 
-After building using the `scripts/build.sh` script, you can execute this command to run the CLI with example config and data files like this:
+Every example lives in its own folder under `example-files/`
+
+```
+example-files/<example>/
+    data.txt               measurements, one column per state
+    cuqdyn-fim.xml         algorithm config
+    cuqdyn-hybridcov.xml   hybrid-covariance variant, where it applies
+    sacess-serial.xml      optimiser config, serial
+    sacess-mpi.xml         optimiser config, MPI
+```
+
+| `<example>` | states | hidden | params | MPI | hybrid |
+|---|---|---|---|---|---|
+| `logistic` | 1 | 0 | 2 | yes | |
+| `lotka-volterra` | 2 | 0 | 4 | yes | |
+| `alpha-pinene` | 5 | 0 | 5 | yes | |
+| `linear-cascade` | 2 | 1 | 2 | | |
+| `linear-cascade3` | 3 | 2 | 3 | | |
+| `lv2-partobs` | 2 | 1 | 4 | | yes |
+| `sir` | 3 | 2 | 2 | | yes |
+| `nfkb` | 15 | 5 | 29 | yes | |
+
+Examples with hidden states are **partially observed**: their `data.txt` carries
+`NaN` in the columns of the states that are never measured, so they exercise both
+band types. The rest are fully observed and reduce to the original CUQDyn1.
+
+After building with `scripts/build.sh`, run any example by setting `EXAMPLE`:
 
 ```bash
-mkdir output
+EXAMPLE=lv2-partobs
 VARIANT=serial
 BUILD_TYPE=debug
+mkdir -p output/${EXAMPLE}
 ./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
-    -c example-files/lotka_volterra_cuqdyn_config.xml \
-    -s example-files/lotka_volterra_ess_${VARIANT}_config.xml \
-    -d example-files/lotka_volterra_paper_data.txt \
-    -o output/
+    -c example-files/${EXAMPLE}/cuqdyn-fim.xml \
+    -s example-files/${EXAMPLE}/sacess-serial.xml \
+    -d example-files/${EXAMPLE}/data.txt \
+    -o output/${EXAMPLE}/
 ```
+
+The MPI build takes the same shape, with `sacess-mpi.xml` and `mpirun`:
 
 ```bash
-mkdir output
-VARIANT=serial
+EXAMPLE=lotka-volterra
 BUILD_TYPE=debug
-./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
-    -c example-files/alpha_pinene_cuqdyn_config.xml \
-    -s example-files/alpha_pinene_ess_${VARIANT}_config.xml \
-    -d example-files/alpha_pinene_paper_data.txt \
-    -o output/
+mkdir -p output/${EXAMPLE}
+mpirun -np 6 --use-hwthread-cpus ./build/${BUILD_TYPE}-mpi/modules/cli/cli solve \
+    -c example-files/${EXAMPLE}/cuqdyn-fim.xml \
+    -s example-files/${EXAMPLE}/sacess-mpi.xml \
+    -d example-files/${EXAMPLE}/data.txt \
+    -o output/${EXAMPLE}/
 ```
 
-```bash
-mkdir output
-VARIANT=serial
-BUILD_TYPE=debug
-./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
-    -c example-files/logistic_model_cuqdyn_config.xml \
-    -s example-files/logistic_model_ess_${VARIANT}_config.xml \
-    -d example-files/logistic_model_paper_data.txt \
-    -o output/
-```
+Swap `cuqdyn-fim.xml` for `cuqdyn-hybridcov.xml` on the examples that offer it to
+get the hybrid covariance instead: the hidden states keep the FIM marginal scale
+but take their correlation structure from the leave-one-out ensemble. That run
+also emits the plain FIM bands, so the two can be drawn together.
 
-The two examples below are **partially observed**: one state is measured and the
-other never is, so they exercise both band types. Their data files are `.txt`
-with `NaN` in the columns of the states that are never measured.
+NF-kB is the largest case, and its FIM is close to singular (`cond(J) ~ 6e8`), so
+its hidden-state bands should be read together with the reported rank and
+condition number rather than taken at face value.
 
-```bash
-mkdir -p output/linear-cascade
-VARIANT=serial
-BUILD_TYPE=debug
-./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
-    -c example-files/linear_cascade_cuqdyn_config.xml \
-    -s example-files/linear_cascade_ess_${VARIANT}_config.xml \
-    -d example-files/linear_cascade_paper_data.txt \
-    -o output/linear-cascade/
-```
-
-```bash
-mkdir -p output/lotka-volterra
-VARIANT=serial
-BUILD_TYPE=debug
-./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
-    -c example-files/lv2_partobs_cuqdyn_config.xml \
-    -s example-files/lv2_partobs_ess_${VARIANT}_config.xml \
-    -d example-files/lv2_partobs_paper_data.txt \
-    -o output/lotka-volterra/
-```
-
-NF-kB is the largest case: 15 states, 29 parameters, 10 of the states measured.
-
-```bash
-mkdir -p output/nfkb
-VARIANT=serial
-BUILD_TYPE=debug
-./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
-    -c example-files/nfkb_cuqdyn_config.xml \
-    -s example-files/nfkb_ess_${VARIANT}_config.xml \
-    -d example-files/nfkb_paper_data.txt \
-    -o output/nfkb/
-```
-
-Its FIM is close to singular (`cond(J) ~ 6e8`), so its hidden-state bands should
-be read together with the reported rank and condition number rather than taken at
-face value.
-
-Both print which states were observed and a one-line FIM summary:
+Every run prints a one-line FIM summary:
 
 ```
-Observed 1 of 2 states; hidden states use FIM delta-method bands
 FIM: rank 4/4, condition number 7.050e+01, ridge 9.803e-08, sigma2 1
+```
+
+`cuqdyn-hybridcov.xml` adds the marginal standard deviations of both covariances,
+so the two can be compared at a glance:
+
+```
+HybridCov: FIM marginal scale with LOO correlation
+   marginal std devs  FIM: 0.02264 0.004309 0.00155 0.03492
+   marginal std devs  hybrid: 0.02264 0.004309 0.00155 0.03492
 ```
 
 Everything above also runs inside the container:
@@ -222,10 +214,10 @@ Everything above also runs inside the container:
 ```bash
 docker compose up -d
 docker compose exec cuqdyn_c ./build/debug-serial/modules/cli/cli solve \
-    -c example-files/lv2_partobs_cuqdyn_config.xml \
-    -s example-files/lv2_partobs_ess_serial_config.xml \
-    -d example-files/lv2_partobs_paper_data.txt \
-    -o output/lotka-volterra/
+    -c example-files/lv2-partobs/cuqdyn-fim.xml \
+    -s example-files/lv2-partobs/sacess-serial.xml \
+    -d example-files/lv2-partobs/data.txt \
+    -o output/lv2-partobs/
 ```
 
 After this, the file `output/cuqdyn-results.txt` contains the results of the algorithm but reading it as a plain text is not very useful. To fix this, you can run: (Needs python3 and matplotlib installed)

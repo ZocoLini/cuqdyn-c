@@ -4,150 +4,105 @@
 #include <stdio.h>
 
 #include "config.h"
+#include "example_files.h"
 
-void test_lotka_volterra();
-void test_linear_cascade();
-void test_lotka_volterra_partobs();
-void test_sir_hybridcov();
-void test_nfkb();
+/*
+ * End-to-end runs over the shipped examples.
+ *
+ * Every scenario is a folder under example-files/ holding data.txt, one or more
+ * cuqdyn-*.xml and a sacess-serial.xml, so adding a case here is a matter of
+ * adding a row rather than another near-identical function. These are the same
+ * files the README tells users to run, which is what keeps the examples honest.
+ */
+typedef struct
+{
+    const char *model;
+    const char *cuqdyn_config;
+    const char *description;
+    long n_states;
+    int n_obs;
+    /// Index of the first measured state, or -1 to leave it unchecked.
+    int first_observed;
+    /// The hybrid covariance also emits the plain FIM bands, so they can be compared.
+    int expects_alt_bands;
+} Scenario;
+
+static const Scenario SCENARIOS[] = {
+        // Fully observed: conformal bands cover every state and the run reduces
+        // to the original CUQDyn1.
+        {"logistic", "cuqdyn-fim.xml", "Logistic, single observed state", 1, 1, 0, 0},
+        {"lotka-volterra", "cuqdyn-fim.xml", "Lotka-Volterra, fully observed", 2, 2, -1, 0},
+        {"alpha-pinene", "cuqdyn-fim.xml", "Alpha-pinene, 5 observed states", 5, 5, -1, 0},
+        // Partially observed: the hidden states go through the delta method.
+        {"linear-cascade", "cuqdyn-fim.xml", "LinearCascade, 1 of 2 states observed", 2, 1, 1, 0},
+        {"linear-cascade3", "cuqdyn-fim.xml", "LinearCascade3, 1 of 3 states observed", 3, 1, 2, 0},
+        {"lv2-partobs", "cuqdyn-fim.xml", "Lotka-Volterra, predator hidden", 2, 1, 0, 0},
+        {"sir", "cuqdyn-fim.xml", "SIR, 2 of 3 states hidden", 3, 1, 1, 0},
+        // Same problem through the hybrid covariance, which also emits the plain
+        // FIM bands so the two can be compared.
+        {"sir", "cuqdyn-hybridcov.xml", "SIR, hybrid covariance", 3, 1, 1, 1},
+        {"lv2-partobs", "cuqdyn-hybridcov.xml", "Lotka-Volterra hidden predator, hybrid covariance", 2, 1, 0, 1},
+        // NF-kB is left out of the default run: 15 states and 29 parameters make
+        // it far slower than the rest. example-files/nfkb/ carries its files.
+};
+
+static const int N_SCENARIOS = sizeof(SCENARIOS) / sizeof(SCENARIOS[0]);
+
+static void run_scenario(const Scenario *scenario)
+{
+    const char *cuqdyn_config_file = example_file(scenario->model, scenario->cuqdyn_config);
+    const char *sacess_config_file = example_sacess_conf(scenario->model);
+    const char *data_file = example_data(scenario->model);
+
+    // Written inside the build tree so a test run never dirties the examples.
+    const char *output_file = "cuqdyn_output";
+
+    CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
+
+    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
+
+    assert(cuqdyn_result != NULL);
+
+    assert(cuqdyn_result->n_states == scenario->n_states);
+    assert(cuqdyn_result->n_obs == scenario->n_obs);
+
+    if (scenario->first_observed >= 0)
+    {
+        assert(cuqdyn_result->observed_idx[0] == scenario->first_observed);
+    }
+
+    // Produced for every run: the covariance describes the fit, not the
+    // observability, so it exists even when every state is measured.
+    assert(cuqdyn_result->cov_p != NULL);
+    assert(cuqdyn_result->std_y != NULL);
+
+    if (scenario->expects_alt_bands)
+    {
+        assert(cuqdyn_result->q_low_alt != NULL);
+        assert(cuqdyn_result->q_up_alt != NULL);
+    }
+    else
+    {
+        assert(cuqdyn_result->q_low_alt == NULL);
+        assert(cuqdyn_result->q_up_alt == NULL);
+    }
+
+    destroy_cuqdyn_result(cuqdyn_result);
+    destroy_cuqdyn_context(context);
+}
 
 int main(void)
 {
 #if defined(MPI2) || defined(MPI)
-    printf("No tests to execute with MPI2\n");
+    printf("No tests to execute with MPI\n");
     return 0;
 #endif
 
-    test_lotka_volterra();
-    printf("\tTest 1 (Lotka-Volterra, fully observed) completed\n");
-
-    test_linear_cascade();
-    printf("\tTest 2 (LinearCascade, 1 of 2 states observed) completed\n");
-
-    test_lotka_volterra_partobs();
-    printf("\tTest 3 (Lotka-Volterra, predator hidden) completed\n");
-
-    test_sir_hybridcov();
-    printf("\tTest 4 (SIR, hybrid covariance, 2 of 3 states hidden) completed\n");
-
-    // test_nfkb(); TODO: Too slow
-    printf("\tTest 5 completed\n");
+    for (int i = 0; i < N_SCENARIOS; ++i)
+    {
+        run_scenario(&SCENARIOS[i]);
+        printf("\tTest %d (%s) completed\n", i + 1, SCENARIOS[i].description);
+    }
 
     return 0;
-}
-
-void test_lotka_volterra()
-{
-    char *data_file = "data/lotka_volterra_paper_data.txt";
-    char *cuqdyn_config_file = "data/lotka_volterra_cuqdyn_config.xml";
-    char *sacess_config_file = "data/lotka_volterra_ess_config_nl2sol.dn2gb.xml";
-    char *output_file = "data/output";
-
-    CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
-
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
-
-    assert(cuqdyn_result != NULL);
-
-    // No NaN in the data means every state is measured, so all the bands come
-    // from the conformal pass. The parameter covariance is produced regardless,
-    // since it describes the fit rather than the observability.
-    assert(cuqdyn_result->n_obs == cuqdyn_result->n_states);
-    assert(cuqdyn_result->cov_p != NULL);
-    assert(cuqdyn_result->std_y != NULL);
-
-    destroy_cuqdyn_result(cuqdyn_result);
-    destroy_cuqdyn_context(context);
-}
-
-void test_linear_cascade()
-{
-    char *data_file = "data/linear_cascade_paper_data.txt";
-    char *cuqdyn_config_file = "data/linear_cascade_cuqdyn_config.xml";
-    char *sacess_config_file = "data/linear_cascade_ess_serial_config.xml";
-    char *output_file = "data/output";
-
-    CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
-
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
-
-    assert(cuqdyn_result != NULL);
-
-    // Only the downstream state is measured, so the hidden one gets FIM bands.
-    assert(cuqdyn_result->n_states == 2);
-    assert(cuqdyn_result->n_obs == 1);
-    assert(cuqdyn_result->observed_idx[0] == 1);
-    assert(cuqdyn_result->cov_p != NULL);
-    assert(cuqdyn_result->std_y != NULL);
-
-    destroy_cuqdyn_result(cuqdyn_result);
-    destroy_cuqdyn_context(context);
-}
-
-void test_lotka_volterra_partobs()
-{
-    char *data_file = "data/lv2_partobs_paper_data.txt";
-    char *cuqdyn_config_file = "data/lv2_partobs_cuqdyn_config.xml";
-    char *sacess_config_file = "data/lv2_partobs_ess_serial_config.xml";
-    char *output_file = "data/output";
-
-    CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
-
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
-
-    assert(cuqdyn_result != NULL);
-
-    // The prey is measured at every time point, the predator never.
-    assert(cuqdyn_result->n_states == 2);
-    assert(cuqdyn_result->n_obs == 1);
-    assert(cuqdyn_result->observed_idx[0] == 0);
-
-    destroy_cuqdyn_result(cuqdyn_result);
-    destroy_cuqdyn_context(context);
-}
-
-void test_sir_hybridcov()
-{
-    char *data_file = "data/sir_paper_data.txt";
-    char *cuqdyn_config_file = "data/sir_hybridcov_cuqdyn_config.xml";
-    char *sacess_config_file = "data/sir_ess_serial_config.xml";
-    char *output_file = "data/output";
-
-    CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
-
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
-
-    assert(cuqdyn_result != NULL);
-
-    assert(cuqdyn_result->n_states == 3);
-    assert(cuqdyn_result->n_obs == 1);
-    assert(cuqdyn_result->cov_p != NULL);
-
-    // The hybrid covariance also yields the plain FIM bands, so the two can be
-    // compared; they are absent with the default method.
-    assert(cuqdyn_result->q_low_alt != NULL);
-    assert(cuqdyn_result->q_up_alt != NULL);
-
-    destroy_cuqdyn_result(cuqdyn_result);
-    destroy_cuqdyn_context(context);
-}
-
-void test_nfkb()
-{
-    char *data_file = "data/nfkb_paper_data.txt";
-    char *cuqdyn_config_file = "data/nfkb_cuqdyn_config.xml";
-    char *sacess_config_file = "data/nfkb_ess_serial_config.xml";
-    char *output_file = "data/output";
-
-    CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
-
-    CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
-
-    assert(cuqdyn_result != NULL);
-
-    assert(cuqdyn_result->n_states == 15);
-    assert(cuqdyn_result->n_obs == 10);
-
-    destroy_cuqdyn_result(cuqdyn_result);
-    destroy_cuqdyn_context(context);
 }

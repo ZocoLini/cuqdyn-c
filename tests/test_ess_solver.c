@@ -1,16 +1,3 @@
-#define LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB "data/lotka_volterra_ess_config_nl2sol.dn2gb.xml"
-#define LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2FB "data/lotka_volterra_ess_config_nl2sol.dn2fb.xml"
-#define LOTKA_VOLTERRA_CONF_FILE_DHC "data/lotka_volterra_ess_config_dhc.xml"
-#define LOTKA_VOLTERRA_CONF_FILE_MISQP "data/lotka_volterra_ess_config_misqp.xml"
-#define ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB "data/alpha_pinene_ess_config_nl2sol.dn2fb.xml"
-#define LOGISTIC_MODEL_CONF_FILE_NL2SOL_DN2FB "data/logistic_model_ess_config_nl2sol.dn2fb.xml"
-
-#define LOTKA_VOLTERRA_DATA "data/lotka_volterra_paper_data.txt"
-#define ALPHA_PINENE_DATA "data/alpha_pinene_paper_data.txt"
-#define LOGISTIC_MODEL_DATA "data/logistic_model_paper_data.txt"
-
-#define OUPUT_PATH "ess_output"
-
 #include <assert.h>
 #include <config.h>
 #include <cuqdyn.h>
@@ -20,115 +7,67 @@
 
 #include "data_reader.h"
 #include "ess_solver.h"
+#include "example_files.h"
 #include "matlab.h"
 #include "nvector/nvector_serial.h"
 
-void lotka_volterra_ess(char *conf_file);
-void alpha_pinene_ess(char *conf_file);
-void logistic_model_ess(char *conf_file);
+#define OUTPUT_PATH "ess_output"
+#define MAX_PARAMETERS 8
 
-int main(int argc, char **argv)
+#define PARAMETER_TOLERANCE 1
+
+typedef struct
+{
+    const char *model;
+    const char *description;
+
+    sunrealtype expected[MAX_PARAMETERS];
+
+    int n_parameters;
+} Scenario;
+
+static const Scenario SCENARIOS[] = {
+        {"lotka-volterra", "Lotka-Volterra", {0.5, 0.02, 0.5, 0.02}, 4},
+        {"logistic", "Logistic Model", {0.1, 102}, 2},
+        {"alpha-pinene", "Alpha-Pinene", {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5}, 5},
+};
+
+static const int N_SCENARIOS = sizeof(SCENARIOS) / sizeof(SCENARIOS[0]);
+
+static void run_scenario(const Scenario *scenario)
+{
+    CuqDynContext context = init_cuqdyn_context_from_file(example_conf(scenario->model));
+
+    CuqdynData data;
+    assert(read_data_file(example_data(scenario->model), &data) == 0);
+
+    N_Vector texp = data.times;
+    SUNMatrix yexp = data.observed_data;
+    N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
+
+    N_Vector xbest = execute_ess_solver(example_sacess_conf(scenario->model), OUTPUT_PATH, texp, yexp, initial_values,
+                                        NULL, data.observed_idx);
+
+    for (int i = 0; i < scenario->n_parameters; ++i)
+    {
+        assert(fabs(NV_Ith_S(xbest, i) - scenario->expected[i]) < PARAMETER_TOLERANCE);
+    }
+
+    destroy_cuqdyn_context(context);
+}
+
+int main(void)
 {
 #if defined(MPI2) || defined(MPI)
     printf("No tests to execute with MPI2\n");
     return 0;
 #endif
 
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2GB);
-    printf("\tTest 1 passed NL2SOL_DN2GB\n");
-
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 2 passed NL2SOL_DN2FB\n");
-
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_DHC);
-    printf("\tTest 3 passed DHC\n");
-
-    lotka_volterra_ess(LOTKA_VOLTERRA_CONF_FILE_MISQP);
-    printf("\tTest 4 passed MISQP\n");
-
-    logistic_model_ess(LOGISTIC_MODEL_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 5 passed Logistic Model NL2SOL_DN2FB\n");
-
-    alpha_pinene_ess(ALPHA_PINENE_CONF_FILE_NL2SOL_DN2FB);
-    printf("\tTest 6 passed Alpha-Pinene NL2SOL_DN2GB\n");
+    for (int i = 0; i < N_SCENARIOS; ++i)
+    {
+        run_scenario(&SCENARIOS[i]);
+        printf("\tTest %d passed %s\n", i + 1, SCENARIOS[i].description);
+    }
 
     return 0;
-}
-
-void lotka_volterra_ess(char *conf_file)
-{
-    CuqDynContext context = init_cuqdyn_context_from_file("data/lotka_volterra_cuqdyn_config.xml");
-
-    sunrealtype expected_values[4] = {0.5, 0.02, 0.5, 0.02};
-
-    CuqdynData data;
-    assert(read_data_file(LOTKA_VOLTERRA_DATA, &data) == 0);
-
-    N_Vector texp = data.times;
-    SUNMatrix yexp = data.observed_data;
-    N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
-
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL, data.observed_idx);
-
-    for (int i = 0; i < 4; ++i)
-    {
-        sunrealtype expected = expected_values[i];
-        sunrealtype result = NV_Ith_S(xbest, i);
-
-        assert(fabs(result - expected) < 1);
-    }
-
-    destroy_cuqdyn_context(context);
-}
-
-void alpha_pinene_ess(char *conf_file)
-{
-    CuqDynContext context = init_cuqdyn_context_from_file("data/alpha_pinene_cuqdyn_config.xml");
-
-    sunrealtype expected_values[5] = {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5};
-
-    CuqdynData data;
-    assert(read_data_file(ALPHA_PINENE_DATA, &data) == 0);
-
-    N_Vector texp = data.times;
-    SUNMatrix yexp = data.observed_data;
-    N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
-
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL, data.observed_idx);
-
-    for (int i = 0; i < 5; ++i)
-    {
-        sunrealtype expected = expected_values[i];
-        sunrealtype result = NV_Ith_S(xbest, i);
-
-        assert(fabs(result - expected) < 1);
-    }
-
-    destroy_cuqdyn_context(context);
-}
-
-void logistic_model_ess(char *conf_file)
-{
-    CuqDynContext context = init_cuqdyn_context_from_file("data/logistic_model_cuqdyn_config.xml");
-
-    sunrealtype expected_values[2] = {0.1, 102};
-
-    CuqdynData data;
-    assert(read_data_file(LOGISTIC_MODEL_DATA, &data) == 0);
-
-    N_Vector texp = data.times;
-    SUNMatrix yexp = data.observed_data;
-    N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
-
-    N_Vector xbest = execute_ess_solver(conf_file, OUPUT_PATH, texp, yexp, initial_values, NULL, data.observed_idx);
-
-    for (int i = 0; i < 2; ++i)
-    {
-        sunrealtype expected = expected_values[i];
-        sunrealtype result = NV_Ith_S(xbest, i);
-
-        assert(fabs(result - expected) < 1);
-    }
-
-    destroy_cuqdyn_context(context);
 }
