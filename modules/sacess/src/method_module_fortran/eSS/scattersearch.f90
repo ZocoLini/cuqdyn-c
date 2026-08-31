@@ -407,7 +407,9 @@ CONTAINS
         CALL seed_recount(exp1, common_vars%idp)
 
         
-        CALL updateresultsess(exp1, results1, results%timetotal, nfuneval, fbest(1), xbest, common_vars%iter, results%timetotal)
+        results%totaliter = common_vars%iter
+        CALL updateresultsess(exp1, results1, results%timetotal, nfuneval, fbest(1), xbest, results%totaliter, &
+                results%timetotal)
         CALL settotaltime(results1, results%timetotal)
         CALL setlocalsolvertime(results1, time%localsolvertime)
 
