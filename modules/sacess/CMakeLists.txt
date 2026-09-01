@@ -1,4 +1,4 @@
-cuqdyn_module_version(sacess sacess_version)
+cuqdyn_module_version(sacess)
 
 file(GLOB SRC_C CONFIGURE_DEPENDS
         src/input_module/*.c
@@ -34,8 +34,8 @@ add_dependencies(sacess sacess_version)
 
 target_include_directories(sacess
         PUBLIC
-        generated
         include
+        generated
         benchmarks
         libAMIGO/include
 

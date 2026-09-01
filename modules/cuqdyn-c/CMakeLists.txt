@@ -1,9 +1,9 @@
-cuqdyn_module_version(cuqdyn-c cuqdyn_version)
+cuqdyn_module_version(cuqdyn-c)
 
 file(GLOB LIB_SRC CONFIGURE_DEPENDS src/*.c)
 
 add_library(cuqdyn-c ${LIB_SRC})
-add_dependencies(cuqdyn-c rust_lib cuqdyn-c_version)
+add_dependencies(cuqdyn-c rust_lib cuqdyn_c_version)
 
 target_include_directories(
     cuqdyn-c
