@@ -27,13 +27,18 @@ state is measured:
 | **Observed** | Conformal prediction over the leave-one-out ensemble | Distribution-free under exchangeability |
 | **Unobserved** | Delta method through the parameter covariance | Linearised error propagation |
 
-The unobserved states can take their covariance two ways, selected with
-`<uq_method>`:
+The covariance itself comes in two varieties, and **every run produces both**.
+There is nothing to select: the sensitivities and the conformal bands are shared,
+so the second variety costs one more quadratic form and the two can be compared
+without a second fit.
 
-| `uq_method` | Covariance | Upstream equivalent |
+| Variety | Covariance | Upstream equivalent |
 |---|---|---|
-| `fim` (default) | Rank-aware FIM / Gauss-Newton | `CUQDyn1_Plus` |
-| `hybridcov` | `D_FIM . R_LOO . D_FIM` — FIM marginal scale, correlation from the LOO ensemble | `CUQDyn1_Plus_HybridCov` |
+| `fim` | Rank-aware FIM / Gauss-Newton | `CUQDyn1_Plus` |
+| `hybrid` | `D_FIM . R_LOO . D_FIM` — FIM marginal scale, correlation from the LOO ensemble | `CUQDyn1_Plus_HybridCov` |
+
+Only the unobserved states tell them apart. The measured ones carry the same
+conformal bands in either, since the covariance has no part in those.
 
 Observability is inferred from the data file: a state is unmeasured when its
 column is `NaN` after `t = 0`. A state is either measured at every point after
@@ -137,26 +142,29 @@ Every example lives in its own folder under `example-files/`
 ```
 example-files/<example>/
     data.txt               measurements, one column per state
-    cuqdyn-fim.xml         algorithm config
-    cuqdyn-hybridcov.xml   hybrid-covariance variant, where it applies
+    cuqdyn.xml             algorithm config
     sacess-serial.xml      optimiser config, serial
     sacess-mpi.xml         optimiser config, MPI
 ```
 
-| `<example>` | states | hidden | params | MPI | hybrid |
-|---|---|---|---|---|---|
-| `logistic` | 1 | 0 | 2 | yes | |
-| `lotka-volterra` | 2 | 0 | 4 | yes | |
-| `alpha-pinene` | 5 | 0 | 5 | yes | |
-| `linear-cascade` | 2 | 1 | 2 | | |
-| `linear-cascade3` | 3 | 2 | 3 | | |
-| `lv2-partobs` | 2 | 1 | 4 | | yes |
-| `sir` | 3 | 2 | 2 | | yes |
-| `nfkb` | 15 | 5 | 29 | yes | |
+| `<example>` | states | hidden | params | MPI |
+|---|---|---|---|---|
+| `logistic` | 1 | 0 | 2 | yes |
+| `lotka-volterra` | 2 | 0 | 4 | yes |
+| `alpha-pinene` | 5 | 0 | 5 | yes |
+| `linear-cascade` | 2 | 1 | 2 | |
+| `linear-cascade3` | 3 | 2 | 3 | |
+| `lv2-partobs` | 2 | 1 | 4 | |
+| `sir` | 3 | 2 | 2 | |
+| `nfkb` | 15 | 5 | 29 | yes |
 
 Examples with hidden states are **partially observed**: their `data.txt` carries
 `NaN` in the columns of the states that are never measured, so they exercise both
-band types. The rest are fully observed and reduce to the original CUQDyn1.
+band types, and are the only ones where the two covariance varieties differ. The
+rest are fully observed and reduce to the original CUQDyn1.
+
+`sir` is where the difference shows most: its FIM and LOO correlation structures
+are far apart (0.21 against 0.45).
 
 After building with `scripts/build.sh`, run any example by setting `EXAMPLE`:
 
@@ -166,7 +174,7 @@ VARIANT=serial
 BUILD_TYPE=debug
 mkdir -p output/${EXAMPLE}
 ./build/${BUILD_TYPE}-${VARIANT}/modules/cli/cli solve \
-    -c example-files/${EXAMPLE}/cuqdyn-fim.xml \
+    -c example-files/${EXAMPLE}/cuqdyn.xml \
     -s example-files/${EXAMPLE}/sacess-serial.xml \
     -d example-files/${EXAMPLE}/data.txt \
     -o output/${EXAMPLE}/
@@ -179,16 +187,11 @@ EXAMPLE=lotka-volterra
 BUILD_TYPE=debug
 mkdir -p output/${EXAMPLE}
 mpirun -np 6 --use-hwthread-cpus ./build/${BUILD_TYPE}-mpi/modules/cli/cli solve \
-    -c example-files/${EXAMPLE}/cuqdyn-fim.xml \
+    -c example-files/${EXAMPLE}/cuqdyn.xml \
     -s example-files/${EXAMPLE}/sacess-mpi.xml \
     -d example-files/${EXAMPLE}/data.txt \
     -o output/${EXAMPLE}/
 ```
-
-Swap `cuqdyn-fim.xml` for `cuqdyn-hybridcov.xml` on the examples that offer it to
-get the hybrid covariance instead: the hidden states keep the FIM marginal scale
-but take their correlation structure from the leave-one-out ensemble. That run
-also emits the plain FIM bands, so the two can be drawn together.
 
 NF-kB is the largest case, and its FIM is close to singular (`cond(J) ~ 6e8`), so
 its hidden-state bands should be read together with the reported rank and
@@ -200,8 +203,8 @@ Every run prints a one-line FIM summary:
 FIM: rank 4/4, condition number 7.050e+01, ridge 9.803e-08, sigma2 1
 ```
 
-`cuqdyn-hybridcov.xml` adds the marginal standard deviations of both covariances,
-so the two can be compared at a glance:
+followed by the marginal standard deviations of both covariances, so the two can
+be compared at a glance:
 
 ```
 HybridCov: FIM marginal scale with LOO correlation
@@ -214,7 +217,7 @@ Everything above also runs inside the container:
 ```bash
 docker compose up -d
 docker compose exec cuqdyn_c ./build/debug-serial/modules/cli/cli solve \
-    -c example-files/lv2-partobs/cuqdyn-fim.xml \
+    -c example-files/lv2-partobs/cuqdyn.xml \
     -s example-files/lv2-partobs/sacess-serial.xml \
     -d example-files/lv2-partobs/data.txt \
     -o output/lv2-partobs/
@@ -228,7 +231,7 @@ python3 plot.py output/cuqdyn-results.txt
 
 Note: Be carefull when executing with `mpirun`, the number of precesses must be divisor of m - 1, where m is the number of rows in the input data matrix.
 
-This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example). Each panel is labelled with the band type it carries, conformal or delta/FIM, and coloured accordingly.
+This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example). Each panel is labelled with the band type it carries, conformal or delta/FIM, and coloured accordingly. On the hidden states the hybrid band is drawn dashed over the FIM one; elsewhere the two coincide, so only one is drawn.
 
 To get information about all the options the cli supports, you can run the following command:
 
@@ -268,8 +271,6 @@ There are three types of input files that must be provided:
 
   - **alp:** predictive region level. Bands are nominally `1 - 2*alp`, so `0.025`
     gives 95%. Defaults to `0.025`.
-  - **uq_method:** `fim` (default) or `hybridcov`. Only affects the states that
-    are never measured; see [Partial observability](#partial-observability).
   - **cost:** how residuals are weighted before the fit and the FIM.
     - `residual_model`: `none` (raw residuals, the default), `known_sigma`
       (divide by the measurement standard deviations) or `state_weights`
@@ -288,7 +289,6 @@ There are three types of input files that must be provided:
 
   ```xml
   <alp>0.025</alp>
-  <uq_method>fim</uq_method>
   <cost>
       <residual_model>known_sigma</residual_model>
       <sigma>2.4531439541663325</sigma>
@@ -374,18 +374,30 @@ CUQDyn1 output and the rest are added by CUQDyn1_Plus:
 |---|---|---|
 | `Params` | n_params | Median of the leave-one-out parameter estimates |
 | `Data` | m x n_states | Median of the leave-one-out trajectories |
-| `Q_low` / `Q_up` | m x n_states | Prediction bands for every state |
 | `Times` | m | Time points |
 | `ObservedIdx` | n_obs | 0-based indices of the measured states |
 | `ParamsInit` | n_params | Best-fit parameters from the full-data fit |
 | `MediaTot` | m x n_states | Trajectory at those best-fit parameters |
-| `CovP` | n_params x n_params | Parameter covariance, only when a state is hidden |
-| `StdY` | m x n_states | Delta-method standard deviations, same condition |
 | `LooParams` | (m-1) x n_params | Per-replicate leave-one-out parameter estimates |
-| `Q_low_fim` / `Q_up_fim` | m x n_states | Plain FIM bands, only with `uq_method=hybridcov` |
+| `ResidLoo` | (m-1) x n_obs | Held-out absolute residuals |
+
+Then one block of four per covariance variety, with `<v>` either `fim` or
+`hybrid`. Both are always written, and `CovP` / `StdY` are missing only when that
+covariance could not be built, which leaves its bands conformal-only.
+
+| Dataset | Shape | Meaning |
+|---|---|---|
+| `Q_low_<v>` / `Q_up_<v>` | m x n_states | Prediction bands for every state |
+| `CovP_<v>` | n_params x n_params | Parameter covariance in natural units |
+| `StdY_<v>` | m x n_states | Delta-method standard deviations |
+
+There is no plain `Q_low` / `Q_up`: with no variety to select, none of the pairs
+deserves the bare name. The CUQDyn1 reference dumps under `example-results/`
+predate this and carry only that pair, which `plot.py` still reads.
 
 `ObservedIdx` is what tells a reader which bands are conformal and which come
-from the delta method.
+from the delta method. It is also what says where the two varieties can differ
+at all.
 
 ## Defining a new model
 

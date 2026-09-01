@@ -20,6 +20,7 @@ void print_matrix(SUNMatrix mat, FILE *output_file, char *name);
 void print_transposed_matrix(TransposedStates mat, FILE *output_file, char *name);
 void print_vector(N_Vector vec, FILE *output_file, char *name);
 void print_observed_idx(const CuqdynResult *result, FILE *output_file);
+void print_uq_bands(const UqBands *bands, FILE *output_file, const char *suffix);
 
 Handler create_solve_handler()
 {
@@ -127,8 +128,6 @@ int handle_solve(int argc, char *argv[])
         N_Vector params_median = cuqdyn_result->predicted_params_median;
         TransposedStates data_median = cuqdyn_result->predicted_data_median;
 
-        SUNMatrix q_low = cuqdyn_result->q_low;
-        SUNMatrix q_up = cuqdyn_result->q_up;
         N_Vector times = cuqdyn_result->times;
 
         const size_t output_file_path_len = strlen(output_dir) + strlen("/cuqdyn-results.txt") + 1;
@@ -145,8 +144,6 @@ int handle_solve(int argc, char *argv[])
 
         print_vector(params_median, output_file, "Params");
         print_transposed_matrix(data_median, output_file, "Data");
-        print_matrix(q_low, output_file, "Q_low");
-        print_matrix(q_up, output_file, "Q_up");
         print_vector(times, output_file, "Times");
 
         // CUQDyn1_Plus additions. Observed states carry conformal bands and the
@@ -161,21 +158,11 @@ int handle_solve(int argc, char *argv[])
         {
             print_transposed_matrix(cuqdyn_result->media_tot, output_file, "MediaTot");
         }
-        if (cuqdyn_result->cov_p != NULL)
-        {
-            print_matrix(cuqdyn_result->cov_p, output_file, "CovP");
-        }
-        if (cuqdyn_result->std_y != NULL)
-        {
-            print_transposed_matrix(cuqdyn_result->std_y, output_file, "StdY");
-        }
-        // Only present with the hybrid covariance: the plain FIM bands, so a
-        // reader can draw both and compare them.
-        if (cuqdyn_result->q_low_alt != NULL)
-        {
-            print_matrix(cuqdyn_result->q_low_alt, output_file, "Q_low_fim");
-            print_matrix(cuqdyn_result->q_up_alt, output_file, "Q_up_fim");
-        }
+        // Both covariance varieties, so a reader can draw them together rather
+        // than rerun. Neither is the plain Q_low/Q_up of the CUQDyn1 files: with
+        // no method left to select there is no pair that deserves the bare name.
+        print_uq_bands(&cuqdyn_result->fim, output_file, "fim");
+        print_uq_bands(&cuqdyn_result->hybrid, output_file, "hybrid");
         if (cuqdyn_result->loo_params != NULL)
         {
             print_matrix(cuqdyn_result->loo_params, output_file, "LooParams");
@@ -197,6 +184,32 @@ int handle_solve(int argc, char *argv[])
 #endif
 
     return 0;
+}
+
+/*
+ * One covariance variety, as Q_low_<suffix> and friends. cov_p and std_y are
+ * missing when that covariance could not be built, which leaves the bands
+ * conformal-only rather than absent.
+ */
+void print_uq_bands(const UqBands *bands, FILE *output_file, const char *suffix)
+{
+    char name[32];
+
+    snprintf(name, sizeof(name), "Q_low_%s", suffix);
+    print_matrix(bands->q_low, output_file, name);
+    snprintf(name, sizeof(name), "Q_up_%s", suffix);
+    print_matrix(bands->q_up, output_file, name);
+
+    if (bands->cov_p != NULL)
+    {
+        snprintf(name, sizeof(name), "CovP_%s", suffix);
+        print_matrix(bands->cov_p, output_file, name);
+    }
+    if (bands->std_y != NULL)
+    {
+        snprintf(name, sizeof(name), "StdY_%s", suffix);
+        print_transposed_matrix(bands->std_y, output_file, name);
+    }
 }
 
 void print_matrix(SUNMatrix mat, FILE *output_file, char *name)

@@ -34,7 +34,7 @@ for VARIANT in "${VARIANTS[@]}"; do
       START_TIME=$(date +%s.%N)
 
       ./build-"$VARIANT"/modules/cli/cli solve \
-        -c example-files/"$EXAMPLE"/cuqdyn-fim.xml \
+        -c example-files/"$EXAMPLE"/cuqdyn.xml \
         -s example-files/"$EXAMPLE"/sacess-"$VARIANT".xml \
         -d example-files/"$EXAMPLE"/data.txt \
         -o "output/scalability/$VARIANT/$R"
@@ -52,7 +52,7 @@ for VARIANT in "${VARIANTS[@]}"; do
         START_TIME=$(date +%s.%N)
 
         srun --ntasks="$PROCS" --cpus-per-task=1 ./build-"$VARIANT"/modules/cli/cli solve \
-          -c example-files/"$EXAMPLE"/cuqdyn-fim.xml \
+          -c example-files/"$EXAMPLE"/cuqdyn.xml \
           -s example-files/"$EXAMPLE"/sacess-"$VARIANT".xml \
           -d example-files/"$EXAMPLE"/data.txt \
           -o "output/scalability/$VARIANT/$PROCS/$R"

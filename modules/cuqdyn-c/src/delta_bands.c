@@ -51,10 +51,84 @@ static int is_observed(const int *observed_idx, const int n_obs, const long stat
     return 0;
 }
 
+/*
+ * One variety starts as a copy of the conformal base, so a state the data
+ * measures reads the same in both and a covariance that cannot be built leaves
+ * usable bands behind rather than an empty matrix.
+ */
+static void start_from_base(SUNMatrix q_low_base, SUNMatrix q_up_base, const long m, const long n_states, UqBands *out)
+{
+    out->q_low = NewDenseMatrix(m, n_states);
+    out->q_up = NewDenseMatrix(m, n_states);
+    SUNMatCopy(q_low_base, out->q_low);
+    SUNMatCopy(q_up_base, out->q_up);
+    out->cov_p = NULL;
+    out->std_y = NULL;
+}
+
+/*
+ * Rewrites the hidden states of one variety from its covariance. This is the
+ * whole of what separates the two: same sensitivities, same quantile, same
+ * centre, and the measured states are left as the conformal base put them.
+ */
+static void fill_from_covariance(const Sensitivities sensitivities, SUNMatrix covariance, TransposedStates media_tot,
+                                 const int *observed_idx, const int n_obs, const double z, const long n_states,
+                                 const long m, const int n_params, UqBands *out)
+{
+    // SM_ELEMENT_D does not parenthesise its argument, so the matrices are held
+    // in locals rather than reached through out-> inside the macro.
+    SUNMatrix std_y = propagate(sensitivities, covariance, n_states, m, n_params);
+    SUNMatrix cov_p = NewDenseMatrix(n_params, n_params);
+    SUNMatrix q_low = out->q_low;
+    SUNMatrix q_up = out->q_up;
+
+    SUNMatCopy(covariance, cov_p);
+
+    for (long k = 0; k < n_states; ++k)
+    {
+        if (is_observed(observed_idx, n_obs, k))
+        {
+            continue; // conformal bands already cover this state
+        }
+
+        for (long i = 1; i < m; ++i)
+        {
+            const double centre = SM_ELEMENT_D(media_tot, k, i);
+            const double half_width = z * SM_ELEMENT_D(std_y, k, i);
+            SM_ELEMENT_D(q_low, i, k) = centre - half_width;
+            SM_ELEMENT_D(q_up, i, k) = centre + half_width;
+        }
+    }
+
+    out->cov_p = cov_p;
+    out->std_y = std_y;
+}
+
+void conformal_only_bands(SUNMatrix q_low_base, SUNMatrix q_up_base, const long m, const long n_states,
+                          UqBands *fim_out, UqBands *hybrid_out)
+{
+    start_from_base(q_low_base, q_up_base, m, n_states, fim_out);
+    start_from_base(q_low_base, q_up_base, m, n_states, hybrid_out);
+}
+
+void destroy_uq_bands(UqBands *bands)
+{
+    if (bands == NULL)
+    {
+        return;
+    }
+
+    SUNMatDestroy(bands->q_low);
+    SUNMatDestroy(bands->q_up);
+    SUNMatDestroy(bands->cov_p);
+    SUNMatDestroy(bands->std_y);
+    *bands = (UqBands) {0};
+}
+
 int delta_method_bands(N_Vector parameters, N_Vector initial_condition, const sunrealtype t0, N_Vector times,
                        TransposedStates media_tot, ObservedData observed_data, const int *observed_idx, const int n_obs,
-                       SUNMatrix loo_params, SUNMatrix q_low, SUNMatrix q_up, SUNMatrix *cov_p_out,
-                       SUNMatrix *std_y_out, SUNMatrix *q_low_alt_out, SUNMatrix *q_up_alt_out)
+                       SUNMatrix loo_params, SUNMatrix q_low_base, SUNMatrix q_up_base, UqBands *fim_out,
+                       UqBands *hybrid_out)
 {
     const CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
     const long n_states = conf->ode_expr.y_count;
@@ -63,6 +137,10 @@ int delta_method_bands(N_Vector parameters, N_Vector initial_condition, const su
 
     TransposedStates states = NULL;
     Sensitivities sensitivities = {0};
+
+    // Before the first thing that can fail, so a caller always has bands to
+    // write out even when no covariance can be built.
+    conformal_only_bands(q_low_base, q_up_base, m, n_states, fim_out, hybrid_out);
 
     states = solve_ode(parameters, initial_condition, t0, times, &sensitivities);
     if (states == NULL)
@@ -120,105 +198,39 @@ int delta_method_bands(N_Vector parameters, N_Vector initial_condition, const su
     /*
      * CUQDyn1_Plus propagates the FIM covariance; CUQDyn1_Plus_HybridCov keeps
      * its marginal scale but takes the correlation structure from the LOO
-     * ensemble. Everything downstream is identical.
+     * ensemble. Both are produced on every run: the sensitivities and the
+     * conformal base are already in hand, so the second variety is one more
+     * quadratic form, and the two can then be compared without a second fit.
      */
-    SUNMatrix covariance = fim->cov_p;
-    SUNMatrix hybrid = NULL;
-
-    if (conf->uq_method == UQ_METHOD_HYBRIDCOV)
-    {
-        hybrid = cuqdyn_hybrid_covariance(fim->cov_p, loo_params);
-        if (hybrid == NULL)
-        {
-            fprintf(stderr, "ERROR: could not build the hybrid covariance\n");
-            destroy_fim_result(fim);
-            destroy_sensitivities(sensitivities);
-            return 1;
-        }
-        covariance = hybrid;
-
-        fprintf(stdout, "HybridCov: FIM marginal scale with LOO correlation\n");
-        fprintf(stdout, "   marginal std devs  FIM:");
-        for (int i = 0; i < n_params; ++i)
-        {
-            fprintf(stdout, " %.4g", sqrt(SM_ELEMENT_D(fim->cov_p, i, i)));
-        }
-        fprintf(stdout, "\n   marginal std devs  hybrid:");
-        for (int i = 0; i < n_params; ++i)
-        {
-            fprintf(stdout, " %.4g", sqrt(SM_ELEMENT_D(covariance, i, i)));
-        }
-        fprintf(stdout, "\n");
-    }
-
-    SUNMatrix std_y = propagate(sensitivities, covariance, n_states, m, n_params);
-
     const double z = gsl_cdf_ugaussian_Pinv(1.0 - conf->alp);
 
-    for (long k = 0; k < n_states; ++k)
-    {
-        if (is_observed(observed_idx, n_obs, k))
-        {
-            continue; // conformal bands already cover this state
-        }
+    fill_from_covariance(sensitivities, fim->cov_p, media_tot, observed_idx, n_obs, z, n_states, m, n_params, fim_out);
 
-        for (long i = 1; i < m; ++i)
-        {
-            const double centre = SM_ELEMENT_D(media_tot, k, i);
-            const double half_width = z * SM_ELEMENT_D(std_y, k, i);
-            SM_ELEMENT_D(q_low, i, k) = centre - half_width;
-            SM_ELEMENT_D(q_up, i, k) = centre + half_width;
-        }
+    SUNMatrix hybrid = cuqdyn_hybrid_covariance(fim->cov_p, loo_params);
+    if (hybrid == NULL)
+    {
+        fprintf(stderr, "ERROR: could not build the hybrid covariance, its bands stay conformal-only\n");
+        destroy_fim_result(fim);
+        destroy_sensitivities(sensitivities);
+        return 1;
     }
 
-    /*
-     * With the hybrid covariance, also propagate the plain FIM one so the two
-     * bands can be drawn together. Only the hidden states differ: the observed
-     * ones carry conformal bands either way.
-     */
-    *q_low_alt_out = NULL;
-    *q_up_alt_out = NULL;
+    fill_from_covariance(sensitivities, hybrid, media_tot, observed_idx, n_obs, z, n_states, m, n_params, hybrid_out);
 
-    if (hybrid != NULL)
+    fprintf(stdout, "HybridCov: FIM marginal scale with LOO correlation\n");
+    fprintf(stdout, "   marginal std devs  FIM:");
+    for (int i = 0; i < n_params; ++i)
     {
-        SUNMatrix std_y_fim = propagate(sensitivities, fim->cov_p, n_states, m, n_params);
-
-        // SM_ELEMENT_D does not parenthesise its argument, so the matrices are
-        // held in locals rather than dereferenced inside the macro.
-        SUNMatrix q_low_fim = NewDenseMatrix(m, n_states);
-        SUNMatrix q_up_fim = NewDenseMatrix(m, n_states);
-        SUNMatCopy(q_low, q_low_fim);
-        SUNMatCopy(q_up, q_up_fim);
-
-        for (long k = 0; k < n_states; ++k)
-        {
-            if (is_observed(observed_idx, n_obs, k))
-            {
-                continue;
-            }
-
-            for (long i = 1; i < m; ++i)
-            {
-                const double centre = SM_ELEMENT_D(media_tot, k, i);
-                const double half_width = z * SM_ELEMENT_D(std_y_fim, k, i);
-                SM_ELEMENT_D(q_low_fim, i, k) = centre - half_width;
-                SM_ELEMENT_D(q_up_fim, i, k) = centre + half_width;
-            }
-        }
-
-        SUNMatDestroy(std_y_fim);
-        *q_low_alt_out = q_low_fim;
-        *q_up_alt_out = q_up_fim;
+        fprintf(stdout, " %.4g", sqrt(SM_ELEMENT_D(fim->cov_p, i, i)));
     }
-
-    *cov_p_out = NewDenseMatrix(n_params, n_params);
-    SUNMatCopy(covariance, *cov_p_out);
-    *std_y_out = std_y;
-
-    if (hybrid != NULL)
+    fprintf(stdout, "\n   marginal std devs  hybrid:");
+    for (int i = 0; i < n_params; ++i)
     {
-        SUNMatDestroy(hybrid);
+        fprintf(stdout, " %.4g", sqrt(SM_ELEMENT_D(hybrid, i, i)));
     }
+    fprintf(stdout, "\n");
+
+    SUNMatDestroy(hybrid);
     destroy_fim_result(fim);
     destroy_sensitivities(sensitivities);
     return 0;

@@ -8,16 +8,19 @@
 
 /*
  * Prediction bands, built two different ways depending on whether a state is
- * measured. Both write into the same q_low / q_up matrices, sized m x n_states,
- * whose first row already holds the initial condition.
+ * measured.
  *
  *   conformal_bands()  distribution-free, from the leave-one-out ensemble,
  *                      for the states the data measures
  *   delta_method_bands()  Gaussian propagation of the parameter covariance,
  *                      for the states that are never measured
  *
- * When every state is observed only the conformal path runs and the algorithm
- * reduces to the original CUQDyn1.
+ * conformal_bands() writes the base pair, sized m x n_states, whose first row
+ * already holds the initial condition. delta_method_bands() copies that base
+ * once per covariance variety and rewrites the hidden states in each.
+ *
+ * When every state is observed only the conformal path has anything to say and
+ * the algorithm reduces to the original CUQDyn1.
  */
 
 /*
@@ -37,30 +40,46 @@ void conformal_bands(MatrixArray media_matrix, SUNMatrix resid_loo, const int *o
                      SUNMatrix q_low, SUNMatrix q_up);
 
 /*
- * Delta-method bands for the states that are never measured.
+ * Delta-method bands for the states that are never measured, both varieties.
  *
  *   Var[y_k(t)] = S_k(t) . Cov_p . S_k(t)'
  *   band = y_hat(t) +/- z_(1-alp) . sqrt(Var)
  *
- * The parameter covariance is the rank-aware FIM one, or the hybrid FIM-scale
- * plus LOO-correlation variant when the config selects it; the propagation is
- * identical either way.
+ * Cov_p is built twice: the rank-aware FIM covariance, and the hybrid variant
+ * that keeps its marginal scale but takes the correlation structure from the
+ * LOO ensemble. The propagation is identical either way, and the sensitivities
+ * are shared, so the second variety costs one more quadratic form.
  *
  * Sensitivities come from CVODES forward sensitivity analysis, which replaces
  * the complex-step differentiation of the Matlab toolbox: CVODES cannot
  * integrate in complex arithmetic but computes dy/dtheta natively, in a single
  * augmented integration.
  *
- * On success fills cov_p_out and std_y_out, which the caller owns. Returns 0.
+ * q_low_base and q_up_base are the conformal bands: row 0 the initial condition
+ * and the measured states already covered. Each variety starts as a copy and
+ * has only its hidden states rewritten, so the two agree wherever the
+ * covariance has no say.
  *
- * When the hybrid covariance is selected the plain FIM bands are computed too
- * and returned through q_low_alt_out / q_up_alt_out, so the two can be compared
- * on the same plot. The sensitivities are already in hand at that point, so the
- * second set costs one more quadratic form. Both are NULL otherwise.
+ * fim_out and hybrid_out are filled before anything that can fail, and the
+ * caller owns all four matrices in each whether this returns 0 or not. A
+ * non-zero return means one of them kept the conformal base, with its cov_p and
+ * std_y left NULL.
  */
 int delta_method_bands(N_Vector parameters, N_Vector initial_condition, sunrealtype t0, N_Vector times,
                        TransposedStates media_tot, ObservedData observed_data, const int *observed_idx, int n_obs,
-                       SUNMatrix loo_params, SUNMatrix q_low, SUNMatrix q_up, SUNMatrix *cov_p_out,
-                       SUNMatrix *std_y_out, SUNMatrix *q_low_alt_out, SUNMatrix *q_up_alt_out);
+                       SUNMatrix loo_params, SUNMatrix q_low_base, SUNMatrix q_up_base, UqBands *fim_out,
+                       UqBands *hybrid_out);
+
+/*
+ * Both varieties as the conformal base alone, with no covariance propagated:
+ * what a run has to fall back on when the best-fit trajectory is missing and
+ * there is nothing to take sensitivities from. delta_method_bands starts here
+ * too, before its first fallible step.
+ */
+void conformal_only_bands(SUNMatrix q_low_base, SUNMatrix q_up_base, long m, long n_states, UqBands *fim_out,
+                          UqBands *hybrid_out);
+
+/// Releases what delta_method_bands filled in.
+void destroy_uq_bands(UqBands *bands);
 
 #endif // UQ_BANDS_H

@@ -57,13 +57,6 @@ typedef struct
     double weak_fraction_threshold;
 } FimConfigOptions;
 
-/// How the hidden states get their covariance.
-typedef enum
-{
-    UQ_METHOD_FIM = 0,
-    UQ_METHOD_HYBRIDCOV = 1,
-} UqMethod;
-
 typedef struct
 {
     Tolerances tolerances;
@@ -72,8 +65,6 @@ typedef struct
     Y0 y0;
     /// Predictive region level; bands are nominally 1 - 2*alp.
     double alp;
-    /// 0 = FIM covariance, 1 = hybrid FIM scale with LOO correlation.
-    int uq_method;
     CostOptions cost;
     FimConfigOptions fim;
 } CuqdynConf;

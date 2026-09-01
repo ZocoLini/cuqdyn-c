@@ -2,6 +2,7 @@
 #include <cuqdyn.h>
 #include <math.h>
 #include <stdio.h>
+#include <sunmatrix/sunmatrix_dense.h>
 
 #include "config.h"
 #include "example_files.h"
@@ -9,39 +10,33 @@
 /*
  * End-to-end runs over the shipped examples.
  *
- * Every scenario is a folder under example-files/ holding data.txt, one or more
- * cuqdyn-*.xml and a sacess-serial.xml, so adding a case here is a matter of
- * adding a row rather than another near-identical function. These are the same
- * files the README tells users to run, which is what keeps the examples honest.
+ * Every scenario is a folder under example-files/ holding data.txt, cuqdyn.xml
+ * and a sacess-serial.xml, so adding a case here is a matter of adding a row
+ * rather than another near-identical function. These are the same files the
+ * README tells users to run, which is what keeps the examples honest.
  */
 typedef struct
 {
     const char *model;
-    const char *cuqdyn_config;
     const char *description;
     long n_states;
     int n_obs;
     /// Index of the first measured state, or -1 to leave it unchecked.
     int first_observed;
-    /// The hybrid covariance also emits the plain FIM bands, so they can be compared.
-    int expects_alt_bands;
 } Scenario;
 
 static const Scenario SCENARIOS[] = {
         // Fully observed: conformal bands cover every state and the run reduces
         // to the original CUQDyn1.
-        {"logistic", "cuqdyn-fim.xml", "Logistic, single observed state", 1, 1, 0, 0},
-        {"lotka-volterra", "cuqdyn-fim.xml", "Lotka-Volterra, fully observed", 2, 2, -1, 0},
-        {"alpha-pinene", "cuqdyn-fim.xml", "Alpha-pinene, 5 observed states", 5, 5, -1, 0},
-        // Partially observed: the hidden states go through the delta method.
-        {"linear-cascade", "cuqdyn-fim.xml", "LinearCascade, 1 of 2 states observed", 2, 1, 1, 0},
-        {"linear-cascade3", "cuqdyn-fim.xml", "LinearCascade3, 1 of 3 states observed", 3, 1, 2, 0},
-        {"lv2-partobs", "cuqdyn-fim.xml", "Lotka-Volterra, predator hidden", 2, 1, 0, 0},
-        {"sir", "cuqdyn-fim.xml", "SIR, 2 of 3 states hidden", 3, 1, 1, 0},
-        // Same problem through the hybrid covariance, which also emits the plain
-        // FIM bands so the two can be compared.
-        {"sir", "cuqdyn-hybridcov.xml", "SIR, hybrid covariance", 3, 1, 1, 1},
-        {"lv2-partobs", "cuqdyn-hybridcov.xml", "Lotka-Volterra hidden predator, hybrid covariance", 2, 1, 0, 1},
+        {"logistic", "Logistic, single observed state", 1, 1, 0},
+        {"lotka-volterra", "Lotka-Volterra, fully observed", 2, 2, -1},
+        {"alpha-pinene", "Alpha-pinene, 5 observed states", 5, 5, -1},
+        // Partially observed: the hidden states go through the delta method, and
+        // are the only ones where the two covariance varieties differ.
+        {"linear-cascade", "LinearCascade, 1 of 2 states observed", 2, 1, 1},
+        {"linear-cascade3", "LinearCascade3, 1 of 3 states observed", 3, 1, 2},
+        {"lv2-partobs", "Lotka-Volterra, predator hidden", 2, 1, 0},
+        {"sir", "SIR, 2 of 3 states hidden", 3, 1, 1},
         // NF-kB is left out of the default run: 15 states and 29 parameters make
         // it far slower than the rest. example-files/nfkb/ carries its files.
 };
@@ -50,7 +45,7 @@ static const int N_SCENARIOS = sizeof(SCENARIOS) / sizeof(SCENARIOS[0]);
 
 static void run_scenario(const Scenario *scenario)
 {
-    const char *cuqdyn_config_file = example_file(scenario->model, scenario->cuqdyn_config);
+    const char *cuqdyn_config_file = example_conf(scenario->model);
     const char *sacess_config_file = example_sacess_conf(scenario->model);
     const char *data_file = example_data(scenario->model);
 
@@ -71,20 +66,32 @@ static void run_scenario(const Scenario *scenario)
         assert(cuqdyn_result->observed_idx[0] == scenario->first_observed);
     }
 
-    // Produced for every run: the covariance describes the fit, not the
-    // observability, so it exists even when every state is measured.
-    assert(cuqdyn_result->cov_p != NULL);
-    assert(cuqdyn_result->std_y != NULL);
+    // Both varieties on every run, with nothing to select. The covariance
+    // describes the fit rather than the observability, so it exists even when
+    // every state is measured.
+    const UqBands *varieties[] = {&cuqdyn_result->fim, &cuqdyn_result->hybrid};
 
-    if (scenario->expects_alt_bands)
+    for (int v = 0; v < 2; ++v)
     {
-        assert(cuqdyn_result->q_low_alt != NULL);
-        assert(cuqdyn_result->q_up_alt != NULL);
+        assert(varieties[v]->q_low != NULL);
+        assert(varieties[v]->q_up != NULL);
+        assert(varieties[v]->cov_p != NULL);
+        assert(varieties[v]->std_y != NULL);
     }
-    else
+
+    // The covariance only reaches the states the data never measures, so the two
+    // agree exactly on the measured ones and the initial condition.
+    for (int j = 0; j < scenario->n_obs; ++j)
     {
-        assert(cuqdyn_result->q_low_alt == NULL);
-        assert(cuqdyn_result->q_up_alt == NULL);
+        const long state = cuqdyn_result->observed_idx[j];
+
+        for (long i = 0; i < SM_ROWS_D(cuqdyn_result->fim.q_low); ++i)
+        {
+            assert(SM_ELEMENT_D(cuqdyn_result->fim.q_low, i, state) ==
+                   SM_ELEMENT_D(cuqdyn_result->hybrid.q_low, i, state));
+            assert(SM_ELEMENT_D(cuqdyn_result->fim.q_up, i, state) ==
+                   SM_ELEMENT_D(cuqdyn_result->hybrid.q_up, i, state));
+        }
     }
 
     destroy_cuqdyn_result(cuqdyn_result);

@@ -42,13 +42,9 @@ void destroy_cuqdyn_result(CuqdynResult *result)
     }
 
     SUNMatDestroy(result->predicted_data_median);
-    SUNMatDestroy(result->q_low);
-    SUNMatDestroy(result->q_up);
+    destroy_uq_bands(&result->fim);
+    destroy_uq_bands(&result->hybrid);
     SUNMatDestroy(result->media_tot);
-    SUNMatDestroy(result->cov_p);
-    SUNMatDestroy(result->std_y);
-    SUNMatDestroy(result->q_low_alt);
-    SUNMatDestroy(result->q_up_alt);
     SUNMatDestroy(result->loo_params);
     SUNMatDestroy(result->resid_loo);
 
@@ -310,35 +306,38 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     const double alp = config->alp;
 
-    // Bands cover every state, not just the measured ones.
-    SUNMatrix q_low = NewDenseMatrix(m, n_states);
-    SUNMatrix q_up = NewDenseMatrix(m, n_states);
+    // Bands cover every state, not just the measured ones. This pair is the base
+    // both covariance varieties start from, and neither ends up owning it.
+    SUNMatrix q_low_base = NewDenseMatrix(m, n_states);
+    SUNMatrix q_up_base = NewDenseMatrix(m, n_states);
 
     for (long k = 0; k < n_states; ++k)
     {
-        SM_ELEMENT_D(q_low, 0, k) = NV_Ith_S(initial_condition, k);
-        SM_ELEMENT_D(q_up, 0, k) = NV_Ith_S(initial_condition, k);
+        SM_ELEMENT_D(q_low_base, 0, k) = NV_Ith_S(initial_condition, k);
+        SM_ELEMENT_D(q_up_base, 0, k) = NV_Ith_S(initial_condition, k);
     }
 
-    conformal_bands(media_matrix, resid_loo, data.observed_idx, n_obs, alp, q_low, q_up);
+    conformal_bands(media_matrix, resid_loo, data.observed_idx, n_obs, alp, q_low_base, q_up_base);
 
     /* ---- Delta-method bands for the hidden states ---------------------- */
-    SUNMatrix cov_p = NULL;
-    SUNMatrix std_y = NULL;
-    SUNMatrix q_low_alt = NULL;
-    SUNMatrix q_up_alt = NULL;
+    UqBands fim_bands = {0};
+    UqBands hybrid_bands = {0};
     TransposedStates media_tot = solve_ode(initial_params, initial_condition, t0, scaled_times, NULL);
 
     if (media_tot == NULL)
     {
         fprintf(stderr, "ERROR: could not solve the ODE at the best-fit parameters\n");
+        conformal_only_bands(q_low_base, q_up_base, m, n_states, &fim_bands, &hybrid_bands);
     }
     else if (delta_method_bands(initial_params, initial_condition, t0, scaled_times, media_tot, observed_data,
-                                data.observed_idx, n_obs, predicted_params_matrix, q_low, q_up, &cov_p, &std_y,
-                                &q_low_alt, &q_up_alt) != 0)
+                                data.observed_idx, n_obs, predicted_params_matrix, q_low_base, q_up_base, &fim_bands,
+                                &hybrid_bands) != 0)
     {
-        fprintf(stderr, "ERROR: could not propagate the parameter covariance\n");
+        fprintf(stderr, "ERROR: the delta-method bands are incomplete\n");
     }
+
+    SUNMatDestroy(q_low_base);
+    SUNMatDestroy(q_up_base);
 
     destroy_matrix_array(media_matrix);
     N_VDestroy(initial_condition);
@@ -347,14 +346,10 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     result->predicted_data_median = predicted_data_median;
     result->predicted_params_median = predicted_params_median;
-    result->q_low = q_low;
-    result->q_up = q_up;
-    result->q_low_alt = q_low_alt;
-    result->q_up_alt = q_up_alt;
+    result->fim = fim_bands;
+    result->hybrid = hybrid_bands;
     result->media_tot = media_tot;
     result->parameters_init = initial_params;
-    result->cov_p = cov_p;
-    result->std_y = std_y;
     result->loo_params = predicted_params_matrix;
     result->resid_loo = resid_loo;
     result->n_obs = n_obs;

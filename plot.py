@@ -5,6 +5,10 @@ observed states get distribution-free conformal bands from the leave-one-out
 ensemble, states that are never measured get Gaussian delta-method bands
 propagated through the parameter covariance. When every state is observed the
 algorithm reduces to CUQDyn1 and every panel is conformal.
+
+The delta-method bands come in two varieties, one per parameter covariance, and
+a run produces both. The FIM one is drawn filled and the hybrid one dashed over
+it, on the hidden states alone: the two agree everywhere else.
 """
 
 import sys
@@ -76,8 +80,17 @@ if not ruta.is_file():
 
 data = read_data(ruta)
 
-q_low = data["Q_low"]["data"]
-q_up = data["Q_up"]["data"]
+# A run writes one band pair per covariance variety, Q_low_fim and
+# Q_low_hybrid, and no plain Q_low. The CUQDyn1 reference dumps under
+# example-results/ predate that and carry only the bare pair, so both shapes
+# are read here.
+if "Q_low_fim" in data:
+    q_low = data["Q_low_fim"]["data"]
+    q_up = data["Q_up_fim"]["data"]
+else:
+    q_low = data["Q_low"]["data"]
+    q_up = data["Q_up"]["data"]
+
 times = data["Times"]["data"][0]
 
 # The leave-one-out median is only in files produced by a full run; the Matlab
@@ -94,25 +107,17 @@ else:
 
 media_tot = data["MediaTot"]["data"] if "MediaTot" in data else None
 
-# Only present when the hybrid covariance was used: the plain FIM bands, drawn
-# alongside so the two covariance choices can be compared on the hidden states.
-fim_low = data["Q_low_fim"]["data"] if "Q_low_fim" in data else None
-fim_up = data["Q_up_fim"]["data"] if "Q_up_fim" in data else None
+# The other variety, drawn alongside so the two can be compared on the hidden
+# states. Absent from the CUQDyn1 reference dumps.
+hybrid_low = data["Q_low_hybrid"]["data"] if "Q_low_hybrid" in data else None
+hybrid_up = data["Q_up_hybrid"]["data"] if "Q_up_hybrid" in data else None
 
 output_folder = ruta.parent
 
 for j in range(num_columns):
     is_observed = j in observed
     color = OBSERVED if is_observed else UNOBSERVED
-    kind = (
-        "conformal (observado)"
-        if is_observed
-        else (
-            "delta/HybridCov (no observado)"
-            if fim_low is not None
-            else "delta/FIM (no observado)"
-        )
-    )
+    kind = "conformal (observado)" if is_observed else "delta/FIM (no observado)"
 
     fig, ax = plt.subplots(figsize=(8, 5), facecolor=SURFACE)
     ax.set_facecolor(SURFACE)
@@ -134,10 +139,12 @@ for j in range(num_columns):
             label="mediana leave-one-out",
         )
 
-    if fim_low is not None and not is_observed:
+    # Only on the hidden states: the covariance has no part in a conformal band,
+    # so on a measured state the two varieties would draw the same line twice.
+    if hybrid_low is not None and not is_observed:
         ax.plot(
             times,
-            [row[j] for row in fim_low],
+            [row[j] for row in hybrid_low],
             color=INK,
             linewidth=1.4,
             linestyle=(0, (5, 2.5)),
@@ -145,12 +152,12 @@ for j in range(num_columns):
         )
         ax.plot(
             times,
-            [row[j] for row in fim_up],
+            [row[j] for row in hybrid_up],
             color=INK,
             linewidth=1.4,
             linestyle=(0, (5, 2.5)),
             zorder=5,
-            label="banda FIM (comparacion)",
+            label="banda HybridCov (comparacion)",
         )
 
     if media_tot is not None:

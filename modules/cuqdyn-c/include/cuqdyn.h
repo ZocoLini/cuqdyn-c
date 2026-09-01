@@ -22,34 +22,48 @@ typedef SUNMatrix TransposedObservedData;
 SUNContext get_sundials_ctx();
 
 /*
+ * What one parameter covariance produces.
+ *
+ * Prediction bands cover every state. The ones the data measures get
+ * distribution-free conformal bands from the leave-one-out ensemble, and the
+ * ones it never measures get Gaussian delta-method bands propagated from the
+ * covariance. Only the second kind depends on which covariance this is, so with
+ * every state observed the two varieties below hold the same numbers and the
+ * result matches the original CUQDyn1.
+ */
+typedef struct
+{
+    /// Prediction bands, m x n_states, row 0 the initial condition.
+    SUNMatrix q_low;
+    SUNMatrix q_up;
+    /// Parameter covariance in natural units, n_params x n_params. NULL when it
+    /// could not be built, which leaves the bands conformal-only.
+    SUNMatrix cov_p;
+    /// Delta-method standard deviations, n_states x m, or NULL as above.
+    SUNMatrix std_y;
+} UqBands;
+
+/*
  * Result of the CUQDyn1_Plus algorithm.
  *
- * q_low/q_up hold the prediction bands for every state. Observed states get
- * distribution-free conformal bands from the leave-one-out ensemble; states
- * that are never measured get Gaussian delta-method bands propagated from the
- * parameter covariance. When every state is observed the Gaussian branch is
- * skipped entirely and the result matches the original CUQDyn1.
+ * Both covariance varieties are always produced, so a run answers which one to
+ * trust rather than being told up front.
  */
 typedef struct
 {
     TransposedStates predicted_data_median;
     N_Vector predicted_params_median;
-    SUNMatrix q_low;
-    SUNMatrix q_up;
+    /// Rank-aware FIM covariance, as CUQDyn1_Plus propagates it.
+    UqBands fim;
+    /// FIM marginal scale with the correlation structure of the leave-one-out
+    /// ensemble, as CUQDyn1_Plus_HybridCov propagates it.
+    UqBands hybrid;
     N_Vector times;
 
     /// Best-fit trajectory from the full-data fit, n_states x m.
     TransposedStates media_tot;
     /// Best-fit parameters from the full-data fit.
     N_Vector parameters_init;
-    /// Parameter covariance in natural units, or NULL when every state is observed.
-    SUNMatrix cov_p;
-    /// Delta-method standard deviations, n_states x m, or NULL as above.
-    SUNMatrix std_y;
-    /// Plain FIM bands, filled only when the hybrid covariance was used, so the
-    /// two can be compared. NULL otherwise.
-    SUNMatrix q_low_alt;
-    SUNMatrix q_up_alt;
     /// Leave-one-out parameter estimates, (m-1) x n_params.
     SUNMatrix loo_params;
     /// Held-out absolute residuals, (m-1) x n_obs.
