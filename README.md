@@ -124,6 +124,17 @@ The project has a `scripts/build.sh` script. `build-[variant]/` directories will
 
 After this, running `scripts/test.sh` is a good way to know if the cuqdyn library works as expected.
 
+`scripts/build.sh serial asan` builds the same thing under AddressSanitizer,
+LeakSanitizer and UndefinedBehaviorSanitizer, into `build/asan-serial`, and
+`scripts/test.sh asan` runs that suite on its own. Only our own modules are
+instrumented: the FetchContent dependencies are configured before the flags are
+set, which keeps hdf5 out of it — its build runs `H5detect`, and that probes the
+platform with deliberately misaligned stores that UBSan aborts on.
+
+MemorySanitizer is not an option here. It is clang-only, it does not instrument
+Fortran, and it needs every linked object instrumented, which `deps/misqp` and
+`deps/xml2-2.9.1` cannot be since they ship prebuilt.
+
 There is also a Dockerfile and a Docker Compose file to build and run the project in a container.
 
 ```bash

@@ -110,9 +110,22 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 
     execute_Solver(exptotal, &result, obj_func);
 
-    N_Vector predicted_params = New_Serial(exptotal[0].test.bench.dim);
-    destroyexp(exptotal);
+    const long dim = exptotal[0].test.bench.dim;
 
-    N_VSetArrayPointer(result.bestx_value, predicted_params);
+    // Copied rather than handed over with N_VSetArrayPointer: that left the
+    // array New_Serial had just allocated with nothing pointing at it, and the
+    // caller ended up owning a block init_result_data made, which reads as the
+    // solver's to release.
+    N_Vector predicted_params = New_Serial(dim);
+    for (long i = 0; i < dim; ++i)
+    {
+        NV_Ith_S(predicted_params, i) = result.bestx_value[i];
+    }
+
+    destroy_result_data(&result);
+    destroyexp(exptotal);
+    // destroyexp empties the struct; the array holding it is ours.
+    free(exptotal);
+
     return predicted_params;
 }

@@ -3,6 +3,7 @@
 #include <cuqdyn.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
 #include "data_reader.h"
@@ -52,6 +53,14 @@ static void run_scenario(const Scenario *scenario)
     {
         assert(fabs(NV_Ith_S(xbest, i) - scenario->expected[i]) < PARAMETER_TOLERANCE);
     }
+
+    N_VDestroy(xbest);
+
+    // Not destroy_cuqdyn_data: execute_ess_solver keeps texp, yexp and
+    // initial_values, and destroyexp releases all three, so the only pieces
+    // still ours are the two the solver never saw.
+    N_VDestroy(data.initial_values);
+    free(data.observed_idx);
 
     destroy_cuqdyn_context(context);
 }

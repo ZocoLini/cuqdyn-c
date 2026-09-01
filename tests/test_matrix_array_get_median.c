@@ -59,6 +59,13 @@ void test_even_matrices()
 
         assert(a == b);
     }
+
+    destroy_matrix_array(matrix_array);
+    SUNMatDestroy(median_matrix);
+    SUNMatDestroy(matrix1);
+    SUNMatDestroy(matrix2);
+    SUNMatDestroy(matrix3);
+    SUNMatDestroy(matrix4);
 }
 
 void test_odd_matrices()
@@ -99,4 +106,10 @@ void test_odd_matrices()
 
         assert(a == b);
     }
+
+    destroy_matrix_array(matrix_array);
+    SUNMatDestroy(median_matrix);
+    SUNMatDestroy(matrix1);
+    SUNMatDestroy(matrix2);
+    SUNMatDestroy(matrix3);
 }

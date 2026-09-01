@@ -180,6 +180,9 @@ void test_set_matrix_row()
             assert(SM_ELEMENT_D(matrix, i, j) == expected_data[i][j]);
         }
     }
+
+    SUNMatDestroy(matrix);
+    N_VDestroy(vector);
 }
 
 void test_set_matrix_column()
@@ -212,6 +215,9 @@ void test_set_matrix_column()
             assert(value == expected);
         }
     }
+
+    SUNMatDestroy(matrix);
+    N_VDestroy(vector);
 }
 
 void test_copy_matrix_row()
@@ -234,6 +240,9 @@ void test_copy_matrix_row()
     {
         assert(NV_Ith_S(vector, i) == expected_data[i]);
     }
+
+    SUNMatDestroy(matrix);
+    N_VDestroy(vector);
 }
 
 void test_copy_matrix_column()
@@ -254,6 +263,9 @@ void test_copy_matrix_column()
     {
         assert(NV_Ith_S(vector, i) == expected_data[i]);
     }
+
+    SUNMatDestroy(matrix);
+    N_VDestroy(vector);
 }
 
 void test_quantile()
@@ -275,4 +287,6 @@ void test_quantile()
         sunrealtype result = quantile(values, q[i]);
         assert(fabs(result - expected[i]) < 0.0001);
     }
+
+    N_VDestroy(values);
 }
