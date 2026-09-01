@@ -80,6 +80,9 @@ set(HAVE_HDF5 TRUE CACHE BOOL "Pretend we have HDF5" FORCE)
 
 ### Building v7.30 of CVODES ###
 
+set(EXAMPLES_ENABLE_C OFF CACHE BOOL "" FORCE)
+set(EXAMPLES_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
     cvodes
     URL
@@ -97,7 +100,6 @@ set(RUST_TARGET_DIR "${RUST_LIB_DIR}/target/release")
 add_custom_target(
     rust_lib
     ALL
-    env RUSTFLAGS=-C target-cpu=native
     COMMAND cargo build --release
     WORKING_DIRECTORY ${RUST_LIB_DIR}
 )
