@@ -79,6 +79,12 @@ jobs:
       - name: test
         run: $RUN ./scripts/test.sh
 
+      # The MPI implementation of the algorithm, validated through its
+      # invariant: with a fixed seed the result must not depend on the
+      # process count (plus the divisibility guard and a deadlock timeout).
+      - name: mpi
+        run: $RUN ./scripts/test-mpi.sh
+
       - if: success() && github.ref == 'refs/heads/main'
         uses: actions/cache/save@v4
         with:
