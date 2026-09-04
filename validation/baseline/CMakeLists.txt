@@ -51,3 +51,10 @@ add_test(NAME cost_replay_lv2
                  ${EXAMPLES}/lv2_partobs_cuqdyn_config.xml
                  ${EXAMPLES}/lv2_partobs_paper_data.txt)
 set_tests_properties(cost_replay_lv2 PROPERTIES SKIP_RETURN_CODE 77)
+
+# The hybrid experiment's C half: serves the real C cost over TCP so
+# MATLAB's MEIGO can optimise against it (see hybrid/hybrid_meigo_cvodes.m).
+# Not a ctest - it is driven interactively from MATLAB.
+add_executable(cost_server hybrid/cost_server.c)
+target_link_libraries(cost_server cuqdyn-c)
+target_compile_options(cost_server PRIVATE -O0 -g -UNDEBUG)
