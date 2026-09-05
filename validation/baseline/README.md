@@ -57,6 +57,21 @@ secuencia da la misma cobertura sin ese canal de divergencia.)
 Resultado actual (lv2): **20.126/20.126 evaluaciones dentro de 1e-3** (media
 4.2e-5, máx 5.2e-4, 0 fallos de integración).
 
+**Experimento híbrido — optimizador compartido (hybrid/).**
+El MEIGO de MATLAB corre dos veces con la misma semilla: una evaluando el
+coste MATLAB (objeto `ode` con `cvodesstiff`, tolerancias del XML) y otra
+evaluando el coste C real servido por TCP (`cost_server`, el mismo código del
+CLI, que devuelve J y los residuos para que `lsqnonlin` también funcione).
+Toda la aleatoriedad la genera MATLAB. Resultados en los 4 modelos
+(`hybrid_report_<modelo>.txt`): los costes coinciden en el prefijo común a
+1e-10 (lv2), 1.5e-9 (ap), 1e-6 (sir) y 3.7e-6 (nfkb), con lock-step de 123,
+148, 74 y 656 evaluaciones respectivamente antes de que un redondeo voltee
+una decisión discreta del eSS. Tras la divergencia, lv2/ap/sir aterrizan en
+el mismo óptimo (θ̂ a 1e-7..3e-4); en nfkb los caminos acaban en cuencas
+distintas del paisaje no identificable (J 914 vs 518 — el run con coste C
+encontró la mejor), midiendo la multimodalidad del problema, no el código:
+en el prefijo común sus costes coinciden a 3.7e-6.
+
 **Capa 4 — end-to-end estadístico (con ruido, es lo que se mide).**
 Cada lado corre el pipeline completo N veces con semillas distintas (MATLAB:
 `gen_baseline(modelo, 4, 1:N)`; C: `run_c_seeds.sh modelo N`, que fija
