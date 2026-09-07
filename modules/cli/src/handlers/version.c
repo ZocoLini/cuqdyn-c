@@ -1,7 +1,8 @@
 #include <handlers/handlers.h>
 #include <stdio.h>
 
-#include "cuqdyn_version.h"
+#include "cli_version.h"
+#include "cuqdyn_c_version.h"
 #include "sacess_version.h"
 
 int handle_version(int argc, char *argv[]);
@@ -21,5 +22,5 @@ int handle_version(int argc, char *argv[])
             "cuqdyn-c   %s  —  C implementation of the CUQDYN algorithm (by Borja Castellano)\n"
             "sacess     %s  —  C implementation of the Scatter Search algorithm\n";
 
-    return printf(help_message, CLI_VERSION, CUQDYN_C_VERSION, SACESS_C_VERSION);
+    return printf(help_message, CLI_VERSION, CUQDYN_C_VERSION, SACESS_VERSION);
 }

@@ -84,11 +84,16 @@ build_variant() {
 
   (
     cd "$dir" || exit 1
-    cmake -DCMAKE_TOOLCHAIN_FILE=../../toolchains/"$variant"_toolchain.cmake \
-      "${CMAKE_TYPE_ARGS[@]}" ../..
+    if [ ! -f CMakeCache.txt ] || [ ! -f Makefile ]; then
+      cmake -DCMAKE_TOOLCHAIN_FILE=../../toolchains/"$variant"_toolchain.cmake \
+        "${CMAKE_TYPE_ARGS[@]}" ../..
+    fi
     make -j "$(nproc)"
   )
 }
+
+export CI_JOB_ID=1
+export CI_JOB_STARTED_AT=1
 
 if [ -d "/home/cesga" ]; then
   module load cesga/2025 gcc/system openmpi/5.0.7 rust/1.88.0

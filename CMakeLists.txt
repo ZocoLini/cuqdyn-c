@@ -3,6 +3,7 @@ project(cuqdyn LANGUAGES C Fortran CXX)
 set(CMAKE_C_STANDARD 11)
 
 include(deps.cmake)
+include(cmake/module_version.cmake)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

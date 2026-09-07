@@ -1,19 +1,37 @@
 #!/bin/bash
 set -euo pipefail
 
-git fetch --tags
-
 MODULE_NAME=$1
 
-branch=$(git rev-parse --abbrev-ref HEAD)
-version=$(git tag --sort=-creatordate | grep "^$MODULE_NAME/" | head -n 1 | sed -E 's:.*/(v[0-9]+\.[0-9]+\.[0-9]+):\1:')
+tag=$(git describe --tags --match "$MODULE_NAME/v*" --abbrev=0 2>/dev/null || true)
+commit=$(git rev-parse --short HEAD)
 
-if [ "$branch" = "main" ]; then
-  echo "$version"
+if [ -z "$tag" ]; then
+  version="dev-$commit"
+elif [ "$(git rev-list -n 1 "$tag")" = "$(git rev-parse HEAD)" ]; then
+  version="${tag#"$MODULE_NAME/"}"
 else
-  if [ -n "$version" ]; then
-    echo "dev-$version-$branch"
-  else
-    echo "dev"
-  fi
+  version="${tag#"$MODULE_NAME/"}-dev-$commit"
 fi
+
+SHARED_PATHS=(
+  CMakeLists.txt
+  deps.cmake
+  cmake
+  toolchains
+  deps
+  scripts/build.sh
+  scripts/get_module_version.sh
+)
+
+EXTRA_PATHS=()
+if [ "$MODULE_NAME" = cuqdyn-c ]; then
+  EXTRA_PATHS=(modules/cuqdyn-rs)
+fi
+
+git update-index -q --refresh || true
+if [ -n "$(git status --porcelain -- "modules/$MODULE_NAME" "${SHARED_PATHS[@]}" ${EXTRA_PATHS[@]+"${EXTRA_PATHS[@]}"})" ]; then
+  version="$version-dirty"
+fi
+
+echo "$version"
