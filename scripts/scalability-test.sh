@@ -11,7 +11,6 @@
 bash scripts/build.sh
 
 # === CONFIGURATION ===
-# mpi2 is left out: it no longer ships a sacess config of its own.
 VARIANTS=("mpi" "serial")
 EXAMPLE="${EXAMPLE:-lotka-volterra}"
 PROCS_LIST=(2 3 5 6 10 15 30)

@@ -30,7 +30,7 @@
 #define error30 "\n*\tERROR[30]: VTR field must appear in XML input file"
 #define error31 "\n*\tERROR[31]: Not run sequential eSS with MPI!"
 #define error32 "\n*\tERROR[32]: Use MPI with this solver!"
-#define error33 "\n*\tERROR[33]: Use -DOPENMP flag in the compilation!"
+#define error33 "\n*\tERROR[33]: Use -DSACESS_OPENMP flag in the compilation!"
 #define error34 "\n*\tERROR[34]: problem field must appear in XML input file"
 #define error35 "\n*\tERROR[35]: dim field must appear in metadata problem in the XML input file"
 #define error36 "\n*\tERROR[36]: upper bounds have to be defined in XML"

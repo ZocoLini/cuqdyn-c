@@ -170,7 +170,7 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
     //   }
     // }
 
-#ifdef MPI2
+#ifdef SACESS_MPI
     MPI_Bcast(exptotal->test.output_graph, 1000, MPI_CHAR, 0, MPI_COMM_WORLD);
 #endif
     if (load_configuration_XML(file, exptotal) == 0 ) {

@@ -721,7 +721,7 @@ CONTAINS
         mig=0
         do while ((continuar .eq. 1) .AND. (mig .NE. 1))
 
-#ifdef MPI2 
+#ifdef SACESS_MPI 
           !  mig =  checkcooperativemigrationcriteriacessinner(exp1)
 #endif 
             if (mig .NE. 1) then
@@ -1001,7 +1001,7 @@ CONTAINS
             if (mod(dim_refset, 2) .EQ. 1) then
                 dim_refset = dim_refset + 1
             end if
-#ifdef MPI2
+#ifdef SACESS_MPI
             !if ((iterprint .EQ. 1) .AND. (idp .EQ. 0)) then
             !    print *, "Refset size automatically calculated:", dim_refset, nvar
             !end if            
@@ -1029,7 +1029,7 @@ CONTAINS
         
         if (ndiverse .EQ. - 1) then
             ndiverse = 10 * nvar
-#ifdef MPI2
+#ifdef SACESS_MPI
         !    if ((iterprint .EQ. 1) .AND. (idp .EQ. 0)) then
         !        print *, "Number of diverse solutions automatically calculated::", ndiverse
         !    end if

@@ -5,7 +5,7 @@
  * algorithms with MPI.
  */
 
-#ifdef MPI2
+#ifdef SACESS_MPI
 
 #include <method_module/structure_paralleltestbed.h>
 #include <stdlib.h>

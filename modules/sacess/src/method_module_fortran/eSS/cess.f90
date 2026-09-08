@@ -4,7 +4,7 @@ MODULE modcess
     USE scattersearchfunctions
     USE localsolver
     USE parallelscattersearchfunctions
-#ifdef MPI2
+#ifdef SACESS_MPI
    
         
 CONTAINS
@@ -163,7 +163,7 @@ CONTAINS
         if ((problem1%int_var .GT. 0) .OR. (problem1%bin_var .GT. 1)) then
             CALL ssm_round_int(solutions, problem1%int_var + problem1%bin_var, problem1%XL, problem1%XU)
         end if
-#ifdef OPENMP            
+#ifdef SACESS_OPENMP            
         openmp_pos = getopenmpoption(exp1)
         ! avaliamos o conxunto solución e creamos a estructura solutionset
         if ( openmp_pos .EQ. 1) then
@@ -494,7 +494,7 @@ CONTAINS
 
           
 ! EVALUACION DAS SOLUCION CANDIDATAS 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
             openmp_pos = getopenmpoption(exp1) 
             CALL update_candidateset_with_new_comb_parallel( exp1,opts1, fitnessfunction,problem1,new_comb,candidateset,&
                 childset,&
@@ -629,7 +629,7 @@ CONTAINS
 !---------------------------------------------------------------------------------------------------------        
 ! GATHER THE RESULTS IN MPI EXECUTION CASE
 !---------------------------------------------------------------------------------------------------------
-#ifdef MPI2
+#ifdef SACESS_MPI
         CALL returnminlocelement(exp1, fbest, F02, i, common_vars%idp)
         CALL cooperativebcastelement(exp1,xbest,common_vars%nvar,i)
         CALL returnsumelementlong(exp1, nfuneval, nfunevaltotal)
