@@ -5,7 +5,7 @@ MODULE modsacess
     USE localsolver
     USE parallelscattersearchfunctions
    
-#ifdef MPI2 
+#ifdef SACESS_MPI 
         
 CONTAINS
 
@@ -175,7 +175,7 @@ CONTAINS
             if ((problem1%int_var .GT. 0) .OR. (problem1%bin_var .GT. 1)) then
                 CALL ssm_round_int(solutions, problem1%int_var + problem1%bin_var, problem1%XL, problem1%XU)
             end if
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
             openmp_pos = getopenmpoption(exp1)
             if (openmp_pos .EQ. 1) then
                 CALL evaluate_solutions_set_parallel(exp1,fitnessfunction,&
@@ -395,7 +395,7 @@ CONTAINS
             CALL generate_new_comb_matrix(exp1, new_comb, ppp, MaxSubSet, nrand, v1,v2,v3)
 
 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
             openmp_pos = getopenmpoption(exp1)           
             if (openmp_pos .EQ. 1) then 
             CALL update_candidateset_with_new_comb_parallel( exp1,opts1, fitnessfunction,problem1,new_comb,& 

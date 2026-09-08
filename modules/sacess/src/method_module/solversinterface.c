@@ -14,7 +14,7 @@
 
 #include <method_module/solversinterface.h>
 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
 #include <omp.h>
 #endif
 
@@ -28,7 +28,7 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
     const char *systemsBiology = "systemBiology";
 
 // NEW: The MPI build fails with SEGFAULT due to this
-#ifndef MPI2
+#ifndef SACESS_MPI
     if ((strcmp(exp1->methodScatterSearch->loptions->solver, "nl2sol") == 0) &&
         (strcmp(exp1->test.bench.type, systemsBiology) != 0))
     {
@@ -56,10 +56,14 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
     //     error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
     // }
 
-    // NEW:
-#ifdef MPI2
+    // sacess runs serially whether or not cuqdyn-c was built with MPI: cuqdyn-c
+    // already spends the ranks on the leave-one-out points and calls this from
+    // inside each of them. The parallel path is kept, not deleted, for when the
+    // two are wired onto the same communicator; until then it sits behind
+    // SACESS_MPI, a flag no build defines, and this one goes away with it.
+#ifdef SACESS_MPI
     error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
-    #else
+#else
     error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
 #endif
 
@@ -75,7 +79,7 @@ int execute_parallel_solver(experiment_total *exp, result_solver *result, long m
     int NPROC;
     id = 0;
     NPROC = exp->execution.NPROC;
-#ifdef MPI2
+#ifdef SACESS_MPI
     id = exp->execution.idp;
     error = 0;
     int benchmark;
@@ -84,7 +88,7 @@ int execute_parallel_solver(experiment_total *exp, result_solver *result, long m
 
     systemsBiology = "systemBiology";
 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
 #pragma omp parallel
     {
         exp[0].par_st->NPROC_OPENMP = omp_get_max_threads();

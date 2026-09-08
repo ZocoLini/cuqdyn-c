@@ -149,7 +149,7 @@ SUBROUTINE  dhc(problem1,exp1,opts1,fitnessfunction,X0,initsize,thres,budget,num
             exitwhile = 0
                     
             do while ( (fxv .GE. fx ) .AND. ( iter .LT. maxiter ) .AND.(exitwhile .NE. 1) .AND. (mig .NE. 1))
-#ifdef MPI2        
+#ifdef SACESS_MPI        
              CALL setNPROC(exp1, NPROC)
              if (dist_criteria .EQ. 1) then
                 do ii=1,NPROC

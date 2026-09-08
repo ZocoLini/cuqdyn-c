@@ -496,7 +496,7 @@ CONTAINS
             else if ( opts1%localoptions%solver == 'misqp' ) then
                 write (*,*)  idp, "Call local solver: misqp - INPUT: Initial point function value: [", f0, "]"
             end if
-#ifdef MPI2            
+#ifdef SACESS_MPI            
             CALL printlsinitlog( exp1, f0 )
 #endif            
         end if
@@ -507,7 +507,7 @@ CONTAINS
         CALL printverboselocaloutput(exp1, size(x0), X, f0, idp)
          
 #ifdef TIMELOCAL     
-#ifdef MPI2 
+#ifdef SACESS_MPI 
         cputime1 = calctimeMPI(exp1,time%starttime)
 #else
         CALL SYSTEM_CLOCK(count_rate=clock_rate)
@@ -515,7 +515,7 @@ CONTAINS
 #endif
 #endif 
         
-#ifndef MPI2
+#ifndef SACESS_MPI
         WRITE (*, '(A33,F25.10)') 'Call to local solver. Input Fx:', f0        
 #endif        
         last_evals = numeval 
@@ -528,7 +528,7 @@ CONTAINS
         fval = outfunct%value
          
 #ifdef TIMELOCAL    
-#ifdef MPI2
+#ifdef SACESS_MPI
         time%localsolvertime = calctimeMPI(exp1,time%starttime)
         time%localsolvertime = time%localsolvertime - cputime1
 #else        
@@ -541,7 +541,7 @@ CONTAINS
         
         if ( opts1%useroptions%iterprint .eq. 1 ) then
             last_evals = numeval - last_evals
-#ifdef MPI2               
+#ifdef SACESS_MPI               
             CALL printlsendlog( exp1, fval, time%localsolvertime, last_evals )
 #else 
             WRITE (*, '(A31,F25.10)') 'Stop local solver. Output Fx:', fval  
@@ -623,7 +623,7 @@ CONTAINS
             if ( adiccionar_local .eq. 1 ) then 
                  
                 if ( outfunct%value_penalty .LT. refset%fpen(childset%parent_index(I(1))) ) then
-#ifdef MPI2                       
+#ifdef SACESS_MPI                       
                     CALL printlocalsolverinsert(exp1,outfunct%value_penalty,local_solver_var%local_solutions_values,&
                                  sizelocal, 1, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
 #endif                                 
@@ -634,7 +634,7 @@ CONTAINS
                     if (ALLOCATED (refset%nlc) ) refset%nlc(:,childset%parent_index(I(1) )) = outfunct%nlc
                     refset_change (childset%parent_index(I(1) )) = 0
                 else
-#ifdef MPI2                       
+#ifdef SACESS_MPI                       
                     CALL printlocalsolverinsert(exp1, outfunct%value_penalty, local_solver_var%local_solutions_values, &
                                 sizelocal, 0, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
 #endif                                
@@ -676,7 +676,7 @@ CONTAINS
                     end if
                 end if
             else
-#ifdef MPI2                   
+#ifdef SACESS_MPI                   
                 CALL printlocalsolverinsert(exp1,outfunct%value_penalty, local_solver_var%local_solutions_values, &
                                 sizelocal, 0, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
 #endif                                

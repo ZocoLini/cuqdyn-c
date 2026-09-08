@@ -12,7 +12,7 @@ void insert_group_dataset_int_value(hid_t group_id, const char *dataname,  int *
         hid_t dataset_id, driver;
         double value_d;
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -28,7 +28,7 @@ void insert_group_dataset_double_value(hid_t group_id, const char *dataname,  do
         double value_d;
          
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -47,7 +47,7 @@ void insert_group_dataset_vector_double_value(hid_t group_id, const char *datana
         int ndims, i;
         herr_t      status;
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -76,7 +76,7 @@ void insert_group_dataset_vector_double_value_reference(hid_t group_id, const ch
         int ndims, i;
         herr_t      status;
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -114,7 +114,7 @@ void insert_group_dataset_matrix_double_value_reference(hid_t group_id, const ch
         herr_t      status;
         int counter;
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -154,7 +154,7 @@ int return_size___group_dataset_matrix_double_value_reference(hid_t group_id, co
         herr_t      status;
         
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -186,7 +186,7 @@ void insert_group_dataset_vector_integer_value2(hid_t group_id, const char *data
         int ndims, i;
         herr_t      status;
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -214,7 +214,7 @@ void insert_group_dataset_vector_integer_value2_reference(hid_t group_id, const 
         herr_t      status;
         
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -248,7 +248,7 @@ void insert_group_dataset_vector_double_value2(hid_t group_id, const char *datan
         herr_t      status;
         
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -277,7 +277,7 @@ void insert_group_dataset_int_value_reference(hid_t group_id, const char *datana
         int ndims;
         herr_t      status;
         
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -313,7 +313,7 @@ AMIGO_model* hdf5AllocateAMIGOmodel(hid_t privstruct_id,hid_t inputs_id, int exp
         herr_t      status, status2;
         hobj_ref_t  *rdata;   
         int         ndims,size_index;
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    
@@ -511,7 +511,7 @@ AMIGO_problem* openMatFileAMIGO(const char* file){
     const char *file2;
     
     
-#ifdef  MPI2
+#ifdef  SACESS_MPI
     driver = H5P_DEFAULT;
 #else
     driver = H5P_DEFAULT;    

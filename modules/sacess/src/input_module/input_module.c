@@ -16,7 +16,7 @@
 #include <libxml/tree.h>
 #include <error/def_errors.h>
 #include <hdf5.h>
-#if  defined(OPENMP) 
+#if  defined(SACESS_OPENMP) 
     #include <omp.h>
 #endif
 #include <sys/stat.h> 
@@ -730,62 +730,62 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             
             if (strcmp((const char *) value, "ScatterSearch") == 0) {
                 exptotal->methodScatterSearch->eSSversion = "ScatterSearch";
-                #ifdef MPI2
+                #ifdef SACESS_MPI
                 perror(error31);
                 exit(31);
                 #endif
             } 
             else if (strcmp((const char *) value, "CeSS") == 0){
                 exptotal->methodScatterSearch->eSSversion = "CeSS";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif        
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif
             }  
             else if (strcmp((const char *) value, "saCeSS") == 0){
                 exptotal->methodScatterSearch->eSSversion = "saCeSS";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif    
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif
             }             
             else if (strcmp((const char *) value, "aCeSS_dist") == 0){
                 exptotal->methodScatterSearch->eSSversion = "aCeSS_dist";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif   
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif                
             }
             else if (strcmp((const char *) value, "eSSm") == 0){
                 exptotal->methodScatterSearch->eSSversion = "eSSm";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif       
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif                
             } 
             else if (strcmp((const char *) value, "coSHADE") == 0){
 	        exptotal->methodScatterSearch->eSSversion = "eSSm";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
 		perror(error32);
 		exit(32);
 		#endif
-		#ifndef OPENMP
+		#ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);
                 #endif
@@ -803,7 +803,7 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
     // EXTRACT PARALLELIZATION ELEMENTS        
     cur = extract_init_node(init_cur, parallelization);
 
-#if  defined(OPENMP) || defined(MPI2)
+#if  defined(SACESS_OPENMP) || defined(SACESS_MPI)
     if (cur != NULL) {
         exit1 = 0;
         
@@ -825,7 +825,7 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             extract_element_parallelization(doc, &root, exptotal->par_st);
             
             exptotal->par_st->NPROC = NPROC;
-                #if OPENMP
+                #ifdef SACESS_OPENMP
             #pragma omp parallel shared(NPROC) 
             {       
                 exptotal->par_st->NPROC_OPENMP =  omp_get_max_threads();

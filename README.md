@@ -120,7 +120,6 @@ The project has a `scripts/build.sh` script. `build-[variant]/` directories will
 
 - `serial`: Builds the project to only execute serial methods.
 - `mpi`: Builds the project to execute the sequential solver in parallel using MPI.
-- `mpi2`: Builds the project to only include the MPI and OpenMP defined in sacess-library.
 
 After this, running `scripts/test.sh` is a good way to know if the cuqdyn library works as expected.
 

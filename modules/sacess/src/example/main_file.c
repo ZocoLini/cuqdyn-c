@@ -15,11 +15,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef MPI2
+#ifdef SACESS_MPI
         #include <mpi.h> 
 #endif
 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
         #include <omp.h>
 #endif
 
@@ -35,7 +35,7 @@ int codigo_ejemplo(int argc, char** argv) {
     int first, init;
    
     
-    #ifdef MPI2
+    #ifdef SACESS_MPI
         MPI_Init(&argc, &argv);
         MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
         MPI_Comm_rank(MPI_COMM_WORLD, &id);          
@@ -60,7 +60,7 @@ int codigo_ejemplo(int argc, char** argv) {
     
     
 // CREATE EXPTOTAL STRUCT
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
 #pragma omp parallel
     {
             NPROC_OPENMP = omp_get_num_threads();
@@ -101,7 +101,7 @@ int codigo_ejemplo(int argc, char** argv) {
     
 #endif    
     
-#ifdef MPI2
+#ifdef SACESS_MPI
     MPI_Barrier(MPI_COMM_WORLD);    
 #endif
 // RUNNING THE SOLVER
@@ -122,7 +122,7 @@ int codigo_ejemplo(int argc, char** argv) {
 // DESTROY EXP DATA       
     destroyexp(exptotal);
 
-    #ifdef MPI2
+    #ifdef SACESS_MPI
         MPI_Finalize();
     #endif
  

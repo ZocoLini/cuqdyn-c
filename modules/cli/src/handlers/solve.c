@@ -11,7 +11,7 @@
 #include "cuqdyn.h"
 #include "handlers/handlers.h"
 
-#if defined(MPI) || defined(MPI2)
+#ifdef MPI
 #include <mpi.h>
 #endif
 
@@ -85,7 +85,7 @@ int handle_solve(int argc, char *argv[])
         return 1;
     }
 
-#if defined(MPI) || defined(MPI2)
+#ifdef MPI
     int err = MPI_Init(&argc, &argv);
 
     if (err != MPI_SUCCESS)
