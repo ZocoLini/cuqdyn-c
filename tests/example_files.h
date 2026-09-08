@@ -20,7 +20,7 @@ static const char *example_file(const char *model, const char *file)
     return path;
 }
 
-static const char *example_conf(const char *model) { return example_file(model, "cuqdyn-fim.xml"); }
+static const char *example_conf(const char *model) { return example_file(model, "cuqdyn.xml"); }
 
 static const char *example_sacess_conf(const char *model) { return example_file(model, "sacess-serial.xml"); }
 
