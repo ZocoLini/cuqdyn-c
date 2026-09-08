@@ -225,8 +225,6 @@ After this, the file `output/cuqdyn-results.txt` contains the results of the alg
 python3 plot.py output/cuqdyn-results.txt
 ```
 
-Note: Be carefull when executing with `mpirun`, the number of precesses must be divisor of m - 1, where m is the number of rows in the input data matrix.
-
 This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example). Each panel is labelled with the band type it carries, conformal or delta/FIM, and coloured accordingly.
 
 To get information about all the options the cli supports, you can run the following command:
