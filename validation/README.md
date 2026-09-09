@@ -50,7 +50,9 @@ validation/
 │                      compares against expect_*. If a check fails, the C algebra
 │                      diverged from MATLAB on that exact input.
 │
-└── baseline/          LAYERS 2-4 MATERIAL, one level up in realism.
+└── baseline/          LAYERS 2-4 MATERIAL, one level up in realism. Holds BOTH
+    │                   sides: matlab/ is the reference, c/ is what this port
+    │                   produced, and the report_*.md compare the two.
     ├── gen_baseline.m       MATLAB generator (seeded, sequential) of matlab/<model>/
     ├── test_baseline.c      C comparator for layers 2+3 (the baseline_* ctests)
     ├── matlab/<model>/      THE MATLAB REFERENCE per model (lv2, ap, sir, nfkb),
@@ -64,8 +66,26 @@ validation/
     │   │                    the bands (q_low/q_up.txt), cov_p.txt, std_y.txt.
     │   │                    test_baseline.c injects these into the C band code
     │   │                    and compares its output against the MATLAB bands.
+    │   ├── layer4/seed_N/   one folder per seed of the statistical campaign:
+    │   │                    theta_hat, params_median and the two bands. These
+    │   │                    are the distributions compare_baseline.py reads.
     │   └── times/y0/truth/sigma/meta/tol.txt   shared context + the comparison
     │                        tolerances (editable without regenerating anything)
+    ├── c/<model>/seed_N/    THE C SIDE of layer 4, written by run_c_seeds.sh:
+    │                        cuqdyn-results.txt (the full result in the CLI's
+    │                        labelled-section format) and sacess/convergence_id0.csv.
+    │                        The solver's run.log is gitignored, nothing reads it.
+    ├── report_<model>.md    the layer-4 verdict per model: parameter medians and
+    │   + _theta.png         IQRs on both sides, band widths, empirical coverage
+    ├── cost_replay/         LAYER 2.5. gen_cost_replay.m records a MATLAB eSS
+    │                        search into lv2_evals.txt; test_cost_replay.c replays
+    │                        the C cost over those same points. All the randomness
+    │                        stayed on the MATLAB side, so the replay is exact.
+    ├── hybrid/              THE SHARED-OPTIMISER EXPERIMENT. cost_server.c serves
+    │                        the real C cost over TCP and hybrid_meigo_cvodes.m has
+    │                        MATLAB's MEIGO optimise against it, which separates a
+    │                        model difference from an optimiser one.
+    │                        hybrid_report_<model>.txt holds the outcome.
     ├── c_<model>_seed1_results.txt   reference C runs (full pipeline,
     │                        SACESS_SEED=1) the figures were rendered from
     ├── matlab_<model>_hybrid_uq_plot.png / c_<model>_seed1_hybrid_uq_plot.png
