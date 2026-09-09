@@ -6,8 +6,8 @@
 #   validation/baseline/run_c_seeds.sh nfkb 20
 #
 # Results land in validation/baseline/c/<model>/seed_<k>/cuqdyn-results.txt,
-# which is what compare_baseline.py consumes. Uses build-serial by default;
-# override with CLI=path/to/cli.
+# which is what compare_baseline.py consumes. Picks the first serial build
+# under build/ by default; override with CLI=path/to/cli.
 
 set -euo pipefail
 
@@ -16,13 +16,19 @@ NSEEDS="${2:-10}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$SCRIPT_DIR/../.." && pwd)"
-CLI="${CLI:-$REPO/build-serial/modules/cli/cli}"
+CLI="${CLI:-}"
+if [ -z "$CLI" ]; then
+    for candidate in release-serial debug-serial; do
+        [ -x "$REPO/build/$candidate/modules/cli/cli" ] &&
+            CLI="$REPO/build/$candidate/modules/cli/cli" && break
+    done
+fi
 
 case "$MODEL" in
     lv2)
-        CONF="$REPO/example-files/lv2_partobs_cuqdyn_config.xml"
-        ESS="$REPO/example-files/lv2_partobs_ess_serial_config.xml"
-        DATA="$REPO/example-files/lv2_partobs_paper_data.txt"
+        CONF="$REPO/example-files/lv2-partobs/cuqdyn-fim.xml"
+        ESS="$REPO/example-files/lv2-partobs/sacess-serial.xml"
+        DATA="$REPO/example-files/lv2-partobs/data.txt"
         ;;
     ap)
         # Self-contained in validation/baseline until promoted to example-files.
@@ -31,15 +37,15 @@ case "$MODEL" in
         DATA="$SCRIPT_DIR/ap_partobs_paper_data.txt"
         ;;
     sir)
-        CONF="$REPO/example-files/sir_cuqdyn_config.xml"
-        ESS="$REPO/example-files/sir_ess_serial_config.xml"
-        DATA="$REPO/example-files/sir_paper_data.txt"
+        CONF="$REPO/example-files/sir/cuqdyn-fim.xml"
+        ESS="$REPO/example-files/sir/sacess-serial.xml"
+        DATA="$REPO/example-files/sir/data.txt"
         ;;
     nfkb)
         # Full-precision sigmas + the MATLAB-matched 2e4 budget.
         CONF="$SCRIPT_DIR/nfkb_cuqdyn_fullsigma.xml"
         ESS="$SCRIPT_DIR/nfkb_ess_serial_2e4.xml"
-        DATA="$REPO/example-files/nfkb_paper_data.txt"
+        DATA="$REPO/example-files/nfkb/data.txt"
         ;;
     *)
         echo "Unknown model '$MODEL' (use lv2, ap, sir or nfkb)" >&2
@@ -47,8 +53,8 @@ case "$MODEL" in
         ;;
 esac
 
-if [ ! -x "$CLI" ]; then
-    echo "cli not found at $CLI - build first (scripts/build.sh serial) or set CLI=" >&2
+if [ -z "$CLI" ] || [ ! -x "$CLI" ]; then
+    echo "cli not found under build/ - build first (scripts/build.sh serial) or set CLI=" >&2
     exit 1
 fi
 

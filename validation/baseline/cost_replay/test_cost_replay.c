@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
         /* The C cost, assembled from the same primitives obj_func uses:
          * integrate every state, keep the observed rows, weight, square, sum. */
-        TransposedStates states = solve_ode(theta, data.initial_values, t0, data.times);
+        TransposedStates states = solve_ode(theta, data.initial_values, t0, data.times, NULL);
         if (states == NULL)
         {
             /* MATLAB integrated this point and CVODES could not: that IS a

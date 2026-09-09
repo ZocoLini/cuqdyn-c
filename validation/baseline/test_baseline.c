@@ -33,7 +33,6 @@
 #include "data_reader.h"
 #include "functions.h"
 #include "ode_solver.h"
-#include "sensitivity.h"
 #include "uq_bands.h"
 
 static int g_failures = 0;
@@ -192,7 +191,7 @@ static void run_layer2(const char *dir, const CuqdynData *data, const CuqdynConf
     }
 
     /* --- trajectory --- */
-    TransposedStates got = solve_ode(theta, data->initial_values, t0, data->times);
+    TransposedStates got = solve_ode(theta, data->initial_values, t0, data->times, NULL);
     if (got == NULL)
     {
         printf("  %-28s solve_ode returned NULL  **FAIL**\n", "trajectory");
@@ -229,11 +228,11 @@ static void run_layer2(const char *dir, const CuqdynData *data, const CuqdynConf
         exit(2);
     }
 
-    TransposedStates states = NULL;
     Sensitivities sens = {0};
-    if (solve_ode_with_sensitivities(theta, data->initial_values, t0, data->times, &states, &sens) != 0)
+    TransposedStates states = solve_ode(theta, data->initial_values, t0, data->times, &sens);
+    if (states == NULL)
     {
-        printf("  %-28s solve_ode_with_sensitivities failed  **FAIL**\n", "sensitivities");
+        printf("  %-28s solve_ode with sensitivities failed  **FAIL**\n", "sensitivities");
         g_checks++;
         g_failures++;
         fclose(f);

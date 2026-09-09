@@ -87,12 +87,12 @@ distribución.
 exactas a precisión de máquina en los 4 modelos, sensibilidades a 1e-7..1e-4,
 bandas delta a 1e-5 (2.9% en nfkb, coherente con cond(FIM) ~ 3e8).
 
-> **Aviso**: no usar `example-files/lotka_volterra_cuqdyn_config.xml` para
+> **Aviso**: no usar `example-files/lotka-volterra/cuqdyn-fim.xml` para
 > comparar con MATLAB. Su modelo compilado Rust (`lotka-volterra` en
 > `modules/cuqdyn-rs/src/models.rs`) tiene **p3 y p4 intercambiados** respecto
-> a `prob_mod_dynamics_LV.m`. El baseline usa `lv2_partobs_*`, que define la
-> ODE por expresiones y sí coincide. El `nfkb` compilado está verificado
-> término a término y es correcto.
+> a `prob_mod_dynamics_LV.m`. El baseline usa `example-files/lv2-partobs/`, que
+> define la ODE por expresiones y sí coincide. El `nfkb` compilado está
+> verificado término a término y es correcto.
 
 ## Cómo ejecutar la comparación (sin MATLAB)
 
@@ -106,19 +106,17 @@ add_subdirectory(validation)
 Y build normal:
 
 ```bash
-mkdir -p build-serial && cd build-serial
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/serial_toolchain.cmake ..
-make -j
-ctest -R baseline --output-on-failure
+scripts/build.sh serial
+cd build/release-serial && ctest -R baseline --output-on-failure
 ```
 
 Si faltan los exports MATLAB los tests salen como SKIP, no como fallo. Tabla
 check a check:
 
 ```bash
-./build-serial/validation/baseline/test_baseline validation/baseline/matlab/lv2 \
-    example-files/lv2_partobs_cuqdyn_config.xml \
-    example-files/lv2_partobs_paper_data.txt
+./build/release-serial/validation/baseline/test_baseline validation/baseline/matlab/lv2 \
+    example-files/lv2-partobs/cuqdyn-fim.xml \
+    example-files/lv2-partobs/data.txt
 ```
 
 Capa 4, lado C + informe:
@@ -208,14 +206,6 @@ Cualquier `cuqdyn-results.txt` se redibuja igual con:
 ```bash
 python3 validation/baseline/plot_c_results_matlab_style.py <results.txt> <datos.txt> <salida.png>
 ```
-
-## La vía rápida en `test_cuqdyn_algo` (propuesta de Borja)
-
-`write_expected_output.m` genera `example-files/lv2_partobs_expected_output.txt`
-y `tests/data/lv2_partobs_expected_output.txt` a partir del export de capa 3.
-Esos ficheros caen fuera de `validation/`, así que esta rama no los incluye;
-la comparación en `tests/test_cuqdyn_algo.c` (margen medio generoso, dos eSS
-independientes) se propone por separado por la misma razón.
 
 ## Qué NO cubre este baseline
 

@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            TransposedStates states = solve_ode(theta, data.initial_values, t0, data.times);
+            TransposedStates states = solve_ode(theta, data.initial_values, t0, data.times, NULL);
             if (states == NULL)
             {
                 fprintf(out, "nan\n");

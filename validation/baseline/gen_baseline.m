@@ -9,10 +9,10 @@ function gen_baseline(model, layers, seeds, outdir)
 % Models:
 %   'lv2'   Lotka-Volterra, 2 states, prey observed / predator hidden.
 %           Mirrors EXAMPLES/LV/run_LV2_CUQDyn1_Plus_partobs_example.m and the
-%           C-side example-files/lv2_partobs_* pair (same data, same bounds).
+%           C-side example-files/lv2-partobs/ folder (same data, same bounds).
 %   'nfkb'  NF-kB, 15 states / 29 params, 10 observed. Mirrors
 %           EXAMPLES/NFKB/run_NFKB_example_CUQDyn1plus.m and the C-side
-%           example-files/nfkb_* pair.
+%           example-files/nfkb/ folder.
 %
 % Layers (see validation/README.md for the layering rationale):
 %   2  INTEGRATION: ODE trajectory + complex-step sensitivities at FIXED true
@@ -264,7 +264,7 @@ switch lower(model)
         pb.cost_model = 'known_sigma_traj';
         pb.noise_pct = 10;
         % The example script uses the default budget (n_params*500 = 2000);
-        % the C config example-files/lv2_partobs_ess_serial_config.xml uses
+        % the C config example-files/lv2-partobs/sacess-serial.xml uses
         % 2e4. The baseline matches the C side so layer 4 compares like with
         % like.
         pb.maxeval = 2e4;

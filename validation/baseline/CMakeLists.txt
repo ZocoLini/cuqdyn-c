@@ -12,16 +12,16 @@ set(EXAMPLES ${PROJECT_SOURCE_DIR}/example-files)
 
 add_test(NAME baseline_lv2
          COMMAND test_baseline ${BASELINE_DIR}/lv2
-                 ${EXAMPLES}/lv2_partobs_cuqdyn_config.xml
-                 ${EXAMPLES}/lv2_partobs_paper_data.txt)
+                 ${EXAMPLES}/lv2-partobs/cuqdyn-fim.xml
+                 ${EXAMPLES}/lv2-partobs/data.txt)
 
 # The full-sigma copy lives here so this branch touches nothing outside
-# validation/: example-files/nfkb_cuqdyn_config.xml carries the same values
+# validation/: example-files/nfkb/cuqdyn-fim.xml carries the same values
 # truncated to fewer digits, which fails the 1e-9 sigma cross-check.
 add_test(NAME baseline_nfkb
          COMMAND test_baseline ${BASELINE_DIR}/nfkb
                  ${CMAKE_CURRENT_SOURCE_DIR}/nfkb_cuqdyn_fullsigma.xml
-                 ${EXAMPLES}/nfkb_paper_data.txt)
+                 ${EXAMPLES}/nfkb/data.txt)
 
 # The AP partially-observed example has no example-files/ counterpart yet, so
 # its data and configs live in this directory (mirrors the MATLAB runner
@@ -33,8 +33,8 @@ add_test(NAME baseline_ap
 
 add_test(NAME baseline_sir
          COMMAND test_baseline ${BASELINE_DIR}/sir
-                 ${EXAMPLES}/sir_cuqdyn_config.xml
-                 ${EXAMPLES}/sir_paper_data.txt)
+                 ${EXAMPLES}/sir/cuqdyn-fim.xml
+                 ${EXAMPLES}/sir/data.txt)
 
 set_tests_properties(baseline_lv2 baseline_nfkb baseline_ap baseline_sir
                      PROPERTIES SKIP_RETURN_CODE 77)
@@ -48,8 +48,8 @@ target_compile_options(test_cost_replay PRIVATE -O0 -g -UNDEBUG)
 
 add_test(NAME cost_replay_lv2
          COMMAND test_cost_replay ${CMAKE_CURRENT_SOURCE_DIR}/cost_replay/lv2_evals.txt
-                 ${EXAMPLES}/lv2_partobs_cuqdyn_config.xml
-                 ${EXAMPLES}/lv2_partobs_paper_data.txt)
+                 ${EXAMPLES}/lv2-partobs/cuqdyn-fim.xml
+                 ${EXAMPLES}/lv2-partobs/data.txt)
 set_tests_properties(cost_replay_lv2 PROPERTIES SKIP_RETURN_CODE 77)
 
 # The hybrid experiment's C half: serves the real C cost over TCP so
