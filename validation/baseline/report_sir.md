@@ -1,7 +1,7 @@
-# Baseline capa 5 - sir
+# Baseline capa 4 - sir
 
-MATLAB: 10 semillas (C:\Users\david\Desktop\agent_cuqdyn-c\cuqdyn-c-git\validation\baseline\matlab\sir)
-C:      10 semillas (C:\Users\david\Desktop\agent_cuqdyn-c\cuqdyn-c-git\validation\baseline\c\sir)
+MATLAB: 10 semillas (validation/baseline/matlab/sir)
+C:      10 semillas (validation/baseline/c/sir)
 
 Ambos lados corren el pipeline completo con su propio optimizador estocastico; lo comparable son las distribuciones, no las semillas una a una.
 

@@ -1,7 +1,7 @@
-# Baseline capa 5 - nfkb
+# Baseline capa 4 - nfkb
 
-MATLAB: 20 semillas (C:\Users\david\Desktop\agent_cuqdyn-c\cuqdyn-c-git\validation\baseline\matlab\nfkb)
-C:      10 semillas (C:\Users\david\Desktop\agent_cuqdyn-c\cuqdyn-c-git\validation\baseline\c\nfkb)
+MATLAB: 20 semillas (validation/baseline/matlab/nfkb)
+C:      10 semillas (validation/baseline/c/nfkb)
 
 Ambos lados corren el pipeline completo con su propio optimizador estocastico; lo comparable son las distribuciones, no las semillas una a una.
 

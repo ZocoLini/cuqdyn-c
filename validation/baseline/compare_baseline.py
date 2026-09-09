@@ -236,9 +236,14 @@ def main():
     truth = read_matrix(os.path.join(mat_root, "truth.txt"))
     times = read_matrix(os.path.join(mat_root, "times.txt")).ravel()
 
-    lines = [f"# Baseline capa 5 - {args.model}", "",
-             f"MATLAB: {len(mat_seeds)} semillas ({mat_root})",
-             f"C:      {len(c_seeds)} semillas ({c_root})", "",
+    # Relative to the repo root: the report is committed, so an absolute path
+    # would freeze whatever machine happened to generate it.
+    repo = os.path.dirname(os.path.dirname(here))
+    rel = lambda p: os.path.relpath(p, repo).replace(os.sep, "/")
+
+    lines = [f"# Baseline capa 4 - {args.model}", "",
+             f"MATLAB: {len(mat_seeds)} semillas ({rel(mat_root)})",
+             f"C:      {len(c_seeds)} semillas ({rel(c_root)})", "",
              "Ambos lados corren el pipeline completo con su propio optimizador "
              "estocastico; lo comparable son las distribuciones, no las semillas "
              "una a una.", ""]
