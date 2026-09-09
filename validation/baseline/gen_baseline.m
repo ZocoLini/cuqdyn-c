@@ -41,7 +41,9 @@ here = fileparts(mfilename('fullpath'));
 repo = fullfile(here, '..', '..');
 
 if nargin < 4 || isempty(outdir)
-    outdir = fullfile(here, 'matlab', model);
+    % validation/matlab/<model>, a sibling of this directory rather than a
+    % child: the reference is not part of the harness that reads it.
+    outdir = fullfile(here, '..', 'matlab', model);
 end
 
 % --- Paths: CUQDyn1_Plus sources, the example dir of the model, MEIGO ---

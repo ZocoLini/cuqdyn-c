@@ -224,16 +224,17 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("model", choices=["lv2", "ap", "sir", "nfkb"])
-    ap.add_argument("--matlab-dir", default=None, help="default: <here>/matlab/<model>")
+    ap.add_argument("--matlab-dir", default=None,
+                    help="default: validation/matlab/<model>")
     ap.add_argument("--c-dir", default=None,
                     help="default: validation/c/layer4/<model>")
     args = ap.parse_args()
 
-    # The MATLAB reference is frozen next to this script; the C runs are the
-    # layer-4 output of run_c_seeds.sh, one level up under validation/c/.
+    # Both sides hang off validation/, not off this script's directory: matlab/
+    # is the frozen reference, c/ the layer-4 output of run_c_seeds.sh.
     validation = os.path.dirname(here)
 
-    mat_root = args.matlab_dir or os.path.join(here, "matlab", args.model)
+    mat_root = args.matlab_dir or os.path.join(validation, "matlab", args.model)
     c_root = args.c_dir or os.path.join(validation, "c", "layer4", args.model)
 
     mat_seeds = load_matlab_seeds(mat_root)

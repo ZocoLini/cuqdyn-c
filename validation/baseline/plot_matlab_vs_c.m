@@ -6,7 +6,7 @@ function plot_matlab_vs_c(model)
 % Both halves are drawn by this same function with the plot_hybrid_uq styling,
 % so any visual difference between the two sides is in the data, never in the
 % plotting. MATLAB bands come from the layer-3 export
-% (matlab/<model>/layer3/); C bands from the seed-1 reference run
+% (../matlab/<model>/layer3/); C bands from the seed-1 reference run
 % (c_<model>_seed1_results.txt). Lower bands are clamped at 0, like
 % plot_hybrid_uq.
 

@@ -7,7 +7,7 @@ target_link_libraries(test_baseline cuqdyn-c)
 # -O0: the comparison must be free of fast-math style reassociation.
 target_compile_options(test_baseline PRIVATE -O0 -g -UNDEBUG)
 
-set(BASELINE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/matlab)
+set(BASELINE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../matlab)
 set(EXAMPLES ${PROJECT_SOURCE_DIR}/example-files)
 
 add_test(NAME baseline_lv2

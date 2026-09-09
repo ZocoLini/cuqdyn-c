@@ -15,7 +15,7 @@
  *   ./test_baseline <baseline_dir> <cuqdyn_config.xml> <data_file>
  *
  * baseline_dir is one model directory written by gen_baseline.m
- * (e.g. validation/baseline/matlab/lv2). Missing layer subdirectories are
+ * (e.g. validation/matlab/lv2). Missing layer subdirectories are
  * skipped; if neither exists the exit code is 77 so ctest reports SKIP.
  * Otherwise the exit code is the number of failing comparisons.
  */

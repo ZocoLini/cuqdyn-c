@@ -20,8 +20,8 @@ Each layer freezes everything the previous one could not:
 | Layer | Name | What is actually done | A failure means | Optimiser noise | Status |
 |---|---|---|---|---|---|
 | 1 | **Algebra kernels** | MATLAB's pure-math functions (`cuqdyn_fim_covariance`, the hybrid covariance, `cuqdyn_residual_variance`, `quantile`) were run once on fixed synthetic inputs and their inputs+outputs frozen in `golden/`. `test_golden.c` re-runs the C counterparts (`fim.c`, `matlab.c`) on the same inputs and diffs the outputs. | a transpilation bug in the linear algebra | none | ✅ **79/79** |
-| 2 | **Integration & sensitivities** | MATLAB integrates each model with `ode15s` at the TRUE parameters and derives dy/dθ by complex step (exact); both are frozen in `baseline/matlab/<m>/layer2/`. `test_baseline.c` integrates the same ODE with CVODES, computes CVODES forward sensitivities, and diffs trajectory and each dy/dθ_k block. | wrong RHS (e.g. parameter order), integrator config, or broken sensitivities | none | ✅ 4/4 models |
-| 3 | **UQ replay** | One seeded full MATLAB run per model; its fitted θ̂, the entire LOO ensemble (per-refit trajectories, held-out residuals, refit parameters) and the resulting bands are frozen in `baseline/matlab/<m>/layer3/`. `test_baseline.c` **injects** θ̂ and the ensemble into the C band code (`conformal_bands()`, `delta_method_bands()`) and diffs bands, `Cov_p` and `std_y` against MATLAB's. Identical inputs → the optimiser is out of the equation. | a bug in the band mathematics (conformal quantiles, FIM covariance, delta propagation) | none | ✅ 4/4 models |
+| 2 | **Integration & sensitivities** | MATLAB integrates each model with `ode15s` at the TRUE parameters and derives dy/dθ by complex step (exact); both are frozen in `matlab/<m>/layer2/`. `test_baseline.c` integrates the same ODE with CVODES, computes CVODES forward sensitivities, and diffs trajectory and each dy/dθ_k block. | wrong RHS (e.g. parameter order), integrator config, or broken sensitivities | none | ✅ 4/4 models |
+| 3 | **UQ replay** | One seeded full MATLAB run per model; its fitted θ̂, the entire LOO ensemble (per-refit trajectories, held-out residuals, refit parameters) and the resulting bands are frozen in `matlab/<m>/layer3/`. `test_baseline.c` **injects** θ̂ and the ensemble into the C band code (`conformal_bands()`, `delta_method_bands()`) and diffs bands, `Cov_p` and `std_y` against MATLAB's. Identical inputs → the optimiser is out of the equation. | a bug in the band mathematics (conformal quantiles, FIM covariance, delta propagation) | none | ✅ 4/4 models |
 | 4 | **Statistical end-to-end** | Each side runs the FULL pipeline N times with different seeds (MATLAB: `gen_baseline(model, 4, 1:N)`; C: `run_c_seeds.sh model N`). `compare_baseline.py` compares the *distributions*: per-parameter median/IQR, band-width ratios per state, empirical coverage of the true trajectory. This is the only layer that exercises the eSS interface itself. | a systematic bias in the optimiser coupling — or nothing: two correct implementations still differ run to run | dominant (it is what is measured) | ✅ 10 seeds per side, 4 models: see report_*.md |
 
 Key results of layers 2-3 (details and tolerances in `baseline/README.md`):
@@ -50,6 +50,23 @@ validation/
 │                      compares against expect_*. If a check fails, the C algebra
 │                      diverged from MATLAB on that exact input.
 │
+├── matlab/<model>/    THE MATLAB REFERENCE per model (lv2, ap, sir, nfkb), all
+│   │                  plain text so no one needs MATLAB to consume it. Written
+│   │                  by baseline/gen_baseline.m:
+│   ├── layer2/        trajectory + complex-step sensitivities at the TRUE
+│   │                  parameters (traj.txt, sens.txt, theta_fixed.txt).
+│   │                  No optimiser involved at all.
+│   ├── layer3/        one seeded CUQDyn1_Plus run: fitted parameters
+│   │                  (theta_hat.txt), the whole LOO ensemble (loo_params.txt,
+│   │                  media_matrix.txt, resid_loo.txt), the bands
+│   │                  (q_low/q_up.txt), cov_p.txt, std_y.txt. test_baseline.c
+│   │                  injects these into the C band code and compares.
+│   ├── layer4/seed_N/ one folder per seed of the statistical campaign:
+│   │                  theta_hat, params_median and the two bands. These are the
+│   │                  distributions compare_baseline.py reads.
+│   └── times/y0/truth/sigma/meta/tol.txt   context shared by every layer, plus
+│                      the tolerances (editable without regenerating anything)
+│
 ├── c/layer4/<model>/seed_N/   WHAT THIS PORT PRODUCED, written by
 │                      baseline/run_c_seeds.sh: cuqdyn-results.txt (the full
 │                      result in the CLI's labelled-section format) and
@@ -58,26 +75,13 @@ validation/
 │                      keeping: layers 1-3 compute theirs and compare it inside
 │                      a single test run. run.log is gitignored, nothing reads it.
 │
-└── baseline/          LAYERS 2-4 MATERIAL, one level up in realism. The MATLAB
-    │                   reference plus the tools that compare it against c/.
-    ├── gen_baseline.m       MATLAB generator (seeded, sequential) of matlab/<model>/
+└── baseline/          THE HARNESS for layers 2-4: what generates matlab/, what
+    │                   compares it against c/, and the verdicts. No reference
+    │                   data of its own.
+    ├── gen_baseline.m       MATLAB generator (seeded, sequential) of ../matlab/<model>/
     ├── test_baseline.c      C comparator for layers 2+3 (the baseline_* ctests)
-    ├── matlab/<model>/      THE MATLAB REFERENCE per model (lv2, ap, sir, nfkb),
-    │   │                    all plain text so no one needs MATLAB to consume it:
-    │   ├── layer2/          trajectory + complex-step sensitivities at the TRUE
-    │   │                    parameters (traj.txt, sens.txt, theta_fixed.txt).
-    │   │                    No optimiser involved at all.
-    │   ├── layer3/          one seeded CUQDyn1_Plus run: fitted parameters
-    │   │                    (theta_hat.txt), the whole LOO ensemble
-    │   │                    (loo_params.txt, media_matrix.txt, resid_loo.txt),
-    │   │                    the bands (q_low/q_up.txt), cov_p.txt, std_y.txt.
-    │   │                    test_baseline.c injects these into the C band code
-    │   │                    and compares its output against the MATLAB bands.
-    │   ├── layer4/seed_N/   one folder per seed of the statistical campaign:
-    │   │                    theta_hat, params_median and the two bands. These
-    │   │                    are the distributions compare_baseline.py reads.
-    │   └── times/y0/truth/sigma/meta/tol.txt   shared context + the comparison
-    │                        tolerances (editable without regenerating anything)
+    ├── compare_baseline.py  layer-4 distribution comparison, writes report_*.md
+    ├── run_c_seeds.sh       layer-4 C side: N seeded CLI runs into ../c/layer4/
     ├── report_<model>.md    the layer-4 verdict per model: parameter medians and
     │   + _theta.png         IQRs on both sides, band widths, empirical coverage
     ├── cost_replay/         LAYER 2.5. gen_cost_replay.m records a MATLAB eSS
@@ -98,12 +102,11 @@ validation/
     │                        lives here until promoted to example-files/
     ├── nfkb_cuqdyn_fullsigma.xml   NF-kB config with full-precision sigmas
     ├── nfkb_ess_serial_2e4.xml     NF-kB eSS config with the MATLAB-matched budget
-    └── run_c_seeds.sh / compare_baseline.py / drago_baseline.sbatch   layer-4
-                             tooling: N seeded C runs, distribution report, SLURM
+    └── drago_baseline.sbatch       SLURM job that regenerates ../matlab/<model>/
 ```
 
 In one sentence each: **`golden/` = frozen inputs+outputs of the MATLAB
-algebra kernels; `baseline/matlab/` = frozen trajectories, ensembles and bands
+algebra kernels; `matlab/` = frozen trajectories, ensembles and bands
 of full seeded MATLAB runs.** Everything else is the machinery to generate
 them (MATLAB side) or compare against them (C side).
 
@@ -135,14 +138,14 @@ For the per-check table, run the binaries directly:
 
 ```bash
 ./build/release-serial/validation/test_golden validation/golden 1e-9
-./build/release-serial/validation/baseline/test_baseline validation/baseline/matlab/lv2 \
+./build/release-serial/validation/baseline/test_baseline validation/matlab/lv2 \
     example-files/lv2-partobs/cuqdyn-fim.xml example-files/lv2-partobs/data.txt
 ```
 
 The exit code is the number of failing comparisons.
 
 **Nobody needs MATLAB for any of the above**: the references are exported as
-plain text under `golden/` and `baseline/matlab/`. MATLAB (R2024a) is only
+plain text under `golden/` and `matlab/`. MATLAB (R2024a) is only
 needed to *regenerate* them (`gen_golden.m`, `baseline/gen_baseline.m`) when
 the MATLAB reference itself changes.
 

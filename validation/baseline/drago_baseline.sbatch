@@ -52,6 +52,6 @@ echo "model=$MODEL layers=$LAYERS seeds=$SEEDS"
 
 matlab -batch "gen_baseline('$MODEL', $LAYERS, $SEEDS)"
 
-echo "Done. Exports under validation/baseline/matlab/$MODEL/"
+echo "Done. Exports under validation/matlab/$MODEL/"
 echo "Pack for the C-side colleagues with:"
 echo "  tar czf baseline_${MODEL}.tar.gz -C $SCRIPT_DIR/matlab $MODEL"

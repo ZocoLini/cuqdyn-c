@@ -5,7 +5,7 @@ transpilación C. Cubre los 4 modelos del preprint: `lv2` (Lotka-Volterra
 parcialmente observado), `ap` (alpha-pinene, y5 oculto), `sir` (solo
 infectados observados) y `nfkb` (15 estados, 10 observados, FIM casi
 singular). **Nada de esta carpeta requiere MATLAB para consumirse**: las
-referencias están exportadas a texto plano en `matlab/<modelo>/`.
+referencias están exportadas a texto plano en `../matlab/<modelo>/`.
 
 Complementa a `validation/golden/` (capa 1: kernels de álgebra). La
 numeración de capas es:
@@ -13,9 +13,9 @@ numeración de capas es:
 | Capa | Nombre | Dónde |
 |---|---|---|
 | 1 | Kernels de álgebra | `validation/golden/` |
-| 2 | Integración y sensibilidades | aquí, `matlab/<m>/layer2/` |
-| 3 | Replay de la etapa de UQ | aquí, `matlab/<m>/layer3/` |
-| 4 | End-to-end estadístico | aquí, `matlab/<m>/layer4/` + `run_c_seeds.sh` |
+| 2 | Integración y sensibilidades | `../matlab/<m>/layer2/` |
+| 3 | Replay de la etapa de UQ | `../matlab/<m>/layer3/` |
+| 4 | End-to-end estadístico | `../matlab/<m>/layer4/` + `run_c_seeds.sh` |
 
 ## Qué compara exactamente cada capa
 
@@ -114,7 +114,7 @@ Si faltan los exports MATLAB los tests salen como SKIP, no como fallo. Tabla
 check a check:
 
 ```bash
-./build/release-serial/validation/baseline/test_baseline validation/baseline/matlab/lv2 \
+./build/release-serial/validation/baseline/test_baseline validation/matlab/lv2 \
     example-files/lv2-partobs/cuqdyn-fim.xml \
     example-files/lv2-partobs/data.txt
 ```
@@ -160,7 +160,7 @@ las semillas hechas se saltan). Si el módulo no se llama `matlab` a secas:
 
 ## Tolerancias y cómo leer un fallo
 
-En `matlab/<modelo>/tol.txt` (editables sin regenerar nada):
+En `../matlab/<modelo>/tol.txt` (editables sin regenerar nada):
 
 | Clave | lv2 | nfkb | Por qué |
 |---|---|---|---|

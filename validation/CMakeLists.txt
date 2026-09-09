@@ -9,5 +9,5 @@ add_test(NAME validation_golden
          COMMAND test_golden ${CMAKE_CURRENT_BINARY_DIR}/golden 1e-9)
 
 # MATLAB-baseline comparison (layers 3 and 4). Its tests SKIP while the
-# MATLAB exports under baseline/matlab/ are absent.
+# MATLAB exports under matlab/ are absent.
 add_subdirectory(baseline)
