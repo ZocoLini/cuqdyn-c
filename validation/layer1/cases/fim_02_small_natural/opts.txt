@@ -1,0 +1,5 @@
+sigma2 1
+parameterization natural
+covariance_method relative_ridge
+relative_ridge 9.9999999999999998e-13
+rank_tol_factor 100

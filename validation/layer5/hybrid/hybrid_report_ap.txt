@@ -1,0 +1,12 @@
+HYBRID EXPERIMENT - ap  (seed 20260904, maxeval 10000)
+run A: MEIGO + MATLAB-CVODES cost | run B: same MEIGO/seed + C cost (TCP)
+
+evaluations:            A=10113  B=10104
+theta sequences:        lock-step for 148 evaluations, diverge at #149
+cost agreement on the common prefix (rel): median 1.475e-09  max 2.972e-07
+
+final results:
+  A: J=718.1683251  theta=[6.2227849e-05 3.4459656e-05 1.8102007e-05 0.00036712653 5.9308502e-05 ]
+  B: J=718.1681552  theta=[6.2225951e-05 3.4455375e-05 1.8107248e-05 0.00036719571 5.9327277e-05 ]
+  |thetaA-thetaB|/thetaA: median 1.88e-04  max 3.17e-04
+  |JA-JB|/JA = 2.37e-07
