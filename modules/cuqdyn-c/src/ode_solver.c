@@ -106,7 +106,6 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
     cloned_abs_tol = New_Serial(tolerances.atol_len);
     memcpy(NV_DATA_S(cloned_abs_tol), tolerances.atol, tolerances.atol_len * sizeof(sunrealtype));
 
-    // We clone the tolerances because the CVodeFree function frees the memory allocated for the abs_tol it receives
     retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, cloned_abs_tol);
     if (check_retval(&retval, "CVodeSVtolerances", 1))
     {
@@ -266,13 +265,10 @@ cleanup:
         {
             CVodeSensFree(cvode_mem);
         }
-        // CVodeFree also releases the tolerance vector it was handed.
         CVodeFree(&cvode_mem);
     }
-    else
-    {
-        N_VDestroy(cloned_abs_tol);
-    }
+
+    N_VDestroy(cloned_abs_tol);
 
     // CVodeSensInit copies the vectors it is handed, so these stay ours to free.
     if (sensitivity_vectors != NULL)

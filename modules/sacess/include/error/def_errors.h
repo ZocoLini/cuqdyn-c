@@ -41,4 +41,4 @@
 #define error41 "\n*\tERROR[41]: nl2sol local solver only can applied to problems created through AMIGO toolbox."
 #define error42 "\n*\tERROR[42]: stopping_criteria field does not appears in XML."
 #define error43 "\n*\tERROR[43]: matlab problems are only compatible with GNU compilers."
-
+#define error44 "\n*\tERROR[44]: Unknown local tolerance level in XML. Range of tol 1-3, or 'default'"
