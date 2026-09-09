@@ -24,7 +24,7 @@ add_executable(test_baseline test_baseline.c)
 target_link_libraries(test_baseline cuqdyn-c)
 target_compile_options(test_baseline PRIVATE -O0 -g -UNDEBUG)
 
-add_test(NAME baseline_lv2
+add_test(NAME layer2_4_lv2
          COMMAND test_baseline ${VALIDATION_DIR} lv2
                  ${EXAMPLES}/lv2-partobs/cuqdyn-fim.xml
                  ${EXAMPLES}/lv2-partobs/data.txt)
@@ -32,7 +32,7 @@ add_test(NAME baseline_lv2
 # The full-sigma copy lives in common/configs: example-files/nfkb/cuqdyn-fim.xml
 # carries the same values truncated to fewer digits, which fails the 1e-9 sigma
 # cross-check.
-add_test(NAME baseline_nfkb
+add_test(NAME layer2_4_nfkb
          COMMAND test_baseline ${VALIDATION_DIR} nfkb
                  ${CONFIGS}/nfkb_cuqdyn_fullsigma.xml
                  ${EXAMPLES}/nfkb/data.txt)
@@ -40,12 +40,12 @@ add_test(NAME baseline_nfkb
 # The AP partially-observed example has no example-files/ counterpart yet, so
 # its data and configs live in common/configs (mirrors the MATLAB runner
 # EXAMPLES/AP/run_AP_CUQDyn1Plus_partobs_example.m).
-add_test(NAME baseline_ap
+add_test(NAME layer2_4_ap
          COMMAND test_baseline ${VALIDATION_DIR} ap
                  ${CONFIGS}/ap_partobs_cuqdyn_config.xml
                  ${CONFIGS}/ap_partobs_paper_data.txt)
 
-add_test(NAME baseline_sir
+add_test(NAME layer2_4_sir
          COMMAND test_baseline ${VALIDATION_DIR} sir
                  ${EXAMPLES}/sir/cuqdyn-fim.xml
                  ${EXAMPLES}/sir/data.txt)
@@ -56,12 +56,12 @@ add_executable(test_cost_replay layer3/test_cost_replay.c)
 target_link_libraries(test_cost_replay cuqdyn-c)
 target_compile_options(test_cost_replay PRIVATE -O0 -g -UNDEBUG)
 
-add_test(NAME cost_replay_lv2
+add_test(NAME layer3_lv2
          COMMAND test_cost_replay ${VALIDATION_DIR}/layer3/lv2_evals.txt
                  ${EXAMPLES}/lv2-partobs/cuqdyn-fim.xml
                  ${EXAMPLES}/lv2-partobs/data.txt)
 
-set_tests_properties(layer1_golden baseline_lv2 baseline_nfkb baseline_ap baseline_sir cost_replay_lv2
+set_tests_properties(layer1_golden layer2_4_lv2 layer2_4_nfkb layer2_4_ap layer2_4_sir layer3_lv2
                      PROPERTIES SKIP_RETURN_CODE 77)
 
 # --- layer 5: statistical end-to-end ------------------------------------

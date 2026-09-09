@@ -276,7 +276,7 @@ static void run_layer2(const char *dir, const CuqdynData *data, const CuqdynConf
     (void) conf;
 }
 
-/* ------------------------------------------------------------- layer 3 -- */
+/* ------------------------------------------------------------- layer 4 -- */
 
 static int is_observed(const int *observed_idx, const int n_obs, const long state)
 {

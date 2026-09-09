@@ -1,5 +1,5 @@
 /*
- * Layer 2.5: replay a recorded MATLAB eSS search through the C cost function.
+ * Layer 3: replay a recorded MATLAB eSS search through the C cost function.
  *
  * gen_cost_replay.m froze every parameter vector a seeded MATLAB MEIGO fit
  * evaluated, together with MATLAB's cost value J. This harness re-evaluates

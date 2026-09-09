@@ -1,5 +1,5 @@
 function gen_cost_replay(model)
-%GEN_COST_REPLAY Layer 2.5: record every point a MATLAB MEIGO search evaluates.
+%GEN_COST_REPLAY Layer 3: record every point a MATLAB MEIGO search evaluates.
 %
 %   gen_cost_replay('lv2')   ->  layer3/lv2_evals.txt
 %

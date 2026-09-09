@@ -170,13 +170,13 @@ end
 %% ------------------------------------------------------------- layer 4 --
 if ismember(4, layers)
     fprintf('=== Layer 4: one seeded CUQDyn1_Plus run (this calls MEIGO) ===\n');
-    l3 = l4dir;
-    if ~exist(l3, 'dir'), mkdir(l3); end
+    l4 = l4dir;
+    if ~exist(l4, 'dir'), mkdir(l4); end
 
     seed = 20260819;
     rng(seed, 'twister');
 
-    resultDir = fullfile(l3, 'matlab_run');
+    resultDir = fullfile(l4, 'matlab_run');
     if ~exist(resultDir, 'dir'), mkdir(resultDir); end
 
     res = CUQDyn1_Plus(pb.cost, pb.dynamics, pb.nstates, pb.n_params, ...
@@ -184,18 +184,18 @@ if ismember(4, layers)
         times, all_state_data, y0, observed_data, observed_idx, ...
         resultDir, meigo_opts);
 
-    write_matrix(fullfile(l3, 'theta_hat.txt'), res.parameters_init(:));
-    write_matrix(fullfile(l3, 'loo_params.txt'), res.loo_params);
-    write_matrix(fullfile(l3, 'resid_loo.txt'), res.resid_loo);
-    write_matrix(fullfile(l3, 'media_tot.txt'), res.media_tot);
-    write_matrix(fullfile(l3, 'q_low.txt'), res.UQ_lower);
-    write_matrix(fullfile(l3, 'q_up.txt'), res.UQ_upper);
-    write_matrix(fullfile(l3, 'cov_p.txt'), res.Cov_p);
-    write_matrix(fullfile(l3, 'std_y.txt'), res.std_y);
-    write_matrix(fullfile(l3, 'observed_data.txt'), observed_data);
+    write_matrix(fullfile(l4, 'theta_hat.txt'), res.parameters_init(:));
+    write_matrix(fullfile(l4, 'loo_params.txt'), res.loo_params);
+    write_matrix(fullfile(l4, 'resid_loo.txt'), res.resid_loo);
+    write_matrix(fullfile(l4, 'media_tot.txt'), res.media_tot);
+    write_matrix(fullfile(l4, 'q_low.txt'), res.UQ_lower);
+    write_matrix(fullfile(l4, 'q_up.txt'), res.UQ_upper);
+    write_matrix(fullfile(l4, 'cov_p.txt'), res.Cov_p);
+    write_matrix(fullfile(l4, 'std_y.txt'), res.std_y);
+    write_matrix(fullfile(l4, 'observed_data.txt'), observed_data);
 
     % media_matrix is m x nstates x (m-1); flat blocks, custom header.
-    fid = fopen(fullfile(l3, 'media_matrix.txt'), 'w');
+    fid = fopen(fullfile(l4, 'media_matrix.txt'), 'w');
     fprintf(fid, '%d %d %d\n', m - 1, m, pb.nstates);
     for k = 1:(m - 1)
         for i = 1:m
@@ -210,22 +210,22 @@ if ismember(4, layers)
     wres = cuqdyn_weight_residuals(res_full, opts.cost);
     sigma2 = cuqdyn_residual_variance(wres, pb.n_params, opts.cost);
 
-    fid = fopen(fullfile(l3, 'meta4.txt'), 'w');
+    fid = fopen(fullfile(l4, 'meta4.txt'), 'w');
     fprintf(fid, 'seed %d\n', seed);
     fprintf(fid, 'sigma2 %.17g\n', sigma2);
     fclose(fid);
 
-    fprintf('Layer 4 written to %s\n', l3);
+    fprintf('Layer 4 written to %s\n', l4);
 end
 
 %% ------------------------------------------------------------- layer 5 --
 if ismember(5, layers)
     fprintf('=== Layer 5: %d seeded full runs ===\n', numel(seeds));
-    l4 = l5dir;
-    if ~exist(l4, 'dir'), mkdir(l4); end
+    l5 = l5dir;
+    if ~exist(l5, 'dir'), mkdir(l5); end
 
     for s = seeds(:).'
-        sdir = fullfile(l4, sprintf('seed_%d', s));
+        sdir = fullfile(l5, sprintf('seed_%d', s));
         if exist(fullfile(sdir, 'q_up.txt'), 'file')
             fprintf('seed %d already done, skipping\n', s);
             continue;
@@ -247,7 +247,7 @@ if ismember(5, layers)
         write_matrix(fullfile(sdir, 'q_up.txt'), res.UQ_upper);
         fprintf('seed %d done\n', s);
     end
-    fprintf('Layer 5 written to %s\n', l4);
+    fprintf('Layer 5 written to %s\n', l5);
 end
 
 fprintf('\nBaseline export complete: %s\n', outdir);

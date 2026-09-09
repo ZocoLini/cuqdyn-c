@@ -40,7 +40,7 @@ Key results of layers 2 and 4 (details and tolerances in `LAYERS.md`):
 
 ```
 validation/
-├── test_baseline.c    C comparator for layers 2 and 4 (the baseline_* ctests).
+├── test_baseline.c    C comparator for layers 2 and 4 (the layer2_4_* ctests).
 │                      One binary because both read the same config, data file
 │                      and per-model context; it takes the validation directory
 │                      and a model name and finds the rest itself.
@@ -128,16 +128,16 @@ system cargo is from 2020 and cannot build the crate):
 
 ```bash
 scripts/build.sh serial
-cd build/release-serial && ctest -R "layer1|baseline|cost_replay" --output-on-failure
+cd build/release-serial && ctest -R "layer1|layer2_4|layer3" --output-on-failure
 ```
 
 - `layer1_golden` — layer 1. A failure = a transpilation bug in the
   algebra.
-- `baseline_lv2` / `baseline_ap` / `baseline_sir` / `baseline_nfkb` — layers
+- `layer2_4_<model>` — layers
   2 and 4 per model, in one binary. Whichever of the two has no MATLAB export
   is skipped; with neither the test reports SKIP (they are included in this
   branch, so they should actually run).
-- `cost_replay_lv2` — layer 3.
+- `layer3_lv2` — layer 3.
 
 Layer 5 is not a ctest: it is a report to read, not a gate. See below.
 

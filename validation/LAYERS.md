@@ -35,7 +35,7 @@ aleatoriedad vive en MATLAB. `layer3/gen_cost_replay.m` corre UN ajuste
 MEIGO/eSS sembrado con el coste envuelto en un grabador, y congela cada punto
 θ_k que el optimizador decidió evaluar (≈2e4 puntos que cubren exactamente la
 región que visita una búsqueda real) junto con su coste MATLAB J_k. El arnés
-C (`layer3/test_cost_replay.c`, ctest `cost_replay_lv2`) re-evalúa el
+C (`layer3/test_cost_replay.c`, ctest `layer3_lv2`) re-evalúa el
 coste C (CVODES + `cuqdyn_residual_weight`) en la MISMA secuencia y compara J
 punto a punto — sin optimizador en C, así que es 100% determinista. Con esto
 queda validada la función de coste *dentro del bucle de optimización*, que
@@ -108,7 +108,7 @@ Y build normal:
 
 ```bash
 scripts/build.sh serial
-cd build/release-serial && ctest -R baseline --output-on-failure
+cd build/release-serial && ctest -R "layer1|layer2_4|layer3" --output-on-failure
 ```
 
 Si faltan los exports MATLAB los tests salen como SKIP, no como fallo. Tabla
