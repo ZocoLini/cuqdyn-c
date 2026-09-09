@@ -50,9 +50,16 @@ validation/
 │                      compares against expect_*. If a check fails, the C algebra
 │                      diverged from MATLAB on that exact input.
 │
-└── baseline/          LAYERS 2-4 MATERIAL, one level up in realism. Holds BOTH
-    │                   sides: matlab/ is the reference, c/ is what this port
-    │                   produced, and the report_*.md compare the two.
+├── c/layer4/<model>/seed_N/   WHAT THIS PORT PRODUCED, written by
+│                      baseline/run_c_seeds.sh: cuqdyn-results.txt (the full
+│                      result in the CLI's labelled-section format) and
+│                      sacess/convergence_id0.csv. Only layer 4 appears here
+│                      because it is the only stage whose C output is worth
+│                      keeping: layers 1-3 compute theirs and compare it inside
+│                      a single test run. run.log is gitignored, nothing reads it.
+│
+└── baseline/          LAYERS 2-4 MATERIAL, one level up in realism. The MATLAB
+    │                   reference plus the tools that compare it against c/.
     ├── gen_baseline.m       MATLAB generator (seeded, sequential) of matlab/<model>/
     ├── test_baseline.c      C comparator for layers 2+3 (the baseline_* ctests)
     ├── matlab/<model>/      THE MATLAB REFERENCE per model (lv2, ap, sir, nfkb),
@@ -71,10 +78,6 @@ validation/
     │   │                    are the distributions compare_baseline.py reads.
     │   └── times/y0/truth/sigma/meta/tol.txt   shared context + the comparison
     │                        tolerances (editable without regenerating anything)
-    ├── c/<model>/seed_N/    THE C SIDE of layer 4, written by run_c_seeds.sh:
-    │                        cuqdyn-results.txt (the full result in the CLI's
-    │                        labelled-section format) and sacess/convergence_id0.csv.
-    │                        The solver's run.log is gitignored, nothing reads it.
     ├── report_<model>.md    the layer-4 verdict per model: parameter medians and
     │   + _theta.png         IQRs on both sides, band widths, empirical coverage
     ├── cost_replay/         LAYER 2.5. gen_cost_replay.m records a MATLAB eSS

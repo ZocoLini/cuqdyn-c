@@ -5,7 +5,7 @@
 #   validation/baseline/run_c_seeds.sh lv2  10
 #   validation/baseline/run_c_seeds.sh nfkb 20
 #
-# Results land in validation/baseline/c/<model>/seed_<k>/cuqdyn-results.txt,
+# Results land in validation/c/layer4/<model>/seed_<k>/cuqdyn-results.txt,
 # which is what compare_baseline.py consumes. Picks the first serial build
 # under build/ by default; override with CLI=path/to/cli.
 
@@ -58,7 +58,7 @@ if [ -z "$CLI" ] || [ ! -x "$CLI" ]; then
     exit 1
 fi
 
-OUTROOT="$SCRIPT_DIR/c/$MODEL"
+OUTROOT="$SCRIPT_DIR/../c/layer4/$MODEL"
 mkdir -p "$OUTROOT"
 
 for ((s = 1; s <= NSEEDS; s++)); do
