@@ -1,7 +1,7 @@
-# Baseline capa 4 - sir
+# Baseline capa 5 - sir
 
-MATLAB: 10 semillas (validation/matlab/sir)
-C:      10 semillas (validation/c/layer4/sir)
+MATLAB: 10 semillas (validation/layer5/matlab/sir)
+C:      10 semillas (validation/layer5/c/sir)
 
 Ambos lados corren el pipeline completo con su propio optimizador estocastico; lo comparable son las distribuciones, no las semillas una a una.
 

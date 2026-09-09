@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Layer-5 comparison: MATLAB seed ensemble vs C seed ensemble.
 
-Layers 3 and 4 are compared by the C harness (test_baseline); this script
-handles the only layer where a scalar pass/fail makes no sense, because both
-sides ran a stochastic optimiser. Instead it compares the two *distributions*:
+Layers 2 and 4 are compared by the C harness (test_baseline) and layer 3 by
+test_cost_replay; this script handles the only layer where a scalar pass/fail
+makes no sense, because both sides ran a stochastic optimiser. Instead it
+compares the two *distributions*:
 
   - per-parameter theta_hat: median and IQR side by side, plus the ratio of
     medians and whether the IQRs overlap;
@@ -15,7 +16,7 @@ Usage:
     python3 compare_baseline.py nfkb --matlab-dir path/ --c-dir path/
 
 Writes report_<model>.md next to this script and, when matplotlib is
-available, a PNG per figure. Exit code 0 always: layer 4 is a report to be
+available, a PNG per figure. Exit code 0 always: layer 5 is a report to be
 read, not a gate - the numbers need a human eye precisely because optimiser
 noise is part of what is being measured.
 """
@@ -67,11 +68,10 @@ def parse_c_results(path):
 
 def load_matlab_seeds(root):
     seeds = []
-    layer4 = os.path.join(root, "layer4")
-    if not os.path.isdir(layer4):
-        sys.exit(f"No layer4/ under {root} - run gen_baseline('<model>', 4, seeds) first")
-    for name in sorted(os.listdir(layer4)):
-        d = os.path.join(layer4, name)
+    if not os.path.isdir(root):
+        sys.exit(f"No {root} - run gen_baseline('<model>', 5, seeds) first")
+    for name in sorted(os.listdir(root)):
+        d = os.path.join(root, name)
         if not name.startswith("seed_") or not os.path.isfile(os.path.join(d, "q_up.txt")):
             continue
         seeds.append({
@@ -81,7 +81,7 @@ def load_matlab_seeds(root):
             "q_up": read_matrix(os.path.join(d, "q_up.txt")),
         })
     if not seeds:
-        sys.exit(f"layer4/ under {root} has no finished seed_* directories")
+        sys.exit(f"{root} has no finished seed_* directories")
     return seeds
 
 
@@ -225,29 +225,29 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("model", choices=["lv2", "ap", "sir", "nfkb"])
     ap.add_argument("--matlab-dir", default=None,
-                    help="default: validation/matlab/<model>")
+                    help="default: validation/layer5/matlab/<model>")
     ap.add_argument("--c-dir", default=None,
-                    help="default: validation/c/layer4/<model>")
+                    help="default: validation/layer5/c/<model>")
     args = ap.parse_args()
 
-    # Both sides hang off validation/, not off this script's directory: matlab/
-    # is the frozen reference, c/ the layer-4 output of run_c_seeds.sh.
-    validation = os.path.dirname(here)
-
-    mat_root = args.matlab_dir or os.path.join(validation, "matlab", args.model)
-    c_root = args.c_dir or os.path.join(validation, "c", "layer4", args.model)
+    # Both sides of layer 5 live next to this script, one directory per side.
+    # The true trajectory and the time grid are not layer-5 material: they
+    # describe the problem, so they come from the shared context.
+    mat_root = args.matlab_dir or os.path.join(here, "matlab", args.model)
+    c_root = args.c_dir or os.path.join(here, "c", args.model)
+    common = os.path.join(os.path.dirname(here), "common", "models", args.model)
 
     mat_seeds = load_matlab_seeds(mat_root)
     c_seeds = load_c_seeds(c_root)
-    truth = read_matrix(os.path.join(mat_root, "truth.txt"))
-    times = read_matrix(os.path.join(mat_root, "times.txt")).ravel()
+    truth = read_matrix(os.path.join(common, "truth.txt"))
+    times = read_matrix(os.path.join(common, "times.txt")).ravel()
 
     # Relative to the repo root: the report is committed, so an absolute path
     # would freeze whatever machine happened to generate it.
     repo = os.path.dirname(os.path.dirname(here))
     rel = lambda p: os.path.relpath(p, repo).replace(os.sep, "/")
 
-    lines = [f"# Baseline capa 4 - {args.model}", "",
+    lines = [f"# Baseline capa 5 - {args.model}", "",
              f"MATLAB: {len(mat_seeds)} semillas ({rel(mat_root)})",
              f"C:      {len(c_seeds)} semillas ({rel(c_root)})", "",
              "Ambos lados corren el pipeline completo con su propio optimizador "

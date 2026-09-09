@@ -1,7 +1,7 @@
 function gen_cost_replay(model)
 %GEN_COST_REPLAY Layer 2.5: record every point a MATLAB MEIGO search evaluates.
 %
-%   gen_cost_replay('lv2')   ->  cost_replay/lv2_evals.txt
+%   gen_cost_replay('lv2')   ->  layer3/lv2_evals.txt
 %
 % This implements the "shared randomness" idea: ALL the randomness lives on
 % the MATLAB side. One seeded MEIGO/eSS fit runs here with the cost handle

@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     if (f == NULL)
     {
         printf("No recorded evaluations at %s.\n", argv[1]);
-        printf("Generate them with MATLAB first: cost_replay/gen_cost_replay.m\n");
+        printf("Generate them with MATLAB first: layer3/gen_cost_replay.m\n");
         return 77; /* ctest SKIP_RETURN_CODE */
     }
 

@@ -2,10 +2,10 @@
 # Layer-5 C side: run the CLI once per seed, fixing SACESS_SEED so each run
 # is reproducible. No MATLAB needed.
 #
-#   validation/baseline/run_c_seeds.sh lv2  10
-#   validation/baseline/run_c_seeds.sh nfkb 20
+#   validation/layer5/run_c_seeds.sh lv2  10
+#   validation/layer5/run_c_seeds.sh nfkb 20
 #
-# Results land in validation/c/layer4/<model>/seed_<k>/cuqdyn-results.txt,
+# Results land in validation/layer5/c/<model>/seed_<k>/cuqdyn-results.txt,
 # which is what compare_baseline.py consumes. Picks the first serial build
 # under build/ by default; override with CLI=path/to/cli.
 
@@ -15,7 +15,9 @@ MODEL="${1:?usage: run_c_seeds.sh lv2|ap|sir|nfkb [n_seeds]}"
 NSEEDS="${2:-10}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "$SCRIPT_DIR/../.." && pwd)"
+VALIDATION="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO="$(cd "$VALIDATION/.." && pwd)"
+CONFIGS="$VALIDATION/common/configs"
 CLI="${CLI:-}"
 if [ -z "$CLI" ]; then
     for candidate in release-serial debug-serial; do
@@ -31,10 +33,10 @@ case "$MODEL" in
         DATA="$REPO/example-files/lv2-partobs/data.txt"
         ;;
     ap)
-        # Self-contained in validation/baseline until promoted to example-files.
-        CONF="$SCRIPT_DIR/ap_partobs_cuqdyn_config.xml"
-        ESS="$SCRIPT_DIR/ap_partobs_ess_serial_config.xml"
-        DATA="$SCRIPT_DIR/ap_partobs_paper_data.txt"
+        # In common/configs until promoted to example-files.
+        CONF="$CONFIGS/ap_partobs_cuqdyn_config.xml"
+        ESS="$CONFIGS/ap_partobs_ess_serial_config.xml"
+        DATA="$CONFIGS/ap_partobs_paper_data.txt"
         ;;
     sir)
         CONF="$REPO/example-files/sir/cuqdyn-fim.xml"
@@ -43,8 +45,8 @@ case "$MODEL" in
         ;;
     nfkb)
         # Full-precision sigmas + the MATLAB-matched 2e4 budget.
-        CONF="$SCRIPT_DIR/nfkb_cuqdyn_fullsigma.xml"
-        ESS="$SCRIPT_DIR/nfkb_ess_serial_2e4.xml"
+        CONF="$CONFIGS/nfkb_cuqdyn_fullsigma.xml"
+        ESS="$CONFIGS/nfkb_ess_serial_2e4.xml"
         DATA="$REPO/example-files/nfkb/data.txt"
         ;;
     *)
@@ -58,7 +60,7 @@ if [ -z "$CLI" ] || [ ! -x "$CLI" ]; then
     exit 1
 fi
 
-OUTROOT="$SCRIPT_DIR/../c/layer4/$MODEL"
+OUTROOT="$SCRIPT_DIR/c/$MODEL"
 mkdir -p "$OUTROOT"
 
 for ((s = 1; s <= NSEEDS; s++)); do

@@ -1,10 +1,10 @@
 function gen_baseline(model, layers, seeds, outdir)
 %GEN_BASELINE Export a MATLAB baseline for the C port, as plain text.
 %
-%   gen_baseline('lv2')                 layers 2 and 3, default output dir
-%   gen_baseline('nfkb', [2 3])         same, NF-kB
-%   gen_baseline('lv2', 4, 1:10)        layer 4, seeds 1..10
-%   gen_baseline('nfkb', 4, 7)          layer 4, only seed 7 (for SLURM arrays)
+%   gen_baseline('lv2')                 layers 2 and 4, default output dirs
+%   gen_baseline('nfkb', [2 4])         same, NF-kB
+%   gen_baseline('lv2', 5, 1:10)        layer 5, seeds 1..10
+%   gen_baseline('nfkb', 5, 7)          layer 5, only seed 7 (for SLURM arrays)
 %
 % Models:
 %   'lv2'   Lotka-Volterra, 2 states, prey observed / predator hidden.
@@ -17,12 +17,15 @@ function gen_baseline(model, layers, seeds, outdir)
 % Layers (see validation/README.md for the layering rationale):
 %   2  INTEGRATION: ODE trajectory + complex-step sensitivities at FIXED true
 %      parameters. No optimiser at all. Pins down CVODES-vs-complex-step.
-%   3  UQ REPLAY: one full seeded CUQDyn1_Plus run with parallelism disabled.
+%   4  UQ REPLAY: one full seeded CUQDyn1_Plus run with parallelism disabled.
 %      Exports theta_hat, the LOO ensemble, residuals, bands, Cov_p, std_y -
 %      enough for the C harness to replay the whole UQ stage deterministically.
-%   4  STATISTICAL END-TO-END: N full runs, one per seed. Exports per-seed
+%   5  STATISTICAL END-TO-END: N full runs, one per seed. Exports per-seed
 %      theta_hat, median params and bands, for a distribution-level comparison
 %      against N C runs (compare_baseline.py does that part).
+%
+% Layer 1 (algebra kernels) comes from gen_golden.m and layer 3 (the cost
+% function replayed over a recorded search) from layer3/gen_cost_replay.m.
 %
 % Everything is written as plain text ("rows cols" header + %.17g values,
 % the same format validation/golden uses), so the C side needs no MATLAB.
@@ -34,17 +37,20 @@ function gen_baseline(model, layers, seeds, outdir)
 if nargin < 1
     error('gen_baseline:model', 'Usage: gen_baseline(''lv2''|''nfkb'', [layers], [seeds], [outdir])');
 end
-if nargin < 2 || isempty(layers), layers = [2 3]; end
+if nargin < 2 || isempty(layers), layers = [2 4]; end
 if nargin < 3 || isempty(seeds),  seeds  = 1:10; end
 
 here = fileparts(mfilename('fullpath'));
-repo = fullfile(here, '..', '..');
+repo = fullfile(here, '..');
 
+% One directory per layer, with the context all of them share in common/.
+% outdir is that shared context; each layer writes into its own tree.
 if nargin < 4 || isempty(outdir)
-    % validation/matlab/<model>, a sibling of this directory rather than a
-    % child: the reference is not part of the harness that reads it.
-    outdir = fullfile(here, '..', 'matlab', model);
+    outdir = fullfile(here, 'common', 'models', model);
 end
+l2dir = fullfile(here, 'layer2', 'matlab', model);
+l4dir = fullfile(here, 'layer4', 'matlab', model);
+l5dir = fullfile(here, 'layer5', 'matlab', model);
 
 % --- Paths: CUQDyn1_Plus sources, the example dir of the model, MEIGO ---
 addpath(fullfile(repo, 'CUQDyn1_Plus', 'src'));
@@ -55,7 +61,7 @@ if isempty(meigoPath)
 end
 if isfolder(meigoPath)
     addpath(genpath(meigoPath));
-elseif any(ismember(layers, [3 4]))
+elseif any(ismember(layers, [4 5]))
     error('gen_baseline:meigo', ...
         'MEIGO64 not found (looked in %s). Set MEIGO64_PATH. Layers 4/5 need it.', meigoPath);
 end
@@ -133,7 +139,7 @@ fclose(fid);
 %% ------------------------------------------------------------- layer 2 --
 if ismember(2, layers)
     fprintf('=== Layer 2: ODE + complex-step sensitivities at true parameters ===\n');
-    l2 = fullfile(outdir, 'layer2');
+    l2 = l2dir;
     if ~exist(l2, 'dir'), mkdir(l2); end
 
     theta = pb.true_params(:);
@@ -161,10 +167,10 @@ if ismember(2, layers)
     fprintf('Layer 2 written to %s\n', l2);
 end
 
-%% ------------------------------------------------------------- layer 3 --
-if ismember(3, layers)
-    fprintf('=== Layer 3: one seeded CUQDyn1_Plus run (this calls MEIGO) ===\n');
-    l3 = fullfile(outdir, 'layer3');
+%% ------------------------------------------------------------- layer 4 --
+if ismember(4, layers)
+    fprintf('=== Layer 4: one seeded CUQDyn1_Plus run (this calls MEIGO) ===\n');
+    l3 = l4dir;
     if ~exist(l3, 'dir'), mkdir(l3); end
 
     seed = 20260819;
@@ -209,13 +215,13 @@ if ismember(3, layers)
     fprintf(fid, 'sigma2 %.17g\n', sigma2);
     fclose(fid);
 
-    fprintf('Layer 3 written to %s\n', l3);
+    fprintf('Layer 4 written to %s\n', l3);
 end
 
-%% ------------------------------------------------------------- layer 4 --
-if ismember(4, layers)
-    fprintf('=== Layer 4: %d seeded full runs ===\n', numel(seeds));
-    l4 = fullfile(outdir, 'layer4');
+%% ------------------------------------------------------------- layer 5 --
+if ismember(5, layers)
+    fprintf('=== Layer 5: %d seeded full runs ===\n', numel(seeds));
+    l4 = l5dir;
     if ~exist(l4, 'dir'), mkdir(l4); end
 
     for s = seeds(:).'
@@ -241,7 +247,7 @@ if ismember(4, layers)
         write_matrix(fullfile(sdir, 'q_up.txt'), res.UQ_upper);
         fprintf('seed %d done\n', s);
     end
-    fprintf('Layer 4 written to %s\n', l4);
+    fprintf('Layer 5 written to %s\n', l4);
 end
 
 fprintf('\nBaseline export complete: %s\n', outdir);
@@ -289,7 +295,7 @@ switch lower(model)
         pb.noise_pct = 5;
         % run_NFKB_example_CUQDyn1plus.m uses 2e4. The stock C config uses
         % 1e5; the C side of the baseline runs the 2e4 copy in
-        % validation/baseline/nfkb_ess_serial_2e4.xml for a fair comparison.
+        % validation/common/configs/nfkb_ess_serial_2e4.xml for a fair comparison.
         pb.maxeval = 2e4;
     case 'ap'
         % Mirrors run_AP_CUQDyn1Plus_partobs_example.m: real measurement

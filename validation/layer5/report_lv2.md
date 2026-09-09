@@ -1,7 +1,7 @@
-# Baseline capa 4 - lv2
+# Baseline capa 5 - lv2
 
-MATLAB: 10 semillas (validation/matlab/lv2)
-C:      10 semillas (validation/c/layer4/lv2)
+MATLAB: 10 semillas (validation/layer5/matlab/lv2)
+C:      10 semillas (validation/layer5/c/lv2)
 
 Ambos lados corren el pipeline completo con su propio optimizador estocastico; lo comparable son las distribuciones, no las semillas una a una.
 

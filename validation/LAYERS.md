@@ -1,21 +1,22 @@
-# Baseline MATLAB → C (capas 2, 3 y 4)
+# Baseline MATLAB → C (capas 2 a 5)
 
 Referencia generada con el MATLAB original (`CUQDyn1_Plus/`) para validar la
 transpilación C. Cubre los 4 modelos del preprint: `lv2` (Lotka-Volterra
 parcialmente observado), `ap` (alpha-pinene, y5 oculto), `sir` (solo
 infectados observados) y `nfkb` (15 estados, 10 observados, FIM casi
 singular). **Nada de esta carpeta requiere MATLAB para consumirse**: las
-referencias están exportadas a texto plano en `../matlab/<modelo>/`.
+referencias están exportadas a texto plano en `common/models/<modelo>/` y `layer<N>/matlab/<modelo>/`.
 
-Complementa a `validation/golden/` (capa 1: kernels de álgebra). La
+Complementa a `layer1/` (capa 1: kernels de álgebra). La
 numeración de capas es:
 
 | Capa | Nombre | Dónde |
 |---|---|---|
-| 1 | Kernels de álgebra | `validation/golden/` |
-| 2 | Integración y sensibilidades | `../matlab/<m>/layer2/` |
-| 3 | Replay de la etapa de UQ | `../matlab/<m>/layer3/` |
-| 4 | End-to-end estadístico | `../matlab/<m>/layer4/` + `run_c_seeds.sh` |
+| 1 | Kernels de álgebra | `layer1/` |
+| 2 | Integración y sensibilidades | `layer2/matlab/<m>/` |
+| 3 | Replay del coste sobre una búsqueda grabada | `layer3/` |
+| 4 | Replay de la etapa de UQ | `layer4/matlab/<m>/` |
+| 5 | End-to-end estadístico | `layer5/matlab/` + `layer5/c/` |
 
 ## Qué compara exactamente cada capa
 
@@ -28,7 +29,24 @@ punto. No interviene ningún optimizador: un fallo aquí es un problema del
 integrador, del RHS de la ODE (p. ej. orden de parámetros) o de las
 sensibilidades. Checks: `trajectory` + un `sens dtheta_k` por parámetro.
 
-**Capa 3 — replay de la etapa de UQ (determinista).**
+**Capa 3 — replay del coste sobre una búsqueda real (determinista).**
+Materializa la idea del "generador de números aleatorios compartido": TODA la
+aleatoriedad vive en MATLAB. `layer3/gen_cost_replay.m` corre UN ajuste
+MEIGO/eSS sembrado con el coste envuelto en un grabador, y congela cada punto
+θ_k que el optimizador decidió evaluar (≈2e4 puntos que cubren exactamente la
+región que visita una búsqueda real) junto con su coste MATLAB J_k. El arnés
+C (`layer3/test_cost_replay.c`, ctest `cost_replay_lv2`) re-evalúa el
+coste C (CVODES + `cuqdyn_residual_weight`) en la MISMA secuencia y compara J
+punto a punto — sin optimizador en C, así que es 100% determinista. Con esto
+queda validada la función de coste *dentro del bucle de optimización*, que
+era la única pieza que las capas 2 y 4 no cubrían. (Un puente vivo C→MEIGO vía
+Engine no sería determinista: los costes difieren a nivel de redondeo y una
+sola comparación volteada divergiría la búsqueda sin haber bug; congelar la
+secuencia da la misma cobertura sin ese canal de divergencia.)
+Resultado actual (lv2): **20.126/20.126 evaluaciones dentro de 1e-3** (media
+4.2e-5, máx 5.2e-4, 0 fallos de integración).
+
+**Capa 4 — replay de la etapa de UQ (determinista).**
 MATLAB ejecuta UNA vez el pipeline completo con semilla fija y exporta todo
 lo que produce el optimizador: θ̂ (`theta_hat.txt`), el ensemble LOO completo
 (`loo_params.txt`, `media_matrix.txt`, `resid_loo.txt`), la trayectoria de
@@ -39,23 +57,6 @@ entradas son idénticas, el optimizador queda fuera de la ecuación: un fallo
 es un bug en la matemática de bandas. Checks: `conformal q_low/q_up` (deben
 ser exactas), `delta q_low/q_up` de estados ocultos, `cov_p`, `std_y`, y dos
 cross-checks de configuración (`alp`, `sigma XML vs MATLAB`).
-
-**Capa 2.5 — replay del coste sobre una búsqueda real (determinista).**
-Materializa la idea del "generador de números aleatorios compartido": TODA la
-aleatoriedad vive en MATLAB. `cost_replay/gen_cost_replay.m` corre UN ajuste
-MEIGO/eSS sembrado con el coste envuelto en un grabador, y congela cada punto
-θ_k que el optimizador decidió evaluar (≈2e4 puntos que cubren exactamente la
-región que visita una búsqueda real) junto con su coste MATLAB J_k. El arnés
-C (`cost_replay/test_cost_replay.c`, ctest `cost_replay_lv2`) re-evalúa el
-coste C (CVODES + `cuqdyn_residual_weight`) en la MISMA secuencia y compara J
-punto a punto — sin optimizador en C, así que es 100% determinista. Con esto
-queda validada la función de coste *dentro del bucle de optimización*, que
-era la única pieza que las capas 2-3 no cubrían. (Un puente vivo C→MEIGO vía
-Engine no sería determinista: los costes difieren a nivel de redondeo y una
-sola comparación volteada divergiría la búsqueda sin haber bug; congelar la
-secuencia da la misma cobertura sin ese canal de divergencia.)
-Resultado actual (lv2): **20.126/20.126 evaluaciones dentro de 1e-3** (media
-4.2e-5, máx 5.2e-4, 0 fallos de integración).
 
 **Experimento híbrido — optimizador compartido (hybrid/).**
 El MEIGO de MATLAB corre dos veces con la misma semilla: una evaluando el
@@ -72,16 +73,16 @@ distintas del paisaje no identificable (J 914 vs 518 — el run con coste C
 encontró la mejor), midiendo la multimodalidad del problema, no el código:
 en el prefijo común sus costes coinciden a 3.7e-6.
 
-**Capa 4 — end-to-end estadístico (con ruido, es lo que se mide).**
+**Capa 5 — end-to-end estadístico (con ruido, es lo que se mide).**
 Cada lado corre el pipeline completo N veces con semillas distintas (MATLAB:
-`gen_baseline(modelo, 4, 1:N)`; C: `run_c_seeds.sh modelo N`, que fija
+`gen_baseline(modelo, 5, 1:N)`; C: `run_c_seeds.sh modelo N`, que fija
 `SACESS_SEED`). `compare_baseline.py` compara las DISTRIBUCIONES: mediana e
 IQR por parámetro, ratio de anchuras de banda por estado y cobertura empírica
 de la trayectoria verdadera. Es un informe para leer, no un gate: aquí dos
 implementaciones correctas no coinciden ejecución a ejecución, solo en
 distribución.
 
-## Resultados actuales (capas 2+3)
+## Resultados actuales (capas 2 y 4)
 
 **71/71 checks en verde** (lv2 12, ap 12, sir 10, nfkb 37): conformales
 exactas a precisión de máquina en los 4 modelos, sensibilidades a 1e-7..1e-4,
@@ -114,20 +115,20 @@ Si faltan los exports MATLAB los tests salen como SKIP, no como fallo. Tabla
 check a check:
 
 ```bash
-./build/release-serial/validation/baseline/test_baseline validation/matlab/lv2 \
+./build/release-serial/validation/test_baseline validation lv2 \
     example-files/lv2-partobs/cuqdyn-fim.xml \
     example-files/lv2-partobs/data.txt
 ```
 
-Capa 4, lado C + informe:
+Capa 5, lado C + informe:
 
 ```bash
-validation/baseline/run_c_seeds.sh lv2 10      # SACESS_SEED=1..10
-python3 validation/baseline/compare_baseline.py lv2
+validation/layer5/run_c_seeds.sh lv2 10      # SACESS_SEED=1..10
+python3 validation/layer5/compare_baseline.py lv2
 ```
 
 Notas de autocontención: el ejemplo AP parcialmente observado (datos +
-configs `ap_partobs_*`) vive en este directorio porque `example-files/` solo
+configs `ap_partobs_*`) vive en `common/configs/` porque `example-files/` solo
 trae el alpha-pinene totalmente observado; `nfkb_cuqdyn_fullsigma.xml` es el
 config NF-kB con los `<sigma>` a precisión completa (los de `example-files/`
 están truncados y fallan el cross-check a 1e-9); y
@@ -141,17 +142,17 @@ Requisitos: MATLAB R2020a+ con Optimization Toolbox; MEIGO64 se toma de
 `$MEIGO64_PATH` o de `CUQDyn/Matlab/MEIGO64-master` del repo.
 
 ```matlab
-cd validation/baseline
-gen_baseline('lv2')            % capas 2 y 3 (por defecto)
-gen_baseline('nfkb', [2 3])
-gen_baseline('sir', 4, 1:10)   % capa 4, semillas 1..10
+cd validation
+gen_baseline('lv2')            % capas 2 y 4 (por defecto)
+gen_baseline('nfkb', [2 4])
+gen_baseline('sir', 5, 1:10)   % capa 5, semillas 1..10
 ```
 
 En drago.cesga.es:
 
 ```bash
-sbatch --export=ALL,MODEL=nfkb,LAYERS="[2 3]" validation/baseline/drago_baseline.sbatch
-sbatch --array=1-20 --export=ALL,MODEL=nfkb,LAYERS=4 validation/baseline/drago_baseline.sbatch
+sbatch --export=ALL,MODEL=nfkb,LAYERS="[2 4]" validation/layer5/drago_baseline.sbatch
+sbatch --array=1-20 --export=ALL,MODEL=nfkb,LAYERS=5 validation/layer5/drago_baseline.sbatch
 ```
 
 Cada tarea del array corre una semilla en su propio `seed_<k>/` (re-lanzable;
@@ -160,7 +161,7 @@ las semillas hechas se saltan). Si el módulo no se llama `matlab` a secas:
 
 ## Tolerancias y cómo leer un fallo
 
-En `../matlab/<modelo>/tol.txt` (editables sin regenerar nada):
+En `common/models/<modelo>/tol.txt` (editables sin regenerar nada):
 
 | Clave | lv2 | nfkb | Por qué |
 |---|---|---|---|
@@ -204,7 +205,7 @@ observado/conformal, naranja = oculto/delta):
 Cualquier `cuqdyn-results.txt` se redibuja igual con:
 
 ```bash
-python3 validation/baseline/plot_c_results_matlab_style.py <results.txt> <datos.txt> <salida.png>
+python3 validation/plot_c_results_matlab_style.py <results.txt> <datos.txt> <salida.png>
 ```
 
 ## Qué NO cubre este baseline

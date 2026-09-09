@@ -1,7 +1,7 @@
-# Baseline capa 4 - nfkb
+# Baseline capa 5 - nfkb
 
-MATLAB: 20 semillas (validation/matlab/nfkb)
-C:      10 semillas (validation/c/layer4/nfkb)
+MATLAB: 20 semillas (validation/layer5/matlab/nfkb)
+C:      10 semillas (validation/layer5/c/nfkb)
 
 Ambos lados corren el pipeline completo con su propio optimizador estocastico; lo comparable son las distribuciones, no las semillas una a una.
 

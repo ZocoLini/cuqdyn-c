@@ -7,5 +7,5 @@ __pycache__/
 
 # Raw evaluation traces hybrid_meigo_cvodes.m writes next to itself. Tens of MB
 # each; hybrid_report_<model>.txt carries the summary that is worth keeping.
-baseline/hybrid/log_A_*.txt
-baseline/hybrid/log_B_*.txt
+layer5/hybrid/log_A_*.txt
+layer5/hybrid/log_B_*.txt
