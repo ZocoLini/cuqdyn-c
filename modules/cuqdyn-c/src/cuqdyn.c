@@ -17,6 +17,20 @@
 #include <mpi.h>
 #endif
 
+#ifdef MPI
+static long rank_iterations(const long points, const int nproc, const int rank)
+{
+    return points / nproc + (rank < points % nproc ? 1 : 0);
+}
+
+static long rank_start_index(const long points, const int nproc, const int rank)
+{
+    const long remainder = points % nproc;
+
+    return rank * (points / nproc) + (rank < remainder ? rank : remainder) + 1;
+}
+#endif
+
 SUNContext get_sundials_ctx()
 {
     static SUNContext ctx = NULL;
@@ -165,34 +179,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 #ifdef MPI
     MPI_Bcast(NV_DATA_S(initial_params), NV_LENGTH_S(initial_params), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    long iterations;
-    long start_index;
-
-    long min_iters_per_node = (long) ((m - 1) / (long) nproc);
-    long remainder = (m - 1) % (long) nproc;
-
-    // The leave-one-out points are split evenly, so the process count has to
-    // divide m - 1. Every rank has to bail, not just the one that reports it:
-    // if the others carried on they would block on sends nobody receives.
-    if (remainder != 0)
-    {
-        if (rank == 0)
-        {
-            fprintf(stderr, "ERROR: %d processes do not divide m - 1 = %ld. Use a process count that divides it.\n",
-                    nproc, m - 1);
-        }
-
-        N_VDestroy(initial_condition);
-        N_VDestroy(scaled_times);
-        N_VDestroy(initial_params);
-        destroy_matrix_array(media_matrix);
-        SUNMatDestroy(resid_loo);
-        SUNMatDestroy(predicted_params_matrix);
-        destroy_cuqdyn_data(&data);
-        return NULL;
-    }
-    iterations = min_iters_per_node;
-    start_index = rank * iterations + 1;
+    const long iterations = rank_iterations(m - 1, nproc, rank);
+    const long start_index = rank_start_index(m - 1, nproc, rank);
 
 #else
     long iterations = m - 1;
@@ -250,8 +238,15 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 #ifdef MPI
             // Receiving
             long slaved_index;
+            const long step = i - start_index;
+
             for (int slave = 1; slave < nproc; ++slave)
             {
+                if (step >= rank_iterations(m - 1, nproc, slave))
+                {
+                    continue;
+                }
+
                 MPI_Recv(&slaved_index, 1, MPI_LONG, slave, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
                 // Receriving the residuals of other processes
