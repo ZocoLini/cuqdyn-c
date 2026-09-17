@@ -3,6 +3,16 @@ project(cuqdyn LANGUAGES C Fortran CXX)
 set(CMAKE_C_STANDARD 11)
 
 include(deps.cmake)
+include(cmake/module_version.cmake)
+
+if(CUQDYN_SANITIZE)
+    add_compile_options(
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+        -fno-sanitize-recover=all
+    )
+    add_link_options(-fsanitize=address,undefined)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

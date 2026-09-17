@@ -4,7 +4,7 @@ double calctimeMPI(void*,double);
 
 void DE_correction_bounds(double *,int,double*,double*);
 
-#ifdef MPI2
+#ifdef SACESS_MPI
 int create_topology(void *, topology_data *, int);
 int destroy_topology( topology_data *);
 #endif

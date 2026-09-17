@@ -9,7 +9,7 @@ void printlsinitlog_(void *, double * );
 void printlocalsolverinsert_(void *, double *, double *, int *, int * );
 void printinitlocalsolverinsert_(void *, double *, double *, int * );
 void printlsendlog_(void *, double *, double *, long *);
-#ifdef MPI2
+#ifdef SACESS_MPI
 void printmasterocurrencesend_(void *, int *, int  *, int *, int *, int *, double * );
 #endif
 void printcomparenewsolutionmasterlog_(void *, double *, double *, double *, double *, double * );

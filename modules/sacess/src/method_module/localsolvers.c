@@ -18,10 +18,10 @@
 #include <time.h>
 #include "include_amigo/AMIGO_pe.h"
 #include "method_module/evaluationinterface.h"
-#ifdef MPI2
+#ifdef SACESS_MPI
 #include <mpi.h>
 #endif
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
 #include <omp.h>
 #endif
 

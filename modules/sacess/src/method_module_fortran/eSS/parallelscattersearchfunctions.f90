@@ -6,11 +6,11 @@ MODULE parallelscattersearchfunctions
     USE scattersearchfunctions
     USE funcevalinterface
     USE localsolver
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
     USE omp_lib
 #endif
     
-#ifdef MPI2
+#ifdef SACESS_MPI
     
 CONTAINS
 
@@ -926,7 +926,7 @@ END SUBROUTINE
 
 
 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
 ! ----------------------------------------------------------------------
 ! SUBROUTINES evaluate_solutions_set_parallel
 ! ----------------------------------------------------------------------   

@@ -20,7 +20,7 @@ extern "C" {
 
 #include "include_amigo/AMIGO_problem.h"
 
-#ifdef	MPI2
+#ifdef	SACESS_MPI
     #include <structure_data/dynamic_list.h>
     #include <mpi.h>
 #endif
@@ -33,7 +33,7 @@ extern "C" {
         int num_r;
         int *left;
         int num_left;
-        #ifdef MPI2
+        #ifdef SACESS_MPI
                 MPI_Comm comunicator;
         #endif
     } topology_data;
@@ -225,7 +225,7 @@ extern "C" {
         int initpath;
         int iteration;
         double *transconst;
-#ifdef MPI2
+#ifdef SACESS_MPI
         list l;
         MPI_Request *request_recept;
         MPI_Request *receptionrequestmaster; // recv in master
@@ -337,6 +337,8 @@ extern "C" {
     int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, SUNMatrix yexp, N_Vector initial_values);
 
 void init_result_data(result_solver *, int);
+
+void destroy_result_data(result_solver *);
 
 const char* getname(experiment_total *);
 

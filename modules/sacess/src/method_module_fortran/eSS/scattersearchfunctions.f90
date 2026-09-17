@@ -28,7 +28,7 @@ CONTAINS
         CHARACTER(kind=C_CHAR, len=20), POINTER  :: del, fin, sol
         CHARACTER(kind=C_CHAR, len=20), TARGET  :: del2, fin2, sol2
         REAL (C_DOUBLE) :: tolf,tolx,prob_bound, tolc
-        REAL (C_FLOAT)  :: thfactor, maxdistfactor
+        REAL (C_DOUBLE) :: thfactor, maxdistfactor
         REAL (C_DOUBLE) :: balance
         INTEGER :: returninitsol,ii,numbersol,counter
         REAL(KIND=SELECTED_REAL_KIND(P=PRECISION_D,R=RANGE_D)), DIMENSION(:,:), ALLOCATABLE :: XX0
@@ -721,7 +721,7 @@ CONTAINS
         mig=0
         do while ((continuar .eq. 1) .AND. (mig .NE. 1))
 
-#ifdef MPI2 
+#ifdef SACESS_MPI 
           !  mig =  checkcooperativemigrationcriteriacessinner(exp1)
 #endif 
             if (mig .NE. 1) then
@@ -1001,7 +1001,7 @@ CONTAINS
             if (mod(dim_refset, 2) .EQ. 1) then
                 dim_refset = dim_refset + 1
             end if
-#ifdef MPI2
+#ifdef SACESS_MPI
             !if ((iterprint .EQ. 1) .AND. (idp .EQ. 0)) then
             !    print *, "Refset size automatically calculated:", dim_refset, nvar
             !end if            
@@ -1029,7 +1029,7 @@ CONTAINS
         
         if (ndiverse .EQ. - 1) then
             ndiverse = 10 * nvar
-#ifdef MPI2
+#ifdef SACESS_MPI
         !    if ((iterprint .EQ. 1) .AND. (idp .EQ. 0)) then
         !        print *, "Number of diverse solutions automatically calculated::", ndiverse
         !    end if
@@ -2740,7 +2740,7 @@ CONTAINS
             fbest = minval(problem1%F0)
             ALLOCATE(iiim(1))
             iiim = minloc(problem1%F0)
-            iii = iiim(1)
+            iii = MAX(iiim(1), 1)
             if (ALLOCATED(xbest)) DEALLOCATE(xbest) 
             ALLOCATE(xbest(nvar))
             xbest = problem1%X0(:,iii)

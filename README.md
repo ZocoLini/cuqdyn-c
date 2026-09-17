@@ -120,9 +120,19 @@ The project has a `scripts/build.sh` script. `build-[variant]/` directories will
 
 - `serial`: Builds the project to only execute serial methods.
 - `mpi`: Builds the project to execute the sequential solver in parallel using MPI.
-- `mpi2`: Builds the project to only include the MPI and OpenMP defined in sacess-library.
 
 After this, running `scripts/test.sh` is a good way to know if the cuqdyn library works as expected.
+
+`scripts/build.sh serial asan` builds the same thing under AddressSanitizer,
+LeakSanitizer and UndefinedBehaviorSanitizer, into `build/asan-serial`, and
+`scripts/test.sh asan` runs that suite on its own. Only our own modules are
+instrumented: the FetchContent dependencies are configured before the flags are
+set, which keeps hdf5 out of it — its build runs `H5detect`, and that probes the
+platform with deliberately misaligned stores that UBSan aborts on.
+
+MemorySanitizer is not an option here. It is clang-only, it does not instrument
+Fortran, and it needs every linked object instrumented, which `deps/misqp` and
+`deps/xml2-2.9.1` cannot be since they ship prebuilt.
 
 There is also a Dockerfile and a Docker Compose file to build and run the project in a container.
 
@@ -225,8 +235,6 @@ After this, the file `output/cuqdyn-results.txt` contains the results of the alg
 ```bash
 python3 plot.py output/cuqdyn-results.txt
 ```
-
-Note: Be carefull when executing with `mpirun`, the number of precesses must be divisor of m - 1, where m is the number of rows in the input data matrix.
 
 This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example). Each panel is labelled with the band type it carries, conformal or delta/FIM, and coloured accordingly.
 

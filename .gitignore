@@ -103,3 +103,4 @@ ESTADO.md
 perf.data
 .~lock*
 .cargo-home/
+generated/

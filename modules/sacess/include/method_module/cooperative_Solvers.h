@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#ifdef MPI2
+#ifdef SACESS_MPI
     
     
 int cooperative_asynchronous_DE(experiment_total *, double(*fitnessfunction)(double*,void *), result_solver *, double , double , int);

@@ -5,7 +5,7 @@
  */
 
 
-#ifdef MPI2
+#ifdef SACESS_MPI
 
 #include <math.h>
 #include <method_module/structure_paralleltestbed.h>

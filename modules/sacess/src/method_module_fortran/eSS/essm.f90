@@ -6,7 +6,7 @@ MODULE modessm
     USE scattersearchfunctions
     USE localsolver
     USE parallelscattersearchfunctions
-#ifdef MPI2 
+#ifdef SACESS_MPI 
        
 CONTAINS
 
@@ -162,7 +162,7 @@ CONTAINS
         end if
         
         ! avaliamos o conxunto solución e creamos a estructura solutionset
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
         openmp_pos = getopenmpoption(exp1)
         if (openmp_pos .EQ. 1) then
         CALL evaluate_solutions_set_parallel(exp1,fitnessfunction,solutionset,problem1,opts1, solutions,&
@@ -316,7 +316,7 @@ CONTAINS
             CALL generate_new_comb_matrix(exp1, new_comb, ppp, MaxSubSet, nrand, v1,v2,v3)
 
 
-#ifdef OPENMP            
+#ifdef SACESS_OPENMP            
             openmp_pos = getopenmpoption(exp1)
             if (openmp_pos .EQ. 1) then
             CALL update_candidateset_with_new_comb_parallel( exp1,opts1, fitnessfunction,problem1,new_comb,candidateset,childset,&

@@ -16,7 +16,7 @@
 #include <libxml/tree.h>
 #include <error/def_errors.h>
 #include <hdf5.h>
-#if  defined(OPENMP) 
+#if  defined(SACESS_OPENMP) 
     #include <omp.h>
 #endif
 #include <sys/stat.h> 
@@ -58,6 +58,28 @@ xmlNodePtr extract_init_node(xmlNodePtr cur, const char *name) {
     return end_cur;
 } 
 
+static char **uniq_allocs = NULL;
+static int uniq_allocs_len = 0;
+static int uniq_allocs_cap = 0;
+
+static void track_uniq_alloc(char *p) {
+    if (p == NULL) return;
+    if (uniq_allocs_len == uniq_allocs_cap) {
+        uniq_allocs_cap = (uniq_allocs_cap == 0) ? 64 : uniq_allocs_cap * 2;
+        uniq_allocs = (char **) realloc(uniq_allocs, uniq_allocs_cap * sizeof(char *));
+    }
+    uniq_allocs[uniq_allocs_len++] = p;
+}
+
+void free_uniq_allocs(void) {
+    int i;
+    for (i = 0; i < uniq_allocs_len; i++) free(uniq_allocs[i]);
+    free(uniq_allocs);
+    uniq_allocs = NULL;
+    uniq_allocs_len = 0;
+    uniq_allocs_cap = 0;
+}
+
 char*  extract_element_uniq(xmlDocPtr doc, xmlNodePtr cur, const char *name ) {
     xmlChar *key;
     xmlChar *output;
@@ -76,6 +98,7 @@ char*  extract_element_uniq(xmlDocPtr doc, xmlNodePtr cur, const char *name ) {
         }
         cur = cur->next;
     }
+    track_uniq_alloc((char *) output);
     return (char *) output;
 }
 
@@ -91,6 +114,7 @@ int  count_element_multi(xmlDocPtr doc, xmlNodePtr cur, const char *name) {
     while (cur_pre != NULL) {
         if ((!xmlStrcmp(cur_pre->name, (const xmlChar *)name)))  {
             key = xmlNodeListGetString(doc,cur_pre->xmlChildrenNode, 1);
+            xmlFree(key);
             hit++;
         }
         cur_pre = cur_pre->next;
@@ -223,7 +247,7 @@ int extract_element_test(xmlDocPtr doc, xmlNodePtr *root, experiment_testbed *te
         perror(error17);
         exit(17);
     }
-    test->bench.type = removeSpace(extract_element_uniq(doc,cur,name_bench_type));
+    test->bench.type = strdup(removeSpace(extract_element_uniq(doc,cur,name_bench_type)));
     
     if (extract_element_uniq(doc, cur, idbench) == NULL) {
         perror(error18);
@@ -528,6 +552,13 @@ int extract_element_method_ScatterSearch(xmlDocPtr doc, xmlNodePtr *root, experi
             (strcmp(removeSpace(extract_element_uniq(doc,cur2,tolc)),"default")!=0))
         {
             method->loptions->tol = atoi(extract_element_uniq(doc,cur2,tolc)); 
+            if (( method->loptions->tol != 1) &&
+                ( method->loptions->tol != 2) &&
+                ( method->loptions->tol != 3))
+            {
+                perror(error44);
+                exit(44);
+            }
         } else method->loptions->tol = -1;
 
         if (( extract_element_uniq(doc,cur2,iterprintc) != NULL ) &&
@@ -556,7 +587,7 @@ int extract_element_method_ScatterSearch(xmlDocPtr doc, xmlNodePtr *root, experi
         } else  method->loptions->evalmax = 5000;
         
         if ( extract_element_uniq(doc,cur2,solverc) != NULL ) {
-            method->loptions->solver = removeSpace(extract_element_uniq(doc,cur2,solverc));
+            method->loptions->solver = strdup(removeSpace(extract_element_uniq(doc,cur2,solverc)));
             if (( strcmp(method->loptions->solver, "nl2sol.dn2gb")!=0) && 
 		( strcmp(method->loptions->solver, "nl2sol.dn2fb")!=0) &&
                 (strcmp(method->loptions->solver, "dhc")!=0) &&
@@ -570,7 +601,7 @@ int extract_element_method_ScatterSearch(xmlDocPtr doc, xmlNodePtr *root, experi
         
         if (( extract_element_uniq(doc,cur2,finishc) != NULL ) &&
             (strcmp(removeSpace(extract_element_uniq(doc,cur2,finishc)),"default")!=0)){
-            method->loptions->finish = removeSpace(extract_element_uniq(doc,cur2,finishc));
+            method->loptions->finish = strdup(removeSpace(extract_element_uniq(doc,cur2,finishc)));
         } else  method->loptions->finish = NULL;
 
         if (( extract_element_uniq(doc,cur2,bestxc) != NULL )  &&
@@ -726,66 +757,65 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             exptotal->methodScatterSearch = (experiment_method_ScatterSearch *) malloc(sizeof (experiment_method_ScatterSearch));
             extract_element_method_ScatterSearch(doc, &root, exptotal->methodScatterSearch);                        
             exptotal->methodDE=NULL;
-            exptotal->methodScatterSearch->eSSversion = (char *) calloc(500, sizeof(char));
             
             if (strcmp((const char *) value, "ScatterSearch") == 0) {
                 exptotal->methodScatterSearch->eSSversion = "ScatterSearch";
-                #ifdef MPI2
+                #ifdef SACESS_MPI
                 perror(error31);
                 exit(31);
                 #endif
             } 
             else if (strcmp((const char *) value, "CeSS") == 0){
                 exptotal->methodScatterSearch->eSSversion = "CeSS";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif        
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif
             }  
             else if (strcmp((const char *) value, "saCeSS") == 0){
                 exptotal->methodScatterSearch->eSSversion = "saCeSS";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif    
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif
             }             
             else if (strcmp((const char *) value, "aCeSS_dist") == 0){
                 exptotal->methodScatterSearch->eSSversion = "aCeSS_dist";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif   
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif                
             }
             else if (strcmp((const char *) value, "eSSm") == 0){
                 exptotal->methodScatterSearch->eSSversion = "eSSm";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
                 perror(error32);
                 exit(32);
                 #endif       
-                #ifndef OPENMP
+                #ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);                
                 #endif                
             } 
             else if (strcmp((const char *) value, "coSHADE") == 0){
 	        exptotal->methodScatterSearch->eSSversion = "eSSm";
-                #ifndef MPI2
+                #ifndef SACESS_MPI
 		perror(error32);
 		exit(32);
 		#endif
-		#ifndef OPENMP
+		#ifndef SACESS_OPENMP
                 perror(error33);
                 exit(33);
                 #endif
@@ -803,7 +833,7 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
     // EXTRACT PARALLELIZATION ELEMENTS        
     cur = extract_init_node(init_cur, parallelization);
 
-#if  defined(OPENMP) || defined(MPI2)
+#if  defined(SACESS_OPENMP) || defined(SACESS_MPI)
     if (cur != NULL) {
         exit1 = 0;
         
@@ -825,7 +855,7 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             extract_element_parallelization(doc, &root, exptotal->par_st);
             
             exptotal->par_st->NPROC = NPROC;
-                #if OPENMP
+                #ifdef SACESS_OPENMP
             #pragma omp parallel shared(NPROC) 
             {       
                 exptotal->par_st->NPROC_OPENMP =  omp_get_max_threads();
@@ -851,6 +881,8 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             extract_element_problem(doc, &root, exptotal,  &exptotal->test);
     }
     xmlFree(value);       
+    xmlFreeDoc(doc);
+    free_uniq_allocs();
     
     return 1;    
     
@@ -957,7 +989,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(max_dom);
 
 // MIN DOMAIN
     // min_dom = (char *) malloc(SIZE_STRING*sizeof(char));
@@ -978,7 +1009,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(min_dom);
 // CONSTRAINTS MIN
     if (extract_element_uniq(doc, cur, cl_s) != NULL){
     // min_const = (char *) malloc(SIZE_STRING*sizeof(char));
@@ -999,7 +1029,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(min_const);
     }
 // CONSTRAINTS MAX
     if (extract_element_uniq(doc, cur, cu_s) != NULL){
@@ -1021,7 +1050,6 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
         perror(error37);
         exit(37);
     }
-    free(max_const);
     }
 
 // INIT POINT
@@ -1057,7 +1085,7 @@ int extract_element_problem(xmlDocPtr doc, xmlNodePtr *root, experiment_total *e
     for (i=0;i<test->bench.number_init_sol;i++) {
 	free(vector_char[i]);
     }
-   // free(vector_char);
+    free(vector_char);
  
     return 1;
 }

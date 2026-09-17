@@ -93,7 +93,7 @@ static void run_scenario(const Scenario *scenario)
 
 int main(void)
 {
-#if defined(MPI2) || defined(MPI)
+#ifdef MPI
     printf("No tests to execute with MPI\n");
     return 0;
 #endif

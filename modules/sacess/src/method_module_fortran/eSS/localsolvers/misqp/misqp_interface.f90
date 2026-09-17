@@ -5,7 +5,7 @@ MODULE misqp_interface
     USE qsort_module
     USE funcevalinterface
 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
     USE omp_lib
 #endif
 
@@ -62,7 +62,7 @@ SUBROUTINE evaluate_gradient ( problem1,exp1,opts1, x, f,  g, ncont, nfunc, m, d
 
 END SUBROUTINE evaluate_gradient
 
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
 SUBROUTINE evaluate_gradient_parallel ( problem1,exp1,opts1, x, f,  g, ncont, nfunc, m, df, dg, fobj_mysqp, pass_misqp, &
     neq, fitnessfunction  )
     IMPLICIT NONE
@@ -362,7 +362,7 @@ SUBROUTINE RUN_MISQP( problem1,exp1,opts1,fitnessfunction,acc, x0, fval, nfunc, 
        
        ! GRADIENT
        ngrad = ngrad + 1
-#ifdef OPENMP       
+#ifdef SACESS_OPENMP       
        openmp_pos = getopenmpoption(exp1)
        if (openmp_pos .EQ. 1) then
        CALL evaluate_gradient_parallel( problem1, exp1, opts1, x, f,  g, ncont, nfunc, m, DF, DG, local_solver_vars%fobj_mysqp, &
@@ -435,7 +435,7 @@ SUBROUTINE RUN_MISQP( problem1,exp1,opts1,fitnessfunction,acc, x0, fval, nfunc, 
                ngrad=ngrad+1
                g_aux=g_ls(1:m)
                x_aux=x_ls(1:n)
-#ifdef OPENMP
+#ifdef SACESS_OPENMP
                CALL evaluate_gradient_parallel( problem1, exp1, opts1, x_aux, f_ls,  g_aux,ncont, nfunc, m, DF, DG, &
                     local_solver_vars%fobj_mysqp, local_solver_vars%pass_misqp,problem1%neq, fitnessfunction  )
 #else
@@ -446,7 +446,7 @@ SUBROUTINE RUN_MISQP( problem1,exp1,opts1,fitnessfunction,acc, x0, fval, nfunc, 
            end if
            
         
-#ifdef MPI2
+#ifdef SACESS_MPI
            dest = 0
            mig = cooperativempitestess(exp1, dest )
            if (mig .EQ. 1) exitloop = 1

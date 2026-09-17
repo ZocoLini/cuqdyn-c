@@ -23,6 +23,7 @@ Usage: scripts/build.sh [variant...] [debug|release] [rebuild]
   variant   ${VARIANTS[*]}, defaults to all of them
   debug     no optimisation, debug symbols, assertions on. The default
   release   optimised, assertions off
+  asan      debug plus AddressSanitizer, LeakSanitizer and UndefinedBehaviorSanitizer
   rebuild   discard the existing build directory first
 
 Builds land in build/<type>-<variant>, for instance build/debug-serial.
@@ -31,7 +32,7 @@ EOF
 
 for arg in "$@"; do
   case "$arg" in
-  debug | release) BUILD_TYPE=$arg ;;
+  debug | release | asan) BUILD_TYPE=$arg ;;
   rebuild) REBUILD=1 ;;
   -h | --help)
     usage
@@ -52,10 +53,22 @@ done
 
 [ ${#TARGETS[@]} -eq 0 ] && TARGETS=("${VARIANTS[@]}")
 
+if [ "$BUILD_TYPE" = asan ]; then
+  CMAKE_TYPE_ARGS=(
+    -DCMAKE_BUILD_TYPE=Debug
+    -DCUQDYN_SANITIZE=ON
+    -DCMAKE_C_FLAGS_DEBUG="-O1 -g -UNDEBUG"
+    -DCMAKE_CXX_FLAGS_DEBUG="-O1 -g -UNDEBUG"
+    -DCMAKE_Fortran_FLAGS_DEBUG="-O1 -g"
+  )
+  echo ""
+  echo "${YELLOW}Building with the sanitizers on. Runs are several times slower${NC}"
+  echo "${YELLOW}and abort on the first error they find.${NC}"
+  echo ""
 # The toolchains hardcode -O3 in CMAKE_C_FLAGS, and cmake emits the per-config
 # flags after those, so -O0 here wins on the command line. -UNDEBUG keeps
 # assertions alive whatever the toolchain said.
-if [ "$BUILD_TYPE" = debug ]; then
+elif [ "$BUILD_TYPE" = debug ]; then
   CMAKE_TYPE_ARGS=(
     -DCMAKE_BUILD_TYPE=Debug
     -DCMAKE_C_FLAGS_DEBUG="-O0 -g -UNDEBUG"
@@ -84,11 +97,16 @@ build_variant() {
 
   (
     cd "$dir" || exit 1
-    cmake -DCMAKE_TOOLCHAIN_FILE=../../toolchains/"$variant"_toolchain.cmake \
-      "${CMAKE_TYPE_ARGS[@]}" ../..
+    if [ ! -f CMakeCache.txt ] || [ ! -f Makefile ]; then
+      cmake -DCMAKE_TOOLCHAIN_FILE=../../toolchains/"$variant"_toolchain.cmake \
+        "${CMAKE_TYPE_ARGS[@]}" ../..
+    fi
     make -j "$(nproc)"
   )
 }
+
+export CI_JOB_ID=1
+export CI_JOB_STARTED_AT=1
 
 if [ -d "/home/cesga" ]; then
   module load cesga/2025 gcc/system openmpi/5.0.7 rust/1.88.0
