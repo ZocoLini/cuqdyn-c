@@ -1,0 +1,7 @@
+rank 2
+n_weak_directions 0
+ridge 5.0961367795151949e-10
+condition_number 36.319995857301578
+rank_tolerance 1.0658141036401503e-12
+sigma2 1
+parameterization_used log
