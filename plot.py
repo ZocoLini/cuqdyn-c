@@ -6,9 +6,9 @@ ensemble, states that are never measured get Gaussian delta-method bands
 propagated through the parameter covariance. When every state is observed the
 algorithm reduces to CUQDyn1 and every panel is conformal.
 
-The delta-method bands come in two varieties, one per parameter covariance. The
-FIM one is drawn filled and the hybrid one dashed over it, on the hidden states
-alone: the two agree everywhere else.
+Every run writes the bands twice, once per parameter covariance variety. The
+FIM one is drawn filled and the hybrid one dashed over it on every panel; on the
+observed states the two are the same conformal band and simply overlap.
 """
 
 import sys
@@ -80,33 +80,18 @@ if not ruta.is_file():
 
 data = read_data(ruta)
 
-# The CUQDyn1 reference dumps under example-results/ carry a bare Q_low/Q_up
-# pair instead of one per variety.
-if "Q_low_fim" in data:
-    q_low = data["Q_low_fim"]["data"]
-    q_up = data["Q_up_fim"]["data"]
-else:
-    q_low = data["Q_low"]["data"]
-    q_up = data["Q_up"]["data"]
+q_low = data["Q_low_fim"]["data"]
+q_up = data["Q_up_fim"]["data"]
+hybrid_low = data["Q_low_hybrid"]["data"]
+hybrid_up = data["Q_up_hybrid"]["data"]
 
 times = data["Times"]["data"][0]
-
-# The leave-one-out median is only in files produced by a full run; the Matlab
-# reference dumps carry the bands and the best fit but not the ensemble.
-loo_median = data["Data"]["data"] if "Data" in data else None
+loo_median = data["Data"]["data"]
 
 num_columns = len(q_low[0])
-
-# Written by CUQDyn1_Plus runs; older result files simply have every state observed.
-if "ObservedIdx" in data:
-    observed = {int(v) for v in data["ObservedIdx"]["data"][0]}
-else:
-    observed = set(range(num_columns))
+observed = {int(v) for v in data["ObservedIdx"]["data"][0]}
 
 media_tot = data["MediaTot"]["data"] if "MediaTot" in data else None
-
-hybrid_low = data["Q_low_hybrid"]["data"] if "Q_low_hybrid" in data else None
-hybrid_up = data["Q_up_hybrid"]["data"] if "Q_up_hybrid" in data else None
 
 output_folder = ruta.parent
 
@@ -124,36 +109,33 @@ for j in range(num_columns):
     ax.fill_between(times, lower, upper, color=color, alpha=0.18, linewidth=0, zorder=2)
     ax.plot(times, lower, color=color, linewidth=2, zorder=4)
     ax.plot(times, upper, color=color, linewidth=2, zorder=4, label=f"banda {kind}")
-    if loo_median is not None:
-        ax.plot(
-            times,
-            [row[j] for row in loo_median],
-            color=color,
-            linewidth=2,
-            linestyle=(0, (1, 1.6)),
-            zorder=5,
-            label="mediana leave-one-out",
-        )
+    ax.plot(
+        times,
+        [row[j] for row in loo_median],
+        color=color,
+        linewidth=2,
+        linestyle=(0, (1, 1.6)),
+        zorder=5,
+        label="mediana leave-one-out",
+    )
 
-    # On a measured state the two varieties would draw the same line twice.
-    if hybrid_low is not None and not is_observed:
-        ax.plot(
-            times,
-            [row[j] for row in hybrid_low],
-            color=INK,
-            linewidth=1.4,
-            linestyle=(0, (5, 2.5)),
-            zorder=5,
-        )
-        ax.plot(
-            times,
-            [row[j] for row in hybrid_up],
-            color=INK,
-            linewidth=1.4,
-            linestyle=(0, (5, 2.5)),
-            zorder=5,
-            label="banda HybridCov (comparacion)",
-        )
+    ax.plot(
+        times,
+        [row[j] for row in hybrid_low],
+        color=INK,
+        linewidth=1.4,
+        linestyle=(0, (5, 2.5)),
+        zorder=5,
+    )
+    ax.plot(
+        times,
+        [row[j] for row in hybrid_up],
+        color=INK,
+        linewidth=1.4,
+        linestyle=(0, (5, 2.5)),
+        zorder=5,
+        label="banda HybridCov",
+    )
 
     if media_tot is not None:
         ax.plot(
