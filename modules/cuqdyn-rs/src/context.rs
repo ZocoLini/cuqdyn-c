@@ -58,18 +58,6 @@ pub enum FimParameterization {
     Log = 1,
 }
 
-/// How the hidden states get their covariance.
-#[repr(i32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
-#[serde(field_identifier, rename_all = "lowercase")]
-pub enum UqMethod {
-    /// CUQDyn1_Plus: the FIM covariance.
-    #[default]
-    Fim = 0,
-    /// CUQDyn1_Plus_HybridCov: FIM scale with LOO correlation.
-    HybridCov = 1,
-}
-
 #[repr(C)]
 #[derive(Debug)]
 pub struct CostOptionsC {
@@ -100,7 +88,6 @@ pub struct CuqdynConfigC {
     y0: Y0C,
     /// Predictive region level; bands are nominally 1 - 2*alp.
     alp: f64,
-    uq_method: UqMethod,
     cost: CostOptionsC,
     fim: FimOptionsC,
 }
@@ -212,9 +199,6 @@ pub struct CuqdynConfigRs {
     alp: f64,
     #[get = "pub"]
     #[serde(default)]
-    uq_method: UqMethod,
-    #[get = "pub"]
-    #[serde(default)]
     cost: CostOptions,
     #[get = "pub"]
     #[serde(default)]
@@ -257,7 +241,6 @@ impl CuqdynConfigRs {
             time_scaling: 1.0,
             y0: None,
             alp: default_alp(),
-            uq_method: UqMethod::default(),
             cost: CostOptions::default(),
             fim: FimOptions::default(),
         }
@@ -280,7 +263,6 @@ impl CuqdynConfigRs {
             time_scaling: 1.0,
             y0: None,
             alp: default_alp(),
-            uq_method: UqMethod::default(),
             cost: CostOptions::default(),
             fim: FimOptions::default(),
         }
@@ -300,7 +282,6 @@ impl CuqdynConfigRs {
             time_scaling: 1.0,
             y0: None,
             alp: default_alp(),
-            uq_method: UqMethod::default(),
             cost: CostOptions::default(),
             fim: FimOptions::default(),
         }
@@ -326,7 +307,6 @@ impl CuqdynConfigRs {
             time_scaling: 1.0,
             y0: None,
             alp: default_alp(),
-            uq_method: UqMethod::default(),
             cost: CostOptions::default(),
             fim: FimOptions::default(),
         }
@@ -346,7 +326,6 @@ impl CuqdynConfigRs {
             time_scaling: 1.0,
             y0: None,
             alp: default_alp(),
-            uq_method: UqMethod::default(),
             cost: CostOptions::default(),
             fim: FimOptions::default(),
         }
@@ -382,7 +361,6 @@ impl CuqdynConfigRs {
             time_scaling: 0.001,
             y0: Some(F64Vec(vec![0.200000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000316, 0.002296, 0.004783, 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003])),
             alp: default_alp(),
-            uq_method: UqMethod::default(),
             cost: CostOptions::default(),
             fim: FimOptions::default(),
         }
@@ -408,7 +386,6 @@ impl CuqdynConfigRs {
                 0.000003, 0.002507, 0.003436, 0.000003, 0.060000, 0.000079, 0.000003,
             ])),
             alp: default_alp(),
-            uq_method: UqMethod::default(),
             cost: CostOptions::default(),
             fim: FimOptions::default(),
         }
@@ -583,7 +560,6 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             time_scaling: value.time_scaling,
             y0,
             alp: value.alp,
-            uq_method: value.uq_method,
             cost,
             fim,
         };
@@ -630,7 +606,6 @@ mod tests {
     <ode_expr y_count="2" p_count="4">
         lotka-volterra
     </ode_expr>
-    <uq_method>hybridcov</uq_method>
     <cost>
         <residual_model>known_sigma</residual_model>
     </cost>
@@ -642,7 +617,6 @@ mod tests {
 
         let config: CuqdynConfigRs = serde_xml_rs::from_str(xml).unwrap();
 
-        assert_eq!(*config.uq_method(), UqMethod::HybridCov);
         assert_eq!(*config.cost().residual_model(), ResidualModel::KnownSigma);
         assert_eq!(
             *config.fim().parameterization(),
@@ -667,7 +641,6 @@ mod tests {
 
         let config: CuqdynConfigRs = serde_xml_rs::from_str(xml).unwrap();
 
-        assert_eq!(*config.uq_method(), UqMethod::Fim);
         assert_eq!(*config.cost().residual_model(), ResidualModel::None);
         assert_eq!(*config.fim().parameterization(), FimParameterization::Log);
     }
@@ -684,7 +657,9 @@ mod tests {
     <ode_expr y_count="2" p_count="4">
         lotka-volterra
     </ode_expr>
-    <uq_method>asd</uq_method>
+    <fim>
+        <parameterization>asd</parameterization>
+    </fim>
 </cuqdyn-config>
         "#;
 
