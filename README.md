@@ -230,7 +230,7 @@ python3 plot.py output/cuqdyn-results.txt
 
 Note: Be carefull when executing with `mpirun`, the number of precesses must be divisor of m - 1, where m is the number of rows in the input data matrix.
 
-This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example). Each panel is labelled with the band type it carries, conformal or delta/FIM, and coloured accordingly. On the hidden states the hybrid band is drawn dashed over the FIM one; elsewhere the two coincide, so only one is drawn.
+This will save a graphic representation for each y(t) in different png files inside the directory where the results are (output folder in this example). Each panel is labelled with the band type it carries, conformal or delta/FIM, and coloured accordingly. The FIM band is drawn filled and the hybrid band dashed over it on every panel; on the observed states they are the same conformal band and overlap.
 
 To get information about all the options the cli supports, you can run the following command:
 
@@ -389,9 +389,6 @@ covariance could not be built, which leaves its bands conformal-only.
 | `Q_low_<v>` / `Q_up_<v>` | m x n_states | Prediction bands for every state |
 | `CovP_<v>` | n_params x n_params | Parameter covariance in natural units |
 | `StdY_<v>` | m x n_states | Delta-method standard deviations |
-
-The CUQDyn1 reference dumps under `example-results/` carry a bare `Q_low` /
-`Q_up` pair instead, which `plot.py` also reads.
 
 `ObservedIdx` is what tells a reader which bands are conformal and which come
 from the delta method, and so where the two varieties can differ at all.
