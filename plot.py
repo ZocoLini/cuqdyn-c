@@ -73,12 +73,12 @@ if len(sys.argv) < 2:
 
 data_file = sys.argv[1]
 
-ruta = Path(data_file)
-if not ruta.is_file():
-    print(f"File {ruta} does not exist.")
+path = Path(data_file)
+if not path.is_file():
+    print(f"File {path} does not exist.")
     sys.exit(1)
 
-data = read_data(ruta)
+data = read_data(path)
 
 q_low = data["Q_low_fim"]["data"]
 q_up = data["Q_up_fim"]["data"]
@@ -93,12 +93,12 @@ observed = {int(v) for v in data["ObservedIdx"]["data"][0]}
 
 media_tot = data["MediaTot"]["data"] if "MediaTot" in data else None
 
-output_folder = ruta.parent
+output_folder = path.parent
 
 for j in range(num_columns):
     is_observed = j in observed
     color = OBSERVED if is_observed else UNOBSERVED
-    kind = "conformal (observado)" if is_observed else "delta/FIM (no observado)"
+    kind = "conformal (observed)" if is_observed else "delta/FIM (unobserved)"
 
     fig, ax = plt.subplots(figsize=(8, 5), facecolor=SURFACE)
     ax.set_facecolor(SURFACE)
@@ -108,7 +108,7 @@ for j in range(num_columns):
 
     ax.fill_between(times, lower, upper, color=color, alpha=0.18, linewidth=0, zorder=2)
     ax.plot(times, lower, color=color, linewidth=2, zorder=4)
-    ax.plot(times, upper, color=color, linewidth=2, zorder=4, label=f"banda {kind}")
+    ax.plot(times, upper, color=color, linewidth=2, zorder=4, label=f"{kind} band")
     ax.plot(
         times,
         [row[j] for row in loo_median],
@@ -116,7 +116,7 @@ for j in range(num_columns):
         linewidth=2,
         linestyle=(0, (1, 1.6)),
         zorder=5,
-        label="mediana leave-one-out",
+        label="leave-one-out median",
     )
 
     ax.plot(
@@ -134,7 +134,7 @@ for j in range(num_columns):
         linewidth=1.4,
         linestyle=(0, (5, 2.5)),
         zorder=5,
-        label="banda HybridCov",
+        label="HybridCov band",
     )
 
     if media_tot is not None:
@@ -144,14 +144,14 @@ for j in range(num_columns):
             color=INK,
             linewidth=1.4,
             zorder=6,
-            label="ajuste global",
+            label="global fit",
         )
 
     ax.set_title(
         f"y{j}  ·  {kind}", color=INK, fontsize=12, fontweight="bold", loc="left"
     )
-    ax.set_xlabel("tiempo", color=INK_2)
-    ax.set_ylabel("valor", color=INK_2)
+    ax.set_xlabel("time", color=INK_2)
+    ax.set_ylabel("value", color=INK_2)
     ax.grid(True, color="#e6e5e0", linewidth=0.8, zorder=0)
     ax.set_axisbelow(True)
     for side in ("top", "right"):
