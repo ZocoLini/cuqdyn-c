@@ -50,6 +50,9 @@ void test_even_vec()
 
         assert(expected == obtained);
     }
+
+    SUNMatDestroy(matrix);
+    N_VDestroy(medians_vector);
 }
 
 void test_odd_vec()
@@ -82,4 +85,7 @@ void test_odd_vec()
 
         assert(expected == obtained);
     }
+
+    SUNMatDestroy(matrix);
+    N_VDestroy(medians_vector);
 }

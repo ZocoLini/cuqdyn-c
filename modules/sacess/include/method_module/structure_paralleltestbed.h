@@ -338,6 +338,8 @@ extern "C" {
 
 void init_result_data(result_solver *, int);
 
+void destroy_result_data(result_solver *);
+
 const char* getname(experiment_total *);
 
 void updatenp_(void *, int *);

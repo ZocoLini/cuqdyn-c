@@ -110,9 +110,17 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 
     execute_Solver(exptotal, &result, obj_func);
 
-    N_Vector predicted_params = New_Serial(exptotal[0].test.bench.dim);
-    destroyexp(exptotal);
+    const long dim = exptotal[0].test.bench.dim;
 
-    N_VSetArrayPointer(result.bestx_value, predicted_params);
+    N_Vector predicted_params = New_Serial(dim);
+    for (long i = 0; i < dim; ++i)
+    {
+        NV_Ith_S(predicted_params, i) = result.bestx_value[i];
+    }
+
+    destroy_result_data(&result);
+    destroyexp(exptotal);
+    free(exptotal);
+
     return predicted_params;
 }
