@@ -50,7 +50,7 @@ impl<'e> GenericModel<'e> {
         let mut exprs = Vec::new();
 
         for s in cuqdyn_conf.ode_expr().expr().iter() {
-            let expr = Expr::compile(s, &ctx).unwrap_or_else(|_| panic!("unable to compile {s}"));
+            let expr = Expr::compile(s, &ctx).unwrap_or_else(|_| panic!("unable to compile {}", s));
             exprs.push(expr);
         }
 
@@ -75,7 +75,7 @@ impl Model for GenericModel<'_> {
         for (i, expr) in self.exprs.iter().enumerate() {
             ydot[i] = expr
                 .eval(&self.ctx, &mut self.stack)
-                .unwrap_or_else(|_| panic!("Error evaluating model expression with index {i}"));
+                .unwrap_or_else(|_| panic!("Error evaluating model expression with index {}", i));
 
             if !ydot[i].is_finite() {
                 let def = env::var("CUQDYN_DEF_YDOT")
