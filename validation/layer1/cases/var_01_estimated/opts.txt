@@ -1,0 +1,3 @@
+n_params 2
+residual_model none
+sigma_is_known 0
