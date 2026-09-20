@@ -28,7 +28,7 @@ typedef struct
 } Scenario;
 
 static const Scenario SCENARIOS[] = {
-        {"lotka-volterra", "Lotka-Volterra", {0.5, 0.02, 0.5, 0.02}, 4},
+        {"lotka-volterra", "Lotka-Volterra", {0.5, 0.02, 0.02, 0.5}, 4},
         {"logistic", "Logistic Model", {0.1, 102}, 2},
         {"alpha-pinene", "Alpha-Pinene", {5.93e-5, 2.96e-5, 2.05e-5, 2.75e-5, 4.00e-5}, 5},
 };
