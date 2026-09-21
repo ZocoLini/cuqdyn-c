@@ -1,3 +1,16 @@
+set(CUQDYN_TEST_SANITIZER_ENV
+    "ASAN_OPTIONS=detect_stack_use_after_return=1:strict_string_checks=1:detect_leaks=1:intercept_strndup=0"
+    "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan-mpi.supp"
+    "UBSAN_OPTIONS=print_stacktrace=1"
+)
+
+set(CUQDYN_MPI_TESTS test_ess_solver test_cuqdyn_algo)
+set(CUQDYN_MPI_NPROCS 1 3 17 32)
+
+if(CUQDYN_MPI)
+    find_package(MPI REQUIRED COMPONENTS C)
+endif()
+
 foreach(
     test_name
     test_matlab
@@ -16,14 +29,30 @@ foreach(
         ${test_name}
         PRIVATE EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/example-files"
     )
-    add_test(NAME ${test_name} COMMAND ${test_name})
+
+    set(registered)
+
+    if(CUQDYN_MPI AND test_name IN_LIST CUQDYN_MPI_TESTS)
+        foreach(np ${CUQDYN_MPI_NPROCS})
+            # --oversubscribe: Open MPI refuses more ranks than cores, and
+            # CI runners are small.
+            add_test(
+                NAME ${test_name}_np${np}
+                COMMAND
+                    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${np}
+                    --oversubscribe $<TARGET_FILE:${test_name}>
+            )
+            list(APPEND registered ${test_name}_np${np})
+        endforeach()
+    else()
+        add_test(NAME ${test_name} COMMAND ${test_name})
+        list(APPEND registered ${test_name})
+    endif()
 
     if(CUQDYN_SANITIZE)
         set_tests_properties(
-            ${test_name}
-            PROPERTIES
-                ENVIRONMENT
-                    "ASAN_OPTIONS=detect_stack_use_after_return=1:strict_string_checks=1:detect_leaks=1:intercept_strndup=0;UBSAN_OPTIONS=print_stacktrace=1"
+            ${registered}
+            PROPERTIES ENVIRONMENT "${CUQDYN_TEST_SANITIZER_ENV}"
         )
     endif()
 endforeach()

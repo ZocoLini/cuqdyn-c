@@ -1,44 +1,18 @@
 #!/bin/bash
 set -euo pipefail
+shopt -s nullglob
 
-usage() {
-  cat <<EOF
-Usage: scripts/test.sh [prefix...]
-
-  prefix    only the build directories starting with it, e.g. 'asan' for
-            build/asan-serial. Defaults to everything scripts/build.sh made.
-EOF
-}
-
-case "${1:-}" in
--h | --help)
-  usage
-  exit 0
-  ;;
-esac
-
-PREFIXES=("$@")
-[ ${#PREFIXES[@]} -eq 0 ] && PREFIXES=("")
-
-# Whatever scripts/build.sh has produced, rather than a hardcoded list.
-run_suite() {
-  local dir=$1
-
-  (
-    cd "$dir" || exit 1
-    ctest --timeout 1800 --output-on-failure
-  )
-}
+# Local convenience: runs the ctest suite of every build scripts/build.sh made,
+# or only of those whose name starts with $1
 
 status=0
 ran=0
-for prefix in "${PREFIXES[@]}"; do
-  for dir in build/"$prefix"*/; do
-    [ -f "$dir/CTestTestfile.cmake" ] || continue
-    echo "==> ${dir%/}"
-    ran=1
-    run_suite "$dir" || status=1
-  done
+
+for dir in build/"${1:-}"*/; do
+  [ -f "$dir/CTestTestfile.cmake" ] || continue
+  echo "==> ${dir%/}"
+  ran=1
+  ctest --test-dir "$dir" --timeout 1800 --output-on-failure || status=1
 done
 
 if [ "$ran" = 0 ]; then

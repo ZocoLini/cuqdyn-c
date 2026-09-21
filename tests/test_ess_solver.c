@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
+#ifdef MPI
+#include <mpi.h>
+#endif
+
 #include "data_reader.h"
 #include "ess_solver.h"
 #include "example_files.h"
@@ -62,18 +66,31 @@ static void run_scenario(const Scenario *scenario)
     destroy_cuqdyn_context(context);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    int rank = 0;
+
 #ifdef MPI
-    printf("No tests to execute with MPI\n");
-    return 0;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#else
+    (void) argc;
+    (void) argv;
 #endif
 
     for (int i = 0; i < N_SCENARIOS; ++i)
     {
         run_scenario(&SCENARIOS[i]);
-        printf("\tTest %d passed %s\n", i + 1, SCENARIOS[i].description);
+
+        if (rank == 0)
+        {
+            printf("\tTest %d passed %s\n", i + 1, SCENARIOS[i].description);
+        }
     }
+
+#ifdef MPI
+    MPI_Finalize();
+#endif
 
     return 0;
 }

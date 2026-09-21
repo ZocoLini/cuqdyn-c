@@ -5,10 +5,9 @@ LABEL author="Borja Castellano" \
 
 RUN apt-get update && \
     apt-get install -y \
+    ca-certificates \
     curl \
     git \
-    libopenmpi-dev \
-    openmpi-bin \
     build-essential \
     cmake \
     gdb \
@@ -21,6 +20,33 @@ RUN apt-get update && \
     clang-tidy \
     libxml2-utils && \
     rm -rf /var/lib/apt/lists/*
+
+# Open MPI from source rather than from apt. The packaged build loads its MCA
+# components with dlopen and dlcloses them on the way out, which leaves
+# LeakSanitizer holding "<unknown module>" stacks that tests/lsan-mpi.supp
+# cannot match by library name, so every rank fails the suite on Open MPI's own
+# allocations. Building the components internal keeps every frame resolvable.
+# 5.0.7 is also what scripts/build.sh loads on CESGA, so CI and the cluster now
+# run the same MPI.
+ARG OPENMPI_VERSION=5.0.7
+ARG OPENMPI_SHA256=119f2009936a403334d0df3c0d74d5595a32d99497f9b1d41e90019fee2fc2dd
+RUN curl -sL -o /tmp/openmpi.tar.bz2 \
+    "https://download.open-mpi.org/release/open-mpi/v${OPENMPI_VERSION%.*}/openmpi-${OPENMPI_VERSION}.tar.bz2" && \
+    echo "${OPENMPI_SHA256}  /tmp/openmpi.tar.bz2" | sha256sum -c - && \
+    tar xf /tmp/openmpi.tar.bz2 -C /tmp && \
+    cd "/tmp/openmpi-${OPENMPI_VERSION}" && \
+    ./configure --prefix=/opt/openmpi \
+    --with-pmix=internal \
+    --with-prrte=internal \
+    --with-hwloc=internal \
+    --with-libevent=internal \
+    --disable-silent-rules && \
+    make -j "$(nproc)" all && \
+    make install && \
+    cd / && rm -rf /tmp/openmpi.tar.bz2 "/tmp/openmpi-${OPENMPI_VERSION}" && \
+    echo /opt/openmpi/lib > /etc/ld.so.conf.d/openmpi.conf && ldconfig
+
+ENV PATH="/opt/openmpi/bin:${PATH}"
 
 # Formatters used by .githooks/pre-commit. Keeping them in the image means the
 # hook works without every contributor installing seven tools by hand: when one

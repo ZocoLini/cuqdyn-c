@@ -1,0 +1,15 @@
+# LeakSanitizer suppressions for the MPI runs.
+#
+# Open MPI keeps its runtime state allocated until the process exits, so every
+# rank reports a few KiB from MPI_Init, the PMIx client and the libevent
+# progress thread it spawns, none of it ours. Matching by library keeps the
+# suppressions stable across Open MPI builds, and a leak in our own code never
+# has these on its stack. The Dockerfile builds Open MPI with its components
+# internal, so none of this is behind a dlclosed module the symbolizer would
+# render as "<unknown module>", which no template here could ever match.
+leak:libmpi.so
+leak:libopen-pal.so
+leak:libpmix.so
+# Bundled into the libraries above, so their frames name the source file.
+leak:hwloc
+leak:libevent

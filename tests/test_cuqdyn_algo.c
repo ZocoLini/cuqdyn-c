@@ -4,17 +4,13 @@
 #include <stdio.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
+#ifdef MPI
+#include <mpi.h>
+#endif
+
 #include "config.h"
 #include "example_files.h"
 
-/*
- * End-to-end runs over the shipped examples.
- *
- * Every scenario is a folder under example-files/ holding data.txt, cuqdyn.xml
- * and a sacess-serial.xml, so adding a case here is a matter of adding a row
- * rather than another near-identical function. These are the same files the
- * README tells users to run, which is what keeps the examples honest.
- */
 typedef struct
 {
     const char *model;
@@ -42,7 +38,7 @@ static const Scenario SCENARIOS[] = {
 
 static const int N_SCENARIOS = sizeof(SCENARIOS) / sizeof(SCENARIOS[0]);
 
-static void run_scenario(const Scenario *scenario)
+static void run_scenario(const Scenario *scenario, int rank)
 {
     const char *cuqdyn_config_file = example_conf(scenario->model);
     const char *sacess_config_file = example_sacess_conf(scenario->model);
@@ -54,6 +50,15 @@ static void run_scenario(const Scenario *scenario)
     CuqDynContext context = init_cuqdyn_context_from_file(cuqdyn_config_file);
 
     CuqdynResult *cuqdyn_result = cuqdyn_algo(data_file, sacess_config_file, output_file);
+
+    // Under MPI only rank 0 gathers the leave-one-out ensemble and builds the
+    // result; every other rank hands its share over and gets NULL back.
+    if (rank != 0)
+    {
+        assert(cuqdyn_result == NULL);
+        destroy_cuqdyn_context(context);
+        return;
+    }
 
     assert(cuqdyn_result != NULL);
 
@@ -95,18 +100,31 @@ static void run_scenario(const Scenario *scenario)
     destroy_cuqdyn_context(context);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    int rank = 0;
+
 #ifdef MPI
-    printf("No tests to execute with MPI\n");
-    return 0;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#else
+    (void) argc;
+    (void) argv;
 #endif
 
     for (int i = 0; i < N_SCENARIOS; ++i)
     {
-        run_scenario(&SCENARIOS[i]);
-        printf("\tTest %d (%s) completed\n", i + 1, SCENARIOS[i].description);
+        run_scenario(&SCENARIOS[i], rank);
+
+        if (rank == 0)
+        {
+            printf("\tTest %d (%s) completed\n", i + 1, SCENARIOS[i].description);
+        }
     }
+
+#ifdef MPI
+    MPI_Finalize();
+#endif
 
     return 0;
 }
