@@ -5,6 +5,10 @@ observed states get distribution-free conformal bands from the leave-one-out
 ensemble, states that are never measured get Gaussian delta-method bands
 propagated through the parameter covariance. When every state is observed the
 algorithm reduces to CUQDyn1 and every panel is conformal.
+
+Every run writes the bands twice, once per parameter covariance variety. The
+FIM one is drawn filled and the hybrid one dashed over it on every panel; on the
+observed states the two are the same conformal band and simply overlap.
 """
 
 import sys
@@ -69,50 +73,32 @@ if len(sys.argv) < 2:
 
 data_file = sys.argv[1]
 
-ruta = Path(data_file)
-if not ruta.is_file():
-    print(f"File {ruta} does not exist.")
+path = Path(data_file)
+if not path.is_file():
+    print(f"File {path} does not exist.")
     sys.exit(1)
 
-data = read_data(ruta)
+data = read_data(path)
 
-q_low = data["Q_low"]["data"]
-q_up = data["Q_up"]["data"]
+q_low = data["Q_low_fim"]["data"]
+q_up = data["Q_up_fim"]["data"]
+hybrid_low = data["Q_low_hybrid"]["data"]
+hybrid_up = data["Q_up_hybrid"]["data"]
+
 times = data["Times"]["data"][0]
-
-# The leave-one-out median is only in files produced by a full run; the Matlab
-# reference dumps carry the bands and the best fit but not the ensemble.
-loo_median = data["Data"]["data"] if "Data" in data else None
+loo_median = data["Data"]["data"]
 
 num_columns = len(q_low[0])
-
-# Written by CUQDyn1_Plus runs; older result files simply have every state observed.
-if "ObservedIdx" in data:
-    observed = {int(v) for v in data["ObservedIdx"]["data"][0]}
-else:
-    observed = set(range(num_columns))
+observed = {int(v) for v in data["ObservedIdx"]["data"][0]}
 
 media_tot = data["MediaTot"]["data"] if "MediaTot" in data else None
 
-# Only present when the hybrid covariance was used: the plain FIM bands, drawn
-# alongside so the two covariance choices can be compared on the hidden states.
-fim_low = data["Q_low_fim"]["data"] if "Q_low_fim" in data else None
-fim_up = data["Q_up_fim"]["data"] if "Q_up_fim" in data else None
-
-output_folder = ruta.parent
+output_folder = path.parent
 
 for j in range(num_columns):
     is_observed = j in observed
     color = OBSERVED if is_observed else UNOBSERVED
-    kind = (
-        "conformal (observado)"
-        if is_observed
-        else (
-            "delta/HybridCov (no observado)"
-            if fim_low is not None
-            else "delta/FIM (no observado)"
-        )
-    )
+    kind = "conformal (observed)" if is_observed else "delta/FIM (unobserved)"
 
     fig, ax = plt.subplots(figsize=(8, 5), facecolor=SURFACE)
     ax.set_facecolor(SURFACE)
@@ -122,36 +108,34 @@ for j in range(num_columns):
 
     ax.fill_between(times, lower, upper, color=color, alpha=0.18, linewidth=0, zorder=2)
     ax.plot(times, lower, color=color, linewidth=2, zorder=4)
-    ax.plot(times, upper, color=color, linewidth=2, zorder=4, label=f"banda {kind}")
-    if loo_median is not None:
-        ax.plot(
-            times,
-            [row[j] for row in loo_median],
-            color=color,
-            linewidth=2,
-            linestyle=(0, (1, 1.6)),
-            zorder=5,
-            label="mediana leave-one-out",
-        )
+    ax.plot(times, upper, color=color, linewidth=2, zorder=4, label=f"{kind} band")
+    ax.plot(
+        times,
+        [row[j] for row in loo_median],
+        color=color,
+        linewidth=2,
+        linestyle=(0, (1, 1.6)),
+        zorder=5,
+        label="leave-one-out median",
+    )
 
-    if fim_low is not None and not is_observed:
-        ax.plot(
-            times,
-            [row[j] for row in fim_low],
-            color=INK,
-            linewidth=1.4,
-            linestyle=(0, (5, 2.5)),
-            zorder=5,
-        )
-        ax.plot(
-            times,
-            [row[j] for row in fim_up],
-            color=INK,
-            linewidth=1.4,
-            linestyle=(0, (5, 2.5)),
-            zorder=5,
-            label="banda FIM (comparacion)",
-        )
+    ax.plot(
+        times,
+        [row[j] for row in hybrid_low],
+        color=INK,
+        linewidth=1.4,
+        linestyle=(0, (5, 2.5)),
+        zorder=5,
+    )
+    ax.plot(
+        times,
+        [row[j] for row in hybrid_up],
+        color=INK,
+        linewidth=1.4,
+        linestyle=(0, (5, 2.5)),
+        zorder=5,
+        label="HybridCov band",
+    )
 
     if media_tot is not None:
         ax.plot(
@@ -160,14 +144,14 @@ for j in range(num_columns):
             color=INK,
             linewidth=1.4,
             zorder=6,
-            label="ajuste global",
+            label="global fit",
         )
 
     ax.set_title(
         f"y{j}  ·  {kind}", color=INK, fontsize=12, fontweight="bold", loc="left"
     )
-    ax.set_xlabel("tiempo", color=INK_2)
-    ax.set_ylabel("valor", color=INK_2)
+    ax.set_xlabel("time", color=INK_2)
+    ax.set_ylabel("value", color=INK_2)
     ax.grid(True, color="#e6e5e0", linewidth=0.8, zorder=0)
     ax.set_axisbelow(True)
     for side in ("top", "right"):
