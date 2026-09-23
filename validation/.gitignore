@@ -1,0 +1,17 @@
+# MATLAB run byproducts: the plain-text exports are the reference,
+# the .mat workspaces are regenerable.
+**/matlab_run/
+ess_report.mat
+__pycache__/
+*.log
+
+# Raw evaluation traces hybrid_meigo_cvodes.m writes next to itself, tens of MB
+# each; its report goes under results/ like every other run output.
+matlab/log_A_*.txt
+matlab/log_B_*.txt
+
+# Everything run_validation.sh writes (--output_dir defaults to
+# validation/results): the runs of layers 5 and 6 are full stochastic
+# pipelines, and every report is regenerated from them. They live on the
+# machines that produced them.
+results/

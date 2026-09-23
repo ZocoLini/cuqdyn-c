@@ -1,0 +1,44 @@
+# The repository linter runs clang-tidy over these files, but validation/ is
+# not part of the CMake build, so the compilation database has no entry for
+# them: clang-tidy borrows the flags of some compiled file and runs from that
+# file's build directory, and which file it borrows from is not predictable.
+# Relative include paths are not an option either, because clang-tidy caches
+# directory lookups by name across the files of one run while the borrowed
+# directory changes from file to file. The paths below are therefore absolute,
+# inside the project container (docker-compose.yml mounts the repository at
+# /home/ubuntu/workspace), which is where the hooks and CI run the linter; a
+# directory that does not exist is ignored. The harness needs the library's
+# own headers, the sacess ones (pipeline_meigo.c fills an experiment_total),
+# and the fetched SUNDIALS and GSL ones, the latter once per build directory
+# scripts/build.sh can produce. Checks and WarningsAsErrors come from the
+# repository .clang-tidy.
+InheritParentConfig: true
+ExtraArgsBefore:
+  - -I/home/ubuntu/workspace/modules/cuqdyn-c/include
+  - -I/home/ubuntu/workspace/modules/cuqdyn-c/generated
+  - -I/home/ubuntu/workspace/modules/sacess/include
+  - -I/home/ubuntu/workspace/modules/sacess/libAMIGO/include
+  - -I/home/ubuntu/workspace/build/asan-serial/_deps/cvodes-src/include
+  - -I/home/ubuntu/workspace/build/asan-serial/_deps/cvodes-build/include
+  - -I/home/ubuntu/workspace/build/asan-serial/_deps/gsl-src
+  - -I/home/ubuntu/workspace/build/asan-serial/_deps/gsl-build
+  - -I/home/ubuntu/workspace/build/asan-mpi/_deps/cvodes-src/include
+  - -I/home/ubuntu/workspace/build/asan-mpi/_deps/cvodes-build/include
+  - -I/home/ubuntu/workspace/build/asan-mpi/_deps/gsl-src
+  - -I/home/ubuntu/workspace/build/asan-mpi/_deps/gsl-build
+  - -I/home/ubuntu/workspace/build/debug-serial/_deps/cvodes-src/include
+  - -I/home/ubuntu/workspace/build/debug-serial/_deps/cvodes-build/include
+  - -I/home/ubuntu/workspace/build/debug-serial/_deps/gsl-src
+  - -I/home/ubuntu/workspace/build/debug-serial/_deps/gsl-build
+  - -I/home/ubuntu/workspace/build/debug-mpi/_deps/cvodes-src/include
+  - -I/home/ubuntu/workspace/build/debug-mpi/_deps/cvodes-build/include
+  - -I/home/ubuntu/workspace/build/debug-mpi/_deps/gsl-src
+  - -I/home/ubuntu/workspace/build/debug-mpi/_deps/gsl-build
+  - -I/home/ubuntu/workspace/build/release-serial/_deps/cvodes-src/include
+  - -I/home/ubuntu/workspace/build/release-serial/_deps/cvodes-build/include
+  - -I/home/ubuntu/workspace/build/release-serial/_deps/gsl-src
+  - -I/home/ubuntu/workspace/build/release-serial/_deps/gsl-build
+  - -I/home/ubuntu/workspace/build/release-mpi/_deps/cvodes-src/include
+  - -I/home/ubuntu/workspace/build/release-mpi/_deps/cvodes-build/include
+  - -I/home/ubuntu/workspace/build/release-mpi/_deps/gsl-src
+  - -I/home/ubuntu/workspace/build/release-mpi/_deps/gsl-build
