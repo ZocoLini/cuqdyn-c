@@ -9,6 +9,7 @@
 # render as "<unknown module>", which no template here could ever match.
 leak:libmpi.so
 leak:libopen-pal.so
+leak:libopen-rte.so
 leak:libpmix.so
 # Bundled into the libraries above, so their frames name the source file.
 leak:hwloc
