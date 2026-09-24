@@ -104,3 +104,8 @@ perf.data
 .~lock*
 .cargo-home/
 generated/
+
+# files for running jobs on the FTIII
+job_mpi.sh
+job_serie.sh
+job_scalability.sh
