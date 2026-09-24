@@ -1,4 +1,5 @@
 #![allow(static_mut_refs)]
+#![deny(clippy::unwrap_used, clippy::expect_used)]
 pub mod context;
 mod models;
 
@@ -10,13 +11,18 @@ use crate::context::{CuqdynConfigC, CuqdynContext};
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn build_cuqdyn_context_from_file(filename: *const c_char) -> *const c_void {
-    let filename = CStr::from_ptr(filename)
-        .to_str()
-        .expect("config filename has no valid UTF-8 chars");
+    let Ok(filename) = CStr::from_ptr(filename).to_str() else {
+        eprintln!("ERROR: config filename has no valid UTF-8 chars");
+        return std::ptr::null();
+    };
 
-    let context = Box::new(CuqdynContext::new_from_file(filename));
-
-    Box::into_raw(context) as *mut c_void
+    match CuqdynContext::new_from_file(filename) {
+        Ok(context) => Box::into_raw(Box::new(context)) as *mut c_void,
+        Err(e) => {
+            eprintln!("ERROR: {}", e);
+            std::ptr::null()
+        }
+    }
 }
 
 #[allow(clippy::missing_safety_doc)]
