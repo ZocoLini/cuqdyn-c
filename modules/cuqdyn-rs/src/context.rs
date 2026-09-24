@@ -455,12 +455,19 @@ pub struct CuqdynContext {
 }
 
 impl CuqdynContext {
-    pub fn new_from_file(filename: impl AsRef<Path>) -> Self {
-        let config_xml = fs::read_to_string(filename).expect("Unable to read the config file");
-        let cuqdyn_config: CuqdynConfigRs =
-            serde_xml_rs::from_str(&config_xml).expect("Unable to parse config xml");
+    pub fn new_from_file(filename: impl AsRef<Path>) -> Result<Self, String> {
+        let filename = filename.as_ref();
+        let config_xml = fs::read_to_string(filename).map_err(|e| {
+            format!(
+                "Unable to read the config file {}: {}",
+                filename.display(),
+                e
+            )
+        })?;
+        let cuqdyn_config: CuqdynConfigRs = serde_xml_rs::from_str(&config_xml)
+            .map_err(|e| format!("Unable to parse config xml {}: {}", filename.display(), e))?;
 
-        Self::new_from_config(cuqdyn_config)
+        Ok(Self::new_from_config(cuqdyn_config))
     }
 
     pub fn new_from_config(rs_config: CuqdynConfigRs) -> Self {
@@ -496,7 +503,9 @@ impl From<CuqdynConfigRs> for CuqdynContext {
             .ode_expr
             .expr
             .iter()
-            .map(|a| CString::new(a.as_bytes()).unwrap())
+            // CString::new only fails on an interior NUL, which the XML parser
+            // already rejects (U+0000 is not a legal XML character) and no preset has.
+            .map(|a| CString::new(a.as_bytes()).unwrap_or_default())
             .collect::<Vec<CString>>();
 
         let ode_exprs_c = ode_exprs
