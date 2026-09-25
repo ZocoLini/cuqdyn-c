@@ -62,8 +62,11 @@ jobs:
             build
             modules/cuqdyn-rs/target
             .cargo-home
-          key: build-${{ hashFiles('deps.cmake', 'CMakeLists.txt', 'toolchains/*.cmake', 'modules/cuqdyn-rs/Cargo.lock') }}
-          restore-keys: build-
+          # The Dockerfile hash leads the key: CMakeCache.txt stores absolute
+          # compiler paths, so a tree configured in another image cannot be
+          # reused (e.g. /usr/bin/mpicc once Open MPI moved to /opt/openmpi).
+          key: build-${{ hashFiles('Dockerfile') }}-${{ hashFiles('deps.cmake', 'CMakeLists.txt', 'toolchains/*.cmake', 'modules/cuqdyn-rs/Cargo.lock') }}
+          restore-keys: build-${{ hashFiles('Dockerfile') }}-
 
       - name: format
         run: $RUN ./.githooks/formatter
@@ -76,10 +79,15 @@ jobs:
       - name: lint
         run: $RUN ./.githooks/linter < /dev/null
 
-      - name: test (with asan)
+      - name: test serial (with asan)
         run: |
           $RUN ./scripts/build.sh serial asan
-          $RUN ./scripts/test.sh asan
+          $RUN ctest --test-dir build/asan-serial --timeout 1800 --output-on-failure
+
+      - name: test mpi (with asan)
+        run: |
+          $RUN ./scripts/build.sh mpi asan
+          $RUN ctest --test-dir build/asan-mpi --timeout 1800 --output-on-failure
 
       - if: success() && github.ref == 'refs/heads/main'
         uses: actions/cache/save@v4

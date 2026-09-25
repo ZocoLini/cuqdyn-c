@@ -1,5 +1,4 @@
 - Validacion del metodo traspilado.  -> David y Marta
-- MPI sin ejercitar con observabilidad parcial
 - Debug sin compilar siquiera.
 - Bootstrap trayectorial.
 - Verificar que lo de las Sensitivities ete bien implementado
