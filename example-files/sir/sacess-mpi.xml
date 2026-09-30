@@ -8,7 +8,7 @@
         <verbose>1</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>1000</maxevaluation>
+            <maxevaluation>20000</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>
