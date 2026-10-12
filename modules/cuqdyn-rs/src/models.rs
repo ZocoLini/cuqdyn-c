@@ -1,4 +1,5 @@
 use crate::context::CuqdynConfigRs;
+use crate::symbolic::SymbolicJacobian;
 use fee::{prelude::*, EmptyResolver, IVRpn, IndexedResolver};
 use std::env;
 
@@ -158,6 +159,91 @@ impl Model for Nfkb {
     }
 }
 
+pub const LOTKA_VOLTERRA_EXPRS: [&str; 2] = ["y0 * (p0 - p1 * y1)", "y1 * (p2 * y0 - p3)"];
+
+pub const ALPHA_PINENE_EXPRS: [&str; 5] = [
+    "-(p0 + p1) * y0",
+    "p0 * y0",
+    "p1 * y0 - (p2 + p3) * y2 + p4 * y4",
+    "p2 * y2",
+    "p3 * y2 - p4 * y4",
+];
+
+pub const NFKB_EXPRS: [&str; 15] = [
+    "p19 - p20 * y0 - p16 * y0",
+    "p16 * y0 - p18 * y1 - p17 * y1 * y7 - p20 * y1 - p1 * y1 * y9 + p2 * y3 - p3 * y1 * y12 + p4 * y4",
+    "p18 * y1 + p17 * y1 * y7 - p20 * y2",
+    "p1 * y1 * y9 - p2 * y3",
+    "p3 * y1 * y12 - p4 * y4",
+    "p10 * y12 - p0 * y5 * y9 + p4 * y4 - p22 * y5",
+    "p22 * p21 * y5 - p0 * y10 * y6",
+    "p14 * y8 - p15 * y7",
+    "p12 + p11 * y6 - p13 * y8",
+    "-p1 * y1 * y9 - p0 * y9 * y5 + p8 * y11 - p9 * y9 - p24 * y9 + p25 * y10",
+    "-p0 * y10 * y6 + p24 * p21 * y9 - p25 * p21 * y10",
+    "p6 + p5 * y6 - p7 * y11",
+    "p0 * y9 * y5 - p10 * y12 - p3 * y1 * y12 + p23 * y13",
+    "p0 * y10 * y6 - p23 * p21 * y13",
+    "p27 + p26 * y6 - p28 * y14",
+];
+
+/// The expressions a model evaluates: the built-in ones carry theirs as
+/// constants, the generic one takes them from the config.
+fn model_expressions(model: &str, cuqdyn_conf: &CuqdynConfigRs) -> Vec<String> {
+    let owned = |exprs: &[&str]| exprs.iter().map(|s| s.to_string()).collect();
+
+    match model {
+        "nfkb" => owned(&NFKB_EXPRS),
+        "lotka-volterra" => owned(&LOTKA_VOLTERRA_EXPRS),
+        "alpha-pinene" | "α-pinene" => owned(&ALPHA_PINENE_EXPRS),
+        _ => cuqdyn_conf.ode_expr().expr().to_vec(),
+    }
+}
+
+/// Differentiates the model, or returns why it could not. The parsed
+/// expressions are first checked against the model itself at a few points, so a
+/// parser that read them differently from fee, or a built-in model whose
+/// constant drifted from its code, falls back to finite differences instead of
+/// handing CVODES a wrong Jacobian.
+pub fn build_jacobian(
+    model_name: &str,
+    cuqdyn_conf: &CuqdynConfigRs,
+    model: &mut dyn Model,
+) -> Result<SymbolicJacobian, String> {
+    let y_count = *cuqdyn_conf.ode_expr().y_count() as usize;
+    let p_count = *cuqdyn_conf.ode_expr().p_count() as usize;
+
+    let exprs = model_expressions(model_name, cuqdyn_conf);
+    let mut jacobian =
+        SymbolicJacobian::new(&exprs, y_count, p_count).map_err(|e| e.to_string())?;
+
+    let mut expected = vec![0.0; y_count];
+    let mut parsed = vec![0.0; y_count];
+
+    for point in 0..4 {
+        // Values in [0.5, 1.5], spread so no two variables coincide.
+        let sample = |k: usize, salt: usize| 0.5 + ((k * 7 + point * 3 + salt) % 11) as f64 / 10.0;
+        let y: Vec<f64> = (0..y_count).map(|k| sample(k, 0)).collect();
+        let p: Vec<f64> = (0..p_count).map(|k| sample(k, 5)).collect();
+
+        model.eval(0.0, &y, &mut expected, &p);
+        jacobian.eval_rhs(&y, &p, &mut parsed);
+
+        for (i, (a, b)) in expected.iter().zip(&parsed).enumerate() {
+            if a.is_finite() && b.is_finite() && (a - b).abs() > 1e-12 * a.abs().max(1.0) {
+                return Err(format!(
+                    "expression {} parsed as {} where the model gives {}",
+                    i + 1,
+                    b,
+                    a
+                ));
+            }
+        }
+    }
+
+    Ok(jacobian)
+}
+
 pub fn build_default_model() -> Box<dyn Model> {
     Box::new(DefaultModel)
 }
@@ -168,5 +254,72 @@ pub fn build_model(model: &str, cuqdyn_conf: &'static CuqdynConfigRs) -> Box<dyn
         "lotka-volterra" => Box::new(LotkaVolterra),
         "alpha-pinene" | "α-pinene" => Box::new(AlphaPinene),
         _ => Box::new(GenericModel::new(cuqdyn_conf)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::context::{CuqdynConfigRs, CuqdynContext};
+
+    /// Central differences of the model RHS, column-major like eval_jacobian.
+    fn finite_differences(ctx: &mut CuqdynContext, y: &[f64], p: &[f64]) -> Vec<f64> {
+        let n = y.len();
+        let mut jac = vec![0.0; n * n];
+        let (mut plus, mut minus) = (vec![0.0; n], vec![0.0; n]);
+
+        for j in 0..n {
+            let h = 1e-6 * y[j].abs().max(1.0);
+            let mut yp = y.to_vec();
+            let mut ym = y.to_vec();
+            yp[j] += h;
+            ym[j] -= h;
+            ctx.eval_f_exprs(0.0, &yp, &mut plus, p);
+            ctx.eval_f_exprs(0.0, &ym, &mut minus, p);
+            for i in 0..n {
+                jac[j * n + i] = (plus[i] - minus[i]) / (2.0 * h);
+            }
+        }
+
+        jac
+    }
+
+    fn check(config: CuqdynConfigRs) {
+        let n = *config.ode_expr().y_count() as usize;
+        let n_p = *config.ode_expr().p_count() as usize;
+        let mut ctx = CuqdynContext::new_from_config(config);
+        assert!(ctx.has_jacobian());
+
+        let y: Vec<f64> = (0..n).map(|k| 0.3 + 0.17 * k as f64).collect();
+        let p: Vec<f64> = (0..n_p).map(|k| 0.2 + 0.05 * k as f64).collect();
+
+        let mut analytic = vec![f64::NAN; n * n];
+        assert!(ctx.eval_jacobian(0.0, &y, &mut analytic, &p));
+        let numeric = finite_differences(&mut ctx, &y, &p);
+
+        for (k, (a, d)) in analytic.iter().zip(&numeric).enumerate() {
+            assert!(
+                (a - d).abs() <= 1e-6 * d.abs().max(1.0),
+                "entry ({}, {}): analytic {} vs finite differences {}",
+                k % n,
+                k / n,
+                a,
+                d
+            );
+        }
+    }
+
+    #[test]
+    fn builtin_models_match_finite_differences() {
+        check(CuqdynConfigRs::lotka_volterra());
+        check(CuqdynConfigRs::alpha_pinene());
+        check(CuqdynConfigRs::nfkb());
+    }
+
+    #[test]
+    fn generic_models_match_finite_differences() {
+        check(CuqdynConfigRs::lotka_volterra_expr());
+        check(CuqdynConfigRs::alpha_pinene_expr());
+        check(CuqdynConfigRs::logistic_growth_expr());
+        check(CuqdynConfigRs::nfkb_expr());
     }
 }

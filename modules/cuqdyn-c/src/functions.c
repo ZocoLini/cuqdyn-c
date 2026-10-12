@@ -13,6 +13,8 @@
 #include "sundials/sundials_types.h"
 
 extern void eval_f_exprs(sunrealtype t, sunrealtype *y, sunrealtype *ydot, sunrealtype *params, CuqDynContext context);
+extern int eval_jacobian(sunrealtype t, const sunrealtype *y, sunrealtype *jac, const sunrealtype *params,
+                         CuqDynContext context);
 
 int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -33,6 +35,19 @@ int ode_model_fun(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     eval_f_exprs(t, y_pointer, ydot_pointer, params, get_cuqdyn_context());
 
     return 0;
+}
+
+int ode_model_jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2,
+                  N_Vector tmp3)
+{
+    CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
+    N_Vector params_vec = user_data;
+
+    t /= conf->time_scaling;
+
+    // A SUNDIALS dense matrix is column-major, which is the layout
+    // eval_jacobian writes.
+    return eval_jacobian(t, NV_DATA_S(y), SM_DATA_D(J), NV_DATA_S(params_vec), get_cuqdyn_context());
 }
 
 /*
@@ -93,11 +108,10 @@ void *obj_func(double *x, void *data)
     experiment_total *exptotal = data;
     output_function *res = calloc(1, sizeof(output_function));
 
-    N_Vector parameters = New_Serial(conf->ode_expr.p_count);
-    memcpy(NV_DATA_S(parameters), x, NV_LENGTH_S(parameters) * sizeof(sunrealtype));
-
-    N_Vector texp = New_Serial(NV_LENGTH_S(exptotal->texp));
-    memcpy(NV_DATA_S(texp), NV_DATA_S(exptotal->texp), NV_LENGTH_S(exptotal->texp) * sizeof(sunrealtype));
+    // Wraps x rather than copying it: without sensitivities nothing writes to
+    // the parameters, and solve_ode only reads the times.
+    N_Vector parameters = N_VMake_Serial(conf->ode_expr.p_count, x, get_sundials_ctx());
+    N_Vector texp = exptotal->texp;
 
 #ifdef DEBUG
     fprintf(stdout, "[DEBUG] [OBJ FUNC] Params: ");
@@ -167,7 +181,6 @@ void *obj_func(double *x, void *data)
     res->g = NULL;
 
     N_VDestroy(parameters);
-    N_VDestroy(texp);
     SUNMatDestroy(result);
 
     return res;

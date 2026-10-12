@@ -9,6 +9,7 @@ use std::{
 };
 
 use crate::models::{self, Model};
+use crate::symbolic::SymbolicJacobian;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -449,6 +450,7 @@ pub struct CuqdynContext {
     #[get = "pub"]
     c_config: CuqdynConfigC,
     model: Box<dyn Model>,
+    jacobian: Option<SymbolicJacobian>,
 
     _ode_exprs_vec: Vec<CString>,
     _ode_exprs_pointers: Vec<*const c_char>,
@@ -476,6 +478,22 @@ impl CuqdynContext {
 
     pub fn eval_f_exprs(&mut self, t: f64, y: &[f64], ydot: &mut [f64], p: &[f64]) {
         self.model.eval(t, y, ydot, p)
+    }
+
+    pub fn has_jacobian(&self) -> bool {
+        self.jacobian.is_some()
+    }
+
+    /// Fills `jac` (column-major) and returns true, or returns false when the
+    /// model could not be differentiated.
+    pub fn eval_jacobian(&mut self, _t: f64, y: &[f64], jac: &mut [f64], p: &[f64]) -> bool {
+        match self.jacobian.as_mut() {
+            Some(jacobian) => {
+                jacobian.eval(y, p, jac);
+                true
+            }
+            None => false,
+        }
     }
 
     pub fn rs_config(&self) -> &CuqdynConfigRs {
@@ -579,6 +597,7 @@ impl From<CuqdynConfigRs> for CuqdynContext {
         let mut ctx = Self {
             c_config,
             model: models::build_default_model(),
+            jacobian: None,
             rs_config: rs_config_ptr,
             _ode_exprs_vec: ode_exprs,
             _ode_exprs_pointers: ode_exprs_c,
@@ -589,7 +608,16 @@ impl From<CuqdynConfigRs> for CuqdynContext {
 
             let model_name = value.ode_expr().expr().first().map_or("", |v| v);
 
-            let model = crate::models::build_model(model_name, value);
+            let mut model = crate::models::build_model(model_name, value);
+
+            match models::build_jacobian(model_name, value, model.as_mut()) {
+                Ok(jacobian) => ctx.jacobian = Some(jacobian),
+                Err(e) => eprintln!(
+                    "WARNING: no analytic Jacobian for the model ({}), CVODES will use finite differences",
+                    e
+                ),
+            }
+
             ctx.model = model;
         }
 

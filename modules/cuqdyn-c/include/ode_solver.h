@@ -46,4 +46,10 @@ sunrealtype sensitivity_at(Sensitivities sensitivities, long state, long time, i
 TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times,
                            Sensitivities *sensitivities_out);
 
+/*
+ * Frees the integrator solve_ode keeps between calls on this thread. Optional:
+ * the next call rebuilds it.
+ */
+void release_ode_workspace(void);
+
 #endif // EDO_SOLVER_H

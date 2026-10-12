@@ -52,6 +52,160 @@ sunrealtype sensitivity_at(const Sensitivities sensitivities, const long state, 
 }
 
 
+/*
+ * The cost function calls solve_ode once per evaluation, which is millions of
+ * times a run. Building CVODES from scratch each time (CVodeCreate, CVodeInit,
+ * the dense matrix and linear solver) made it the source of nearly every malloc
+ * in the program, so the plain path keeps one integrator alive and only
+ * CVodeReInit's it. CVodeReInit resets the whole integration state, so the
+ * trajectory is the same as from a fresh one.
+ *
+ * One per thread, since saCeSS can evaluate the cost from OpenMP threads. The
+ * sensitivity path runs once per run and still builds its own, which keeps
+ * CVodeSensInit off the shared integrator.
+ */
+typedef struct
+{
+    void *cvode_mem;
+    SUNMatrix A;
+    SUNLinearSolver LS;
+    N_Vector abs_tol;
+    N_Vector yout;
+    long n_states;
+    long atol_len;
+} OdeWorkspace;
+
+static _Thread_local OdeWorkspace workspace;
+
+static void free_integrator(void **cvode_mem, SUNLinearSolver *LS, SUNMatrix *A)
+{
+    if (*cvode_mem != NULL)
+    {
+        CVodeFree(cvode_mem);
+    }
+    SUNLinSolFree(*LS);
+    SUNMatDestroy(*A);
+    *LS = NULL;
+    *A = NULL;
+}
+
+/*
+ * Creates a CVODES integrator for y' = ode_model_fun, with its dense linear
+ * solver and the step limits from the environment. Tolerances and user data
+ * are left to the caller, since they change between calls. Returns NULL on
+ * failure, with nothing left allocated.
+ */
+static void *create_integrator(N_Vector initial_values, sunrealtype t0, long n_states, SUNMatrix *A_out,
+                               SUNLinearSolver *LS_out)
+{
+    int retval;
+    SUNMatrix A = NULL;
+    SUNLinearSolver LS = NULL;
+
+    void *cvode_mem = CVodeCreate(CV_BDF, get_sundials_ctx());
+    if (check_retval((void *) cvode_mem, "CVodeCreate", 0))
+    {
+        return NULL;
+    }
+
+    retval = CVodeInit(cvode_mem, ode_model_fun, t0, initial_values);
+    if (check_retval(&retval, "CVodeInit", 1))
+    {
+        goto fail;
+    }
+
+    A = NewDenseMatrix(n_states, n_states);
+    LS = SUNLinSol_Dense(initial_values, A, get_sundials_ctx());
+    retval = CVodeSetLinearSolver(cvode_mem, LS, A);
+    if (check_retval(&retval, "CVodeSetLinearSolver", 1))
+    {
+        goto fail;
+    }
+
+    // Without a Jacobian function CVODES builds it by finite differences, one
+    // extra RHS evaluation per state on every Newton matrix refresh.
+    // CUQDYN_DQ_JACOBIAN keeps that path available for comparison.
+    if (has_jacobian(get_cuqdyn_context()) && getenv("CUQDYN_DQ_JACOBIAN") == NULL)
+    {
+        retval = CVodeSetJacFn(cvode_mem, ode_model_jac);
+        if (check_retval(&retval, "CVodeSetJacFn", 1))
+        {
+            goto fail;
+        }
+    }
+
+    char *min_step_s = getenv("CUQDYN_CVODES_MIN_STEP");
+    if (min_step_s != NULL)
+    {
+        sunrealtype min_step = atof(min_step_s);
+        retval = CVodeSetMinStep(cvode_mem, min_step);
+        if (check_retval(&retval, "CVodeSetMinStep", 1))
+        {
+            goto fail;
+        }
+    }
+
+    long max_num_steps = 1000000;
+    char *max_num_steps_s = getenv("CUQDYN_CVODES_MAX_NUM_STEPS");
+    if (max_num_steps_s != NULL)
+    {
+        max_num_steps = atol(max_num_steps_s);
+    }
+
+    retval = CVodeSetMaxNumSteps(cvode_mem, max_num_steps);
+    if (check_retval(&retval, "CVodeSetMaxNumSteps", 1))
+    {
+        goto fail;
+    }
+
+    *A_out = A;
+    *LS_out = LS;
+    return cvode_mem;
+
+fail:
+    free_integrator(&cvode_mem, &LS, &A);
+    return NULL;
+}
+
+void release_ode_workspace(void)
+{
+    free_integrator(&workspace.cvode_mem, &workspace.LS, &workspace.A);
+    N_VDestroy(workspace.abs_tol);
+    N_VDestroy(workspace.yout);
+    workspace = (OdeWorkspace) {0};
+}
+
+/*
+ * The integrator of the plain path, rewound to (t0, initial_values). It is
+ * rebuilt only when the model it was sized for changes.
+ */
+static void *reuse_integrator(N_Vector initial_values, sunrealtype t0, long n_states, long atol_len)
+{
+    if (workspace.cvode_mem != NULL && workspace.n_states == n_states && workspace.atol_len == atol_len)
+    {
+        int retval = CVodeReInit(workspace.cvode_mem, t0, initial_values);
+        if (!check_retval(&retval, "CVodeReInit", 1))
+        {
+            return workspace.cvode_mem;
+        }
+    }
+
+    release_ode_workspace();
+
+    workspace.cvode_mem = create_integrator(initial_values, t0, n_states, &workspace.A, &workspace.LS);
+    if (workspace.cvode_mem == NULL)
+    {
+        return NULL;
+    }
+
+    workspace.abs_tol = New_Serial(atol_len);
+    workspace.yout = New_Serial(n_states);
+    workspace.n_states = n_states;
+    workspace.atol_len = atol_len;
+
+    return workspace.cvode_mem;
+}
+
 TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunrealtype t0, N_Vector times,
                            Sensitivities *sensitivities_out)
 {
@@ -81,32 +235,44 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
 
     int retval;
     void *cvode_mem = NULL;
+    // Only set on the sensitivity path; the plain one borrows the workspace's.
     SUNMatrix A = NULL;
     SUNLinearSolver LS = NULL;
-    N_Vector yout = NULL;
-    N_Vector cloned_abs_tol = NULL;
+    N_Vector own_abs_tol = NULL;
+    N_Vector own_yout = NULL;
+    N_Vector abs_tol;
+    N_Vector yout;
     N_Vector *sensitivity_vectors = NULL;
     sunrealtype *pbar = NULL;
     Sensitivities sensitivities = {0};
     TransposedStates result = NULL;
     int failed = 1;
 
-    cvode_mem = CVodeCreate(CV_BDF, get_sundials_ctx());
-    if (check_retval((void *) cvode_mem, "CVodeCreate", 0))
+    if (with_sensitivities)
+    {
+        cvode_mem = create_integrator(initial_values, t0, n_states, &A, &LS);
+        own_abs_tol = New_Serial(tolerances.atol_len);
+        own_yout = New_Serial(n_states);
+        abs_tol = own_abs_tol;
+        yout = own_yout;
+    }
+    else
+    {
+        cvode_mem = reuse_integrator(initial_values, t0, n_states, tolerances.atol_len);
+        abs_tol = workspace.abs_tol;
+        yout = workspace.yout;
+    }
+
+    if (cvode_mem == NULL)
     {
         goto cleanup;
     }
 
-    retval = CVodeInit(cvode_mem, ode_model_fun, t0, initial_values);
-    if (check_retval(&retval, "CVodeInit", 1))
-    {
-        goto cleanup;
-    }
+    // CVodeSVtolerances copies the vector, and only allocates on its first call
+    // for a given integrator.
+    memcpy(NV_DATA_S(abs_tol), tolerances.atol, tolerances.atol_len * sizeof(sunrealtype));
 
-    cloned_abs_tol = New_Serial(tolerances.atol_len);
-    memcpy(NV_DATA_S(cloned_abs_tol), tolerances.atol, tolerances.atol_len * sizeof(sunrealtype));
-
-    retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, cloned_abs_tol);
+    retval = CVodeSVtolerances(cvode_mem, tolerances.rtol, abs_tol);
     if (check_retval(&retval, "CVodeSVtolerances", 1))
     {
         goto cleanup;
@@ -114,38 +280,6 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
 
     retval = CVodeSetUserData(cvode_mem, parameters);
     if (check_retval(&retval, "CVodeSetUserData", 1))
-    {
-        goto cleanup;
-    }
-
-    A = NewDenseMatrix(n_states, n_states);
-    LS = SUNLinSol_Dense(initial_values, A, get_sundials_ctx());
-    retval = CVodeSetLinearSolver(cvode_mem, LS, A);
-    if (check_retval(&retval, "CVodeSetLinearSolver", 1))
-    {
-        goto cleanup;
-    }
-
-    char *min_step_s = getenv("CUQDYN_CVODES_MIN_STEP");
-    if (min_step_s != NULL)
-    {
-        sunrealtype min_step = atof(min_step_s);
-        retval = CVodeSetMinStep(cvode_mem, min_step);
-        if (check_retval(&retval, "CVodeSetMinStep", 1))
-        {
-            goto cleanup;
-        }
-    }
-
-    long max_num_steps = 1000000;
-    char *max_num_steps_s = getenv("CUQDYN_CVODES_MAX_NUM_STEPS");
-    if (max_num_steps_s != NULL)
-    {
-        max_num_steps = atol(max_num_steps_s);
-    }
-
-    retval = CVodeSetMaxNumSteps(cvode_mem, max_num_steps);
-    if (check_retval(&retval, "CVodeSetMaxNumSteps", 1))
     {
         goto cleanup;
     }
@@ -202,7 +336,6 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
     /* Time points */
     sunrealtype t;
 
-    yout = New_Serial(n_states);
     result = NewDenseMatrix(n_states, n_times);
 
     for (long i = 0; i < n_times; ++i)
@@ -255,29 +388,25 @@ TransposedStates solve_ode(N_Vector parameters, N_Vector initial_values, sunreal
     failed = 0;
 
 cleanup:
-    N_VDestroy(yout);
     destroy_sensitivities(sensitivities);
     free(pbar);
 
-    if (cvode_mem != NULL)
+    if (with_sensitivities)
     {
-        if (with_sensitivities)
+        if (cvode_mem != NULL)
         {
             CVodeSensFree(cvode_mem);
         }
-        CVodeFree(&cvode_mem);
+        free_integrator(&cvode_mem, &LS, &A);
+        N_VDestroy(own_abs_tol);
+        N_VDestroy(own_yout);
     }
-
-    N_VDestroy(cloned_abs_tol);
 
     // CVodeSensInit copies the vectors it is handed, so these stay ours to free.
     if (sensitivity_vectors != NULL)
     {
         N_VDestroyVectorArray(sensitivity_vectors, n_params);
     }
-
-    SUNLinSolFree(LS);
-    SUNMatDestroy(A);
 
     if (failed && result != NULL)
     {

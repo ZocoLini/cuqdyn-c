@@ -357,6 +357,7 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     N_VDestroy(scaled_times);
     destroy_cuqdyn_data(&data);
+    release_ode_workspace();
 
     return result;
 }

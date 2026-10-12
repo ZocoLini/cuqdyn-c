@@ -117,6 +117,15 @@ the default value.
 Set this variable if you want to set the maximum number of steps used by the CVODES solver instead of
 the default value.
 
+### CUQDYN_DQ_JACOBIAN
+
+The model expressions are differentiated symbolically, and CVODES gets the
+analytic Jacobian `df/dy` from them. Set this variable to any value to make it
+approximate the Jacobian by finite differences instead, as it did before. A
+model the differentiator does not understand (an operator other than
+`+ - * / ^`, or a function) falls back to finite differences on its own, with a
+warning.
+
 ## Building the project
 
 **GCC and GFortran v14 aren't supported by the project, so you need to use GCC v13 or lower.**
