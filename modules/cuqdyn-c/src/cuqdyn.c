@@ -35,15 +35,15 @@ static long share_start(const long total, const long parts, const long part)
 }
 
 /*
- * How the ranks share the leave-one-out refits. The refits are spread over
- * min(nproc, points) groups of contiguous ranks, both as evenly as possible.
- * With no more ranks than refits every group is a single rank, as it always
- * was; the ranks left over join the groups, and sacess runs each refit in
- * parallel over its group.
+ * How the ranks share the leave-one-out refits. The ranks are split into
+ * min(nproc, points) groups of contiguous ranks, as evenly as possible. With no
+ * more ranks than refits every group is a single rank; the ranks left over join
+ * the groups, and sacess runs each refit in parallel over its group.
  *
  * Every rank computes the same layout from nproc and points, so it needs no
  * communication, and each rank knows before the loop whether it leads a group
- * (and so needs the buffers for the results) or only works inside sacess.
+ * (and so needs the buffers for the results) or only works inside sacess. Which
+ * refits a group runs is decided as the loop goes, see next_refit.
  */
 typedef struct
 {
@@ -51,9 +51,6 @@ typedef struct
     long group;
     /// World rank of the first rank of the group, the one that reports to rank 0.
     int leader;
-    /// Refits of the group and the first of them, 1-based like the loop index.
-    long iterations;
-    long start_index;
 } LoopLayout;
 
 static LoopLayout loop_layout(const long points, const int nproc, const int rank)
@@ -73,10 +70,114 @@ static LoopLayout loop_layout(const long points, const int nproc, const int rank
     }
 
     layout.leader = (int) share_start(nproc, layout.n_groups, layout.group);
-    layout.iterations = share_size(points, layout.n_groups, layout.group);
-    layout.start_index = share_start(points, layout.n_groups, layout.group) + 1;
 
     return layout;
+}
+#endif
+
+/*
+ * The results of the refits a group leader ran, packed one record after another
+ * as [index, residuals, predicted states, params], so they reach rank 0 in a
+ * single message once the loop is over.
+ */
+typedef struct
+{
+    long n_residuals;
+    long states_rows;
+    long states_cols;
+    long n_params;
+    long count;
+    long capacity;
+    double *data;
+} RefitRecords;
+
+static long refit_record_len(const RefitRecords *records)
+{
+    return 1 + records->n_residuals + records->states_rows * records->states_cols + records->n_params;
+}
+
+static void append_refit_record(RefitRecords *records, const long index, N_Vector residuals, SUNMatrix states,
+                                N_Vector params)
+{
+    const long len = refit_record_len(records);
+
+    if (records->count == records->capacity)
+    {
+        const long capacity = records->capacity == 0 ? 4 : 2 * records->capacity;
+        double *grown = realloc(records->data, capacity * len * sizeof(double));
+        if (grown == NULL)
+        {
+            fprintf(stderr, "ERROR: out of memory storing the leave-one-out results\n");
+            exit(1);
+        }
+        records->data = grown;
+        records->capacity = capacity;
+    }
+
+    double *record = records->data + records->count * len;
+    const long states_len = records->states_rows * records->states_cols;
+
+    record[0] = (double) index;
+    memcpy(record + 1, NV_DATA_S(residuals), records->n_residuals * sizeof(double));
+    memcpy(record + 1 + records->n_residuals, SM_DATA_D(states), states_len * sizeof(double));
+    memcpy(record + 1 + records->n_residuals + states_len, NV_DATA_S(params), records->n_params * sizeof(double));
+
+    ++records->count;
+}
+
+/// Writes `count` packed records into rank 0's result matrices.
+static void store_refit_records(const RefitRecords *layout, const double *data, const long count, SUNMatrix resid_loo,
+                                MatrixArray media_matrix, SUNMatrix predicted_params_matrix)
+{
+    const long len = refit_record_len(layout);
+    const long states_len = layout->states_rows * layout->states_cols;
+
+    N_Vector residuals = New_Serial(layout->n_residuals);
+    SUNMatrix states = NewDenseMatrix(layout->states_rows, layout->states_cols);
+    N_Vector params = New_Serial(layout->n_params);
+
+    for (long k = 0; k < count; ++k)
+    {
+        const double *record = data + k * len;
+        const long i = (long) record[0];
+
+        memcpy(NV_DATA_S(residuals), record + 1, layout->n_residuals * sizeof(double));
+        memcpy(SM_DATA_D(states), record + 1 + layout->n_residuals, states_len * sizeof(double));
+        memcpy(NV_DATA_S(params), record + 1 + layout->n_residuals + states_len, layout->n_params * sizeof(double));
+
+        set_matrix_row(resid_loo, residuals, i, 0, layout->n_residuals);
+        matrix_array_set_index(media_matrix, i - 1, states);
+        set_matrix_row(predicted_params_matrix, params, i - 1, 0, layout->n_params);
+    }
+
+    N_VDestroy(residuals);
+    SUNMatDestroy(states);
+    N_VDestroy(params);
+}
+
+#ifdef MPI
+/*
+ * The next refit for the calling rank's group, 1-based. The leader takes it
+ * from a counter on rank 0 and passes it to the rest of its group, so a group
+ * that finishes early goes on with the refits still pending instead of waiting
+ * for the others. An index past the last refit means the loop is over.
+ */
+static long next_refit(const int is_leader, MPI_Win counter_win, MPI_Comm group_comm)
+{
+    long taken = 0;
+
+    if (is_leader)
+    {
+        const long one = 1;
+
+        MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, counter_win);
+        MPI_Fetch_and_op(&one, &taken, MPI_LONG, 0, 0, MPI_SUM, counter_win);
+        MPI_Win_unlock(0, counter_win);
+    }
+
+    MPI_Bcast(&taken, 1, MPI_LONG, 0, group_comm);
+
+    return taken + 1;
 }
 #endif
 
@@ -240,24 +341,42 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
 
     const LoopLayout layout = loop_layout(m - 1, nproc, rank);
     const int is_leader = rank == layout.leader;
-    const long iterations = layout.iterations;
-    const long start_index = layout.start_index;
 
     MPI_Comm group_comm;
     MPI_Comm_split(MPI_COMM_WORLD, (int) layout.group, rank, &group_comm);
     sacess_set_comm(group_comm);
+
+    // The refits handed out so far. Only rank 0 exposes it.
+    long refits_taken = 0;
+    MPI_Win counter_win;
+    MPI_Win_create(rank == 0 ? &refits_taken : NULL, rank == 0 ? (MPI_Aint) sizeof(long) : 0, sizeof(long),
+                   MPI_INFO_NULL, MPI_COMM_WORLD, &counter_win);
 #else
     const int is_leader = 1;
-    const long iterations = m - 1;
-    const long start_index = 1;
+    long refits_taken = 0;
 #endif
 
     // Only the leader of a group handles the results of its refits.
     N_Vector residuals = is_leader ? New_Serial(n) : NULL;
-    const long end_index = iterations + start_index;
+    RefitRecords records = {
+            .n_residuals = n,
+            .states_rows = NV_LENGTH_S(initial_condition),
+            .states_cols = NV_LENGTH_S(scaled_times),
+            .n_params = NV_LENGTH_S(initial_params),
+    };
 
-    for (long i = start_index; i < end_index; ++i)
+    for (;;)
     {
+#ifdef MPI
+        const long i = next_refit(is_leader, counter_win, group_comm);
+#else
+        const long i = ++refits_taken;
+#endif
+        if (i > m - 1)
+        {
+            break;
+        }
+
         LongArray indices_to_remove = create_array((long[]) {i + 1}, 1);
 
         N_Vector texp = copy_vector_remove_indices(scaled_times, indices_to_remove);
@@ -286,66 +405,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
             NV_Ith_S(residuals, j) = fabs(observed - predicted);
         }
 
-#ifdef MPI
-        long predicted_obs_states_len = SM_COLUMNS_D(predicted_obs_states) * SM_ROWS_D(predicted_obs_states);
-        if (rank != 0)
-        {
-            // Sending
-            // Tag 0 is used to send the acutal i (row / time)
-            // Tag 1 is used to send the residuals vector
-            // Tag 2 is used to send the predicted data matrix
-            // Tag 3 is used to send the predicted params vector
-            // We also need to send the actual i to the master process
-            MPI_Send(&i, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
-            MPI_Send(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-            MPI_Send(SM_DATA_D(predicted_obs_states), (int) predicted_obs_states_len, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
-            MPI_Send(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
-        }
-        else
-        {
-#endif
-            set_matrix_row(resid_loo, residuals, i, 0, NV_LENGTH_S(residuals));
-            matrix_array_set_index(media_matrix, i - 1, predicted_obs_states);
-            set_matrix_row(predicted_params_matrix, predicted_params, i - 1, 0, NV_LENGTH_S(predicted_params));
-#ifdef MPI
-            // Receiving from the leaders of the other groups. Group 0 has the
-            // most refits, so rank 0 passes every step any group reaches.
-            long slaved_index;
-            const long step = i - start_index;
-
-            for (long group = 1; group < layout.n_groups; ++group)
-            {
-                if (step >= share_size(m - 1, layout.n_groups, group))
-                {
-                    continue;
-                }
-
-                const int leader = (int) share_start(nproc, layout.n_groups, group);
-
-                MPI_Recv(&slaved_index, 1, MPI_LONG, leader, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-                // Receriving the residuals of other processes
-                MPI_Recv(NV_DATA_S(residuals), NV_LENGTH_S(residuals), MPI_DOUBLE, leader, 1, MPI_COMM_WORLD,
-                         MPI_STATUS_IGNORE);
-                set_matrix_row(resid_loo, residuals, slaved_index, 0, NV_LENGTH_S(residuals));
-
-                // Receiving the predicted data matrix
-                MPI_Recv(SM_DATA_D(predicted_obs_states), (int) predicted_obs_states_len, MPI_DOUBLE, leader, 2,
-                         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                matrix_array_set_index(media_matrix, slaved_index - 1, predicted_obs_states);
-
-                // Receiving the predicted params
-                MPI_Recv(NV_DATA_S(predicted_params), NV_LENGTH_S(predicted_params), MPI_DOUBLE, leader, 3,
-                         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                set_matrix_row(predicted_params_matrix, predicted_params, slaved_index - 1, 0,
-                               NV_LENGTH_S(predicted_params));
-            }
-        }
-#endif
-        if (rank == 0)
-        {
-            fprintf(stdout, "Iteration %ld of %ld done\n", i - start_index + 1, end_index - start_index);
-        }
+        append_refit_record(&records, i, residuals, predicted_obs_states, predicted_params);
+        fprintf(stdout, "Refit %ld of %ld done by rank %d\n", i, m - 1, rank);
 
         N_VDestroy(predicted_params);
         SUNMatDestroy(predicted_obs_states);
@@ -354,14 +415,37 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     N_VDestroy(residuals);
 
 #ifdef MPI
+    MPI_Win_free(&counter_win);
     sacess_set_comm(MPI_COMM_WORLD);
     MPI_Comm_free(&group_comm);
 
-    printf("%ld iterations of rank %d finalized\n", iterations, rank);
+    // The leaders hand their results to rank 0 only now, so no group ever
+    // waits on rank 0 between refits.
+    if (is_leader && rank != 0)
+    {
+        MPI_Send(&records.count, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(records.data, (int) (records.count * refit_record_len(&records)), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+    }
+    else if (rank == 0)
+    {
+        for (long group = 1; group < layout.n_groups; ++group)
+        {
+            const int leader = (int) share_start(nproc, layout.n_groups, group);
+            long count;
+
+            MPI_Recv(&count, 1, MPI_LONG, leader, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            double *data_received = malloc(count * refit_record_len(&records) * sizeof(double));
+            MPI_Recv(data_received, (int) (count * refit_record_len(&records)), MPI_DOUBLE, leader, 1, MPI_COMM_WORLD,
+                     MPI_STATUS_IGNORE);
+            store_refit_records(&records, data_received, count, resid_loo, media_matrix, predicted_params_matrix);
+            free(data_received);
+        }
+    }
 #endif
 
     if (rank != 0)
     {
+        free(records.data);
         N_VDestroy(initial_condition);
         N_VDestroy(scaled_times);
         N_VDestroy(initial_params);
@@ -369,6 +453,9 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         release_ode_workspace();
         return NULL;
     }
+
+    store_refit_records(&records, records.data, records.count, resid_loo, media_matrix, predicted_params_matrix);
+    free(records.data);
 
     // media_matrix is transposed so predicted data median is also transposed
     TransposedStates predicted_data_median = matrix_array_get_median(media_matrix);

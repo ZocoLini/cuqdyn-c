@@ -215,18 +215,21 @@ mpirun -np 6 --use-hwthread-cpus ./build/${BUILD_TYPE}-mpi/modules/cli/cli solve
 ### How the MPI build shares the ranks
 
 - The full-data fit runs saCeSS in parallel over every rank.
-- The `m - 1` leave-one-out refits are then spread over `min(nproc, m - 1)`
-  groups of contiguous ranks, both as evenly as possible. With no more ranks
-  than refits every group is a single rank; the ranks left over join the
-  groups, and each refit runs saCeSS in parallel over its group. With 10 ranks
-  and 4 refits the groups have 3, 3, 2 and 2 ranks.
+- For the `m - 1` leave-one-out refits the ranks are split into
+  `min(nproc, m - 1)` groups of contiguous ranks, as evenly as possible. With no
+  more ranks than refits every group is a single rank; the ranks left over join
+  the groups, and each refit runs saCeSS in parallel over its group. With 10
+  ranks and 4 refits the groups have 3, 3, 2 and 2 ranks.
+- The refits are handed out as the loop goes: a group that finishes one takes
+  the next one still pending, from a counter on rank 0, so no group sits idle
+  while others still have work. Each group leader keeps its results and sends
+  them to rank 0 once, after the loop.
 - A group of one rank runs the sequential eSS, whatever the method in the
   sacess config; a larger one runs saCeSS, with the `<parallelization>` options
   of the config. Every sacess config here asks for `ScatterSearch` and carries
   a `cooperative` block, so the same file works for both.
-- `maxevaluation` is the budget of the whole group, as saCeSS defines it: each
-  rank of a group of `k` stops after about `maxevaluation / k` evaluations. A
-  large group finishes sooner, but raise `maxevaluation` if the fit gets worse.
+- `maxevaluation` is the budget of each rank: every rank of a saCeSS group runs
+  up to `maxevaluation` evaluations, so a larger group searches more, not less.
 
 NF-kB is the largest case, and its FIM is close to singular (`cond(J) ~ 6e8`), so
 its hidden-state bands should be read together with the reported rank and
