@@ -5,13 +5,40 @@
  */
 
 
-#ifdef SACESS_MPI
+#ifdef MPI
 
 #include <math.h>
 #include <method_module/structure_paralleltestbed.h>
 #include <method_module/parallel_functions.h>
 #include <mpi.h>
 #include <string.h>
+
+/*
+ * sacess used to free its buffers with receives still posted into them. Once
+ * it is called more than once per process, a later MPI call can then complete
+ * one of those receives into freed memory. These finish a request before its
+ * buffer goes away.
+ */
+static void finish_receive(MPI_Request *request)
+{
+    int done;
+
+    if (*request == MPI_REQUEST_NULL) return;
+
+    MPI_Test(request, &done, MPI_STATUS_IGNORE);
+    if (!done) {
+        MPI_Cancel(request);
+        MPI_Wait(request, MPI_STATUS_IGNORE);
+    }
+}
+
+/// The messages are a few doubles, sent eagerly, so this does not wait on the peer.
+static void finish_send(MPI_Request *request)
+{
+    if (*request == MPI_REQUEST_NULL) return;
+
+    MPI_Wait(request, MPI_STATUS_IGNORE);
+}
 
 
 
@@ -35,10 +62,10 @@ void sendbestsolutiondist_( void *exp1_, double *serializedata, int *sizeser, in
       	memmove(exp1[0].execution.sendbuffermaster[0], serializedata, (*sizeser)*sizeof(double));
 	if(exp1[0].execution.idp>0)
          	MPI_Isend( exp1[0].execution.sendbuffermaster[0], *sizeser, MPI_DOUBLE,exp1[0].execution.idp-1, 100, 
-			MPI_COMM_WORLD, &(exp1[0].execution.sendrequestmaster[0]));
+			sacess_comm, &(exp1[0].execution.sendrequestmaster[0]));
 	else
  		MPI_Isend( exp1[0].execution.sendbuffermaster[0], *sizeser, MPI_DOUBLE,exp1[0].execution.NPROC-1, 100, 
- 				MPI_COMM_WORLD, &(exp1[0].execution.sendrequestmaster[0]));
+ 				sacess_comm, &(exp1[0].execution.sendrequestmaster[0]));
 
 
    }   
@@ -56,10 +83,10 @@ void sendbestsolutiondist_( void *exp1_, double *serializedata, int *sizeser, in
         memmove( exp1[0].execution.sendbuffermaster[1], serializedata, (*sizeser)*sizeof(double));
 	if(exp1[0].execution.idp<(exp1[0].execution.NPROC-1))
           	MPI_Isend(exp1[0].execution.sendbuffermaster[1], *sizeser, MPI_DOUBLE,exp1[0].execution.idp+1, 100, 
- 				MPI_COMM_WORLD, &(exp1[0].execution.sendrequestmaster[1]));
+ 				sacess_comm, &(exp1[0].execution.sendrequestmaster[1]));
 	else
  		MPI_Isend(exp1[0].execution.sendbuffermaster[1], *sizeser, MPI_DOUBLE,0, 100, 
- 				MPI_COMM_WORLD, &(exp1[0].execution.sendrequestmaster[1]));
+ 				sacess_comm, &(exp1[0].execution.sendrequestmaster[1]));
 
    }
 
@@ -107,7 +134,7 @@ void returnwindowvaluesdist_(void *exp1_, double *serializedata, int *sizeser, i
               if (id == 1)   
  	      printdescartsolution_(exp1, &(exp1[0].execution.receptionbuffermaster[id][*sizeser-1]), &idproc);
           }
-          MPI_Irecv(exp1[0].execution.receptionbuffermaster[id],*sizeser,MPI_DOUBLE,idproc, 100,MPI_COMM_WORLD,
+          MPI_Irecv(exp1[0].execution.receptionbuffermaster[id],*sizeser,MPI_DOUBLE,idproc, 100,sacess_comm,
                                                                      &(exp1[0].execution.receptionrequestmaster[id]));
        }
    }
@@ -135,18 +162,18 @@ void asynchinitasynchronousvars_(void *exp1_, int *sizeser ) {
 
  	 if(exp1[0].execution.idp>0)
       	     MPI_Irecv(exp1[0].execution.receptionbuffermaster[0], *sizeser, MPI_DOUBLE,exp1[0].execution.idp-1,
-                        100,MPI_COMM_WORLD, &(exp1[0].execution.receptionrequestmaster[0]));
+                        100,sacess_comm, &(exp1[0].execution.receptionrequestmaster[0]));
          else
  	     MPI_Irecv(exp1[0].execution.receptionbuffermaster[0], *sizeser, MPI_DOUBLE,exp1[0].execution.NPROC-1,
-            		100,MPI_COMM_WORLD, &(exp1[0].execution.receptionrequestmaster[0]));
+            		100,sacess_comm, &(exp1[0].execution.receptionrequestmaster[0]));
 	
 
 	 if(exp1[0].execution.idp<(exp1[0].execution.NPROC-1))
       	     MPI_Irecv(exp1[0].execution.receptionbuffermaster[1], *sizeser, MPI_DOUBLE,exp1[0].execution.idp+1,
-             		100,MPI_COMM_WORLD, &(exp1[0].execution.receptionrequestmaster[1]));
+             		100,sacess_comm, &(exp1[0].execution.receptionrequestmaster[1]));
 	 else
  	     MPI_Irecv(exp1[0].execution.receptionbuffermaster[1], *sizeser, MPI_DOUBLE,0,
-                        100,MPI_COMM_WORLD, &(exp1[0].execution.receptionrequestmaster[1]));
+                        100,sacess_comm, &(exp1[0].execution.receptionrequestmaster[1]));
 
 
 
@@ -216,7 +243,7 @@ void  receivesolutionsmaster_ (void *exp1_, int *dest, double *serializedata, in
         memmove(serializedata, exp1[0].execution.receptionbuffermaster[(*dest-1)], (*sizeser)*sizeof(double));
 //      free(exp1[0].execution.receptionbuffermaster[(*dest-1)]);    
 //      exp1[0].execution.receptionbuffermaster[(*dest-1)] = (double *) malloc( *sizeser * sizeof(double));
-        MPI_Irecv(exp1[0].execution.receptionbuffermaster[*dest-1], *sizeser, MPI_DOUBLE,*dest, 150, MPI_COMM_WORLD, &exp1[0].execution.receptionrequestmaster[*dest-1]);
+        MPI_Irecv(exp1[0].execution.receptionbuffermaster[*dest-1], *sizeser, MPI_DOUBLE,*dest, 150, sacess_comm, &exp1[0].execution.receptionrequestmaster[*dest-1]);
             
     } else flag=0;
     *result=flag;
@@ -233,7 +260,7 @@ void masterupdatesolutionslaves_( void *exp1_, double *serializedata, int *sizes
     
     for (i = 0; i < (exp1[0].execution.NPROC-1); i++) {
 	       memmove(exp1[0].execution.sendbuffermaster[i], serializedata, *sizeser*sizeof(double));
-	       MPI_Isend(exp1[0].execution.sendbuffermaster[i], *sizeser, MPI_DOUBLE,i+1, 150, MPI_COMM_WORLD,&exp1[0].execution.sendrequestmaster[i]);
+	       MPI_Isend(exp1[0].execution.sendbuffermaster[i], *sizeser, MPI_DOUBLE,i+1, 150, sacess_comm,&exp1[0].execution.sendrequestmaster[i]);
     }
 }
 
@@ -253,7 +280,7 @@ void returnwindowvalueslave_(void *exp1_, double *serializedata, int *sizeser, i
 	MPI_Test( exp1[0].execution.receptionrequestslave, &flag, MPI_STATUS_IGNORE);
     	if (flag == 1) {
     		memmove( serializedata,exp1[0].execution.receptionbufferslave, *sizeser*sizeof(double));
-        	MPI_Irecv(exp1[0].execution.receptionbufferslave, *sizeser, MPI_DOUBLE, 0, 150, MPI_COMM_WORLD, exp1[0].execution.receptionrequestslave);
+        	MPI_Irecv(exp1[0].execution.receptionbufferslave, *sizeser, MPI_DOUBLE, 0, 150, sacess_comm, exp1[0].execution.receptionrequestslave);
         	*returnflag = 1;
     	}  
     }
@@ -275,7 +302,7 @@ void sendbestsolutionslave_ (void *exp1_, double *serializedata, int *sizeser, i
     
     memmove ( exp1[0].execution.sendbufferslave , serializedata, *sizeser * sizeof(double) );    
     MPI_Isend( exp1[0].execution.sendbufferslave , *sizeser, MPI_DOUBLE, 0, 150,
-                MPI_COMM_WORLD, exp1[0].execution.sendrequestslave);  
+                sacess_comm, exp1[0].execution.sendrequestslave);  
 
 }
 
@@ -303,6 +330,13 @@ void asynchinitmasterandwindows_(void *exp1_, int *sizeser ) {
         exp1[0].execution.receptionbufferslave[i] = DBL_MAX;
      }
 
+     // Only posted on the side that uses them; NULL elsewhere so the teardown
+     // can tell.
+     *exp1[0].execution.sendrequestslave = MPI_REQUEST_NULL;
+     *exp1[0].execution.receptionrequestslave = MPI_REQUEST_NULL;
+     *exp1[0].execution.adaptation_slave_recv = MPI_REQUEST_NULL;
+     *exp1[0].execution.adaptation_slave_send = MPI_REQUEST_NULL;
+
 // MASTER
      if (exp1[0].execution.idp == 0) {
      	 exp1[0].execution.receptionbuffermaster = (double **) malloc((exp1[0].execution.NPROC-1)* sizeof (double));
@@ -322,21 +356,23 @@ void asynchinitmasterandwindows_(void *exp1_, int *sizeser ) {
               exp1[0].execution.adaptation_master_buffer_send[i] = (double *) malloc( 4 * sizeof (double));
               
 	      exp1[0].execution.sendbuffermaster[i] = (double *) malloc((*sizeser)* sizeof (double));
+              exp1[0].execution.sendrequestmaster[i] = MPI_REQUEST_NULL;
+              exp1[0].execution.adaptation_master_send[i] = MPI_REQUEST_NULL;
 
               MPI_Irecv(exp1[0].execution.receptionbuffermaster[i], *sizeser, MPI_DOUBLE,i+1, 150,
-                 MPI_COMM_WORLD, &exp1[0].execution.receptionrequestmaster[i]);
+                 sacess_comm, &exp1[0].execution.receptionrequestmaster[i]);
               
               MPI_Irecv(&exp1[0].execution.adaptation_master_buffer_recv[i], 1, MPI_INT,i+1, 155,
-                 MPI_COMM_WORLD, &exp1[0].execution.adaptation_master_recv[i]);              
+                 sacess_comm, &exp1[0].execution.adaptation_master_recv[i]);              
          }
 
     } else {
 // SLAVES
        MPI_Irecv(exp1[0].execution.receptionbufferslave, *sizeser, MPI_DOUBLE,0, 150,
-                 MPI_COMM_WORLD, exp1[0].execution.receptionrequestslave );
+                 sacess_comm, exp1[0].execution.receptionrequestslave );
        
        MPI_Irecv(exp1[0].execution.adaptation_slave_buffer_recv, 4, MPI_DOUBLE,0, 155,
-                 MPI_COMM_WORLD, exp1[0].execution.adaptation_slave_recv );       
+                 sacess_comm, exp1[0].execution.adaptation_slave_recv );       
        
     } 
      
@@ -359,7 +395,7 @@ void adaptationcheck_(void *exp1_, int *resultflag_adapt, int *idslave_to_adapt)
             *idslave_to_adapt = i;
             
             MPI_Irecv(&exp1[0].execution.adaptation_master_buffer_recv[i], 1, MPI_INT,i+1, 155,
-                 MPI_COMM_WORLD, &exp1[0].execution.adaptation_master_recv[i]);              
+                 sacess_comm, &exp1[0].execution.adaptation_master_recv[i]);              
             break;
         }
     }
@@ -380,7 +416,7 @@ void adaptationsendmaster_(void *exp1_, int *idsend, int *size_dim, int *ncounte
     buffersend[3] = *accept;
     
     MPI_Isend(buffersend, 4, MPI_DOUBLE, *idsend, 155, 
-            MPI_COMM_WORLD, &exp1[0].execution.adaptation_master_send[*idsend-1] );
+            sacess_comm, &exp1[0].execution.adaptation_master_send[*idsend-1] );
 }
 
 
@@ -391,7 +427,7 @@ void sendslaveadaptsignal_(void *exp1_, int *code) {
     
     adaptation_slave_buffer_send = *code; 
     MPI_Isend(&adaptation_slave_buffer_send, 1, MPI_INT, 0, 155, 
-            MPI_COMM_WORLD, exp1[0].execution.adaptation_slave_send );    
+            sacess_comm, exp1[0].execution.adaptation_slave_send );    
 }
 
 
@@ -412,7 +448,7 @@ void checkadaptsettings_(void *exp1_, int *size_dim, int *ncounter, double *bala
         
                 
         MPI_Irecv(exp1[0].execution.adaptation_slave_buffer_recv, 4, MPI_DOUBLE,0, 155,
-                 MPI_COMM_WORLD, exp1[0].execution.adaptation_slave_recv );  
+                 sacess_comm, exp1[0].execution.adaptation_slave_recv );  
     }
     
 }
@@ -430,6 +466,31 @@ void destroyasynchinitmasterandwindows_(void *exp1_) {
     exp1 = (experiment_total *) exp1_;        
     int i;
 
+    if (exp1[0].execution.idp == 0) {
+        for (i = 0; i < (exp1[0].execution.NPROC-1); i++) {
+            finish_receive(&exp1[0].execution.receptionrequestmaster[i]);
+            finish_receive(&exp1[0].execution.adaptation_master_recv[i]);
+            finish_send(&exp1[0].execution.sendrequestmaster[i]);
+            finish_send(&exp1[0].execution.adaptation_master_send[i]);
+        }
+    }
+    // The stop requests of initcooperativestoppingcriteriaess, one per rank.
+    // gatherresultsess_ would release them, but sacess never calls it.
+    if (exp1[0].execution.request_recept != NULL) {
+        for (i = 0; i < exp1[0].execution.NPROC; i++) {
+            finish_receive(&exp1[0].execution.request_recept[i]);
+        }
+        free(exp1[0].execution.request_recept);
+        exp1[0].execution.request_recept = NULL;
+    }
+    free(exp1[0].execution.st);
+    exp1[0].execution.st = NULL;
+
+    finish_receive(exp1[0].execution.receptionrequestslave);
+    finish_receive(exp1[0].execution.adaptation_slave_recv);
+    finish_send(exp1[0].execution.sendrequestslave);
+    finish_send(exp1[0].execution.adaptation_slave_send);
+
     // MASTER
     free(exp1[0].execution.sendbufferslave);
     exp1[0].execution.sendbufferslave=NULL;
@@ -446,7 +507,13 @@ void destroyasynchinitmasterandwindows_(void *exp1_) {
         free(exp1[0].execution.sendrequestmaster );
         free(exp1[0].execution.adaptation_master_send );
         free(exp1[0].execution.adaptation_master_recv );      
+        free(exp1[0].execution.receptionbuffermaster );
+        free(exp1[0].execution.sendbuffermaster );
+        free(exp1[0].execution.adaptation_master_buffer_recv );
+        free(exp1[0].execution.adaptation_master_buffer_send );
     }
+    free( exp1[0].execution.adaptation_slave_buffer_recv );
+    free( exp1[0].execution.adaptation_slave_buffer_send );
     free( exp1[0].execution.adaptation_slave_send );    
     free( exp1[0].execution.adaptation_slave_recv );          
     free( exp1[0].execution.receptionrequestslave );
@@ -504,7 +571,7 @@ void initcooperativestoppingcriteriaessmaster_( void *exp) {
 
     for (i = 0; i < exp1[0].execution.NPROC-1; i++) {
         exp1[0].execution.st[i] = 0;
-        MPI_Irecv(&(exp1[0].execution.st[i]), 1, MPI_INT,i+1, 200, MPI_COMM_WORLD, &(exp1[0].execution.request_recept[i]));
+        MPI_Irecv(&(exp1[0].execution.st[i]), 1, MPI_INT,i+1, 200, sacess_comm, &(exp1[0].execution.request_recept[i]));
     }
 }
 
@@ -518,7 +585,7 @@ void initcooperativestoppingcriteriaessslave_( void *exp) {
     exp1[0].execution.request_recept = (MPI_Request *) malloc( sizeof (MPI_Request));
 
     exp1[0].execution.st[0] = 0;
-    MPI_Irecv(exp1[0].execution.st, 1, MPI_INT, 0, 200, MPI_COMM_WORLD, &exp1[0].execution.request_recept[0] );
+    MPI_Irecv(exp1[0].execution.st, 1, MPI_INT, 0, 200, sacess_comm, &exp1[0].execution.request_recept[0] );
 }
 
 
@@ -533,7 +600,7 @@ void initcooperativestoppingcriteriaess_( void *exp) {
     for (i = 0; i < exp1[0].execution.NPROC; i++) {
         exp1[0].execution.st[i] = 0;
         MPI_Irecv(&(exp1[0].execution.st[i]), 1, MPI_INT,
-                i, 200, MPI_COMM_WORLD, &(exp1[0].execution.request_recept[i]));
+                i, 200, sacess_comm, &(exp1[0].execution.request_recept[i]));
     }
 }
 
@@ -674,7 +741,7 @@ void asynchronousstoppingcriteriawithrestartess_(void *exp, int *stop, long *eva
                     for (i = 0; i < exp1[0].execution.NPROC; i++) {
                         if (exp1[0].execution.idp != i) {
                             exp1[0].execution.st_sent = 1;
-                            MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, MPI_COMM_WORLD, &mpir);
+                            MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, sacess_comm, &mpir);
                         }
                     }
                 }
@@ -706,7 +773,7 @@ void asynchronousstoppingcriteriaess_(void *exp, int *stop, long *evaluation_loc
                 for (i = 0; i < exp1[0].execution.NPROC; i++) {
                     if (exp1[0].execution.idp != i) {
                         exp1[0].execution.st_sent = 1;
-                        MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, MPI_COMM_WORLD, &mpir);
+                        MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, sacess_comm, &mpir);
                     }
                 }
     }
@@ -737,7 +804,7 @@ void asynchronousstoppingcriteriaessmaster_(void *exp, int *stop, long *evaluati
         if ((*stop == 4) || (*stop == 3)) {
 		exp1[0].execution.st_sent = 1;
                 for (i = 0; i < (exp1[0].execution.NPROC-1); i++) {
-                        MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, i+1, 200, MPI_COMM_WORLD, &mpir);
+                        MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, i+1, 200, sacess_comm, &mpir);
                 }
         }
 
@@ -767,7 +834,7 @@ void asynchronousstoppingcriteriaessslave_(void *exp, int *stop, long *evaluatio
 
     if ((*stop == 4) || (*stop == 3) || (*stop == 2) || (*stop == 1) ) {
             exp1[0].execution.st_sent = 1;
-            MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, 0, 200, MPI_COMM_WORLD, &mpir);
+            MPI_Isend(&(exp1[0].execution.st_sent), 1, MPI_INT, 0, 200, sacess_comm, &mpir);
     }
 
 }
@@ -791,7 +858,7 @@ void synchronousstoppingcriteriawithrestartess_(void *exp, int *stop, long *eval
                 for (i = 0; i < exp1[0].execution.NPROC; i++) {
                     if (exp1[0].execution.idp != i) {
                         exp1[0].execution.st_sent = 1;
-                        MPI_Send(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, MPI_COMM_WORLD);
+                        MPI_Send(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, sacess_comm);
                     }
                 }
             }
@@ -822,7 +889,7 @@ void synchronousstoppingcriteriacess_(void *exp, int *stop, long *evaluation_loc
         if ((*stop == 4) || (*stop == 3)) {
                 for (i = 0; i < exp1[0].execution.NPROC; i++) {
                         exp1[0].execution.st_sent = 1;
-                        MPI_Send(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, MPI_COMM_WORLD);
+                        MPI_Send(&(exp1[0].execution.st_sent), 1, MPI_INT, i, 200, sacess_comm);
                 }
         }
         
@@ -850,7 +917,7 @@ void synchronousstoppingcriteriacessmaster_(void *exp, int *stop, long *evaluati
         if (exp1[0].execution.idp != 0) {
             if (*stop > 0) {
                 exp1[0].execution.st_sent = 1;
-                MPI_Send(&(exp1[0].execution.st_sent), 1, MPI_INT, 0, 200, MPI_COMM_WORLD);
+                MPI_Send(&(exp1[0].execution.st_sent), 1, MPI_INT, 0, 200, sacess_comm);
             }
         }
         
@@ -864,8 +931,8 @@ void setcountstopsvaressmaster_(void *exp, int *fin, int *exitcounter) {
     
     
     if (exp1[0].execution.NPROC != 1) {
-        MPI_Reduce(fin,exitcounter,1,MPI_INT,MPI_MAX,0,MPI_COMM_WORLD);
-        MPI_Bcast(exitcounter, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Reduce(fin,exitcounter,1,MPI_INT,MPI_MAX,0,sacess_comm);
+        MPI_Bcast(exitcounter, 1, MPI_INT, 0, sacess_comm);
     } else {
         if (*fin > 0)
             *exitcounter = 1;
@@ -896,16 +963,16 @@ void gatherresultsess_(void *exp, double *matrixlocal, double *matrix, int *D, d
     int l,flag;
 
     for (l = 0; l < exp1[0].execution.NPROC; l++) {
-        MPI_Test( &(exp1[0].execution.request_recept[l]), &flag, MPI_STATUS_IGNORE);
-        if (flag == 0) {
-            MPI_Cancel( &(exp1[0].execution.request_recept[l]));
-        }
+        finish_receive(&(exp1[0].execution.request_recept[l]));
     }    
     
     if (exp1[0].execution.request_recept != NULL) {
         free(exp1[0].execution.request_recept);
         exp1[0].execution.request_recept = NULL;
     }
+    // The stop flags the requests above received into.
+    free(exp1[0].execution.st);
+    exp1[0].execution.st = NULL;
     
     // Can't find usages of this function
     MPI_Gather(matrixlocal, exp1[0].execution.tam * (*D + 1), MPI_DOUBLE, matrix, exp1[0].execution.tam * (*D + 1), MPI_DOUBLE, 0, exp1[0].execution.topology.comunicator);
@@ -929,16 +996,16 @@ void gatherresultsserializeess_(void *exp, void *local_s, double *smatrixlocal, 
     totallocal = 0;
     
     for (l = 0; l < exp1[0].execution.NPROC; l++) {
-        MPI_Test( &(exp1[0].execution.request_recept[l]), &flag, MPI_STATUS_IGNORE);
-        if (flag == 0) {
-            MPI_Cancel( &(exp1[0].execution.request_recept[l]));            
-        }
+        finish_receive(&(exp1[0].execution.request_recept[l]));
     }    
     
     if (exp1[0].execution.request_recept != NULL) {
         free(exp1[0].execution.request_recept);
         exp1[0].execution.request_recept = NULL;
     }
+    // The stop flags the requests above received into.
+    free(exp1[0].execution.st);
+    exp1[0].execution.st = NULL;
     // Can't find usages of this function
     MPI_Gather(smatrixlocal, *sizetotal, MPI_DOUBLE, smatrix, *sizetotal, MPI_DOUBLE, 0, exp1[0].execution.topology.comunicator);
     MPI_Bcast(smatrix, *sizetotal*exp1->execution.NPROC, MPI_DOUBLE, 0,exp1[0].execution.topology.comunicator);
@@ -1005,7 +1072,7 @@ void migrationsynchcooperativesentcess_(void *exp,int *sizeD, double *matrix, do
             }
         }
 
-        MPI_Bcast(concatmatrix, *value*ssi, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(concatmatrix, *value*ssi, MPI_DOUBLE, 0, sacess_comm);
 
     }
 }

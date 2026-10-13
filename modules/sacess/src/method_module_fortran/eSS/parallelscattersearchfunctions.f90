@@ -10,7 +10,7 @@ MODULE parallelscattersearchfunctions
     USE omp_lib
 #endif
     
-#ifdef SACESS_MPI
+#ifdef MPI
     
 CONTAINS
 
@@ -85,14 +85,16 @@ SUBROUTINE asynchronous_master_acess (exp1,opts1,problem1,refset,fin,nfuneval,fb
         ! CHECK STOPPING CRITERIA
         cputime3 = calctimeMPI(exp1,starttime)
         if (fin < 1) THEN
+            ! The stop requests are indexed by rank and the slaves are ranks
+            ! 1 to NPROC-1. This used to take dest = i - 1 and skip 0, which
+            ! left out the last slave: a master with a single slave never saw
+            ! it stop and looped forever.
             do i = 1, NPROC-1
                 if (fin .NE. 3) then
-                    dest = i - 1
-                    if (dest .NE. 0) THEN
-                        flag = cooperativempitestess(exp1, dest )
-                        if (flag .EQ. 1) THEN
-                            fin = 3
-                        end if
+                    dest = i
+                    flag = cooperativempitestess(exp1, dest )
+                    if (flag .EQ. 1) THEN
+                        fin = 3
                     end if
                 end if
             end do

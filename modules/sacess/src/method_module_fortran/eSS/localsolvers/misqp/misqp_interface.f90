@@ -446,7 +446,7 @@ SUBROUTINE RUN_MISQP( problem1,exp1,opts1,fitnessfunction,acc, x0, fval, nfunc, 
            end if
            
         
-#ifdef SACESS_MPI
+#ifdef MPI
            dest = 0
            mig = cooperativempitestess(exp1, dest )
            if (mig .EQ. 1) exitloop = 1

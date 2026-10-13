@@ -20,9 +20,18 @@ extern "C" {
 
 #include "include_amigo/AMIGO_problem.h"
 
-#ifdef	SACESS_MPI
+#ifdef	MPI
     #include <structure_data/dynamic_list.h>
     #include <mpi.h>
+
+    /*
+     * Communicator every MPI call of sacess goes through, MPI_COMM_WORLD by
+     * default. The caller can narrow it to a group of ranks so several sacess
+     * runs share the world at once; collectives then reach only that group, and
+     * the ranks inside it are renumbered from 0.
+     */
+    extern MPI_Comm sacess_comm;
+    void sacess_set_comm(MPI_Comm comm);
 #endif
 
 //#include <Python.h>
@@ -33,7 +42,7 @@ extern "C" {
         int num_r;
         int *left;
         int num_left;
-        #ifdef SACESS_MPI
+        #ifdef MPI
                 MPI_Comm comunicator;
         #endif
     } topology_data;
@@ -225,7 +234,7 @@ extern "C" {
         int initpath;
         int iteration;
         double *transconst;
-#ifdef SACESS_MPI
+#ifdef MPI
         list l;
         MPI_Request *request_recept;
         MPI_Request *receptionrequestmaster; // recv in master

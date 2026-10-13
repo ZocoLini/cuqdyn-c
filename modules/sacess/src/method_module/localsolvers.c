@@ -18,7 +18,7 @@
 #include <time.h>
 #include "include_amigo/AMIGO_pe.h"
 #include "method_module/evaluationinterface.h"
-#ifdef SACESS_MPI
+#ifdef MPI
 #include <mpi.h>
 #endif
 #ifdef SACESS_OPENMP

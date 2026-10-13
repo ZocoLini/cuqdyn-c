@@ -32,8 +32,16 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
 
 #ifdef MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    // The group this run was given, see sacess_set_comm. sacess leaves
+    // unmatched messages behind when it stops, so each run talks over its own
+    // copy of the group, and nothing it leaves can reach the next run.
+    MPI_Comm group_comm = sacess_comm;
+    MPI_Comm run_comm;
+    MPI_Comm_dup(group_comm, &run_comm);
+    sacess_set_comm(run_comm);
+
+    MPI_Comm_size(run_comm, &nproc);
+    MPI_Comm_rank(run_comm, &rank);
 #else
     nproc = 1;
     rank = 0;
@@ -121,6 +129,11 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     destroy_result_data(&result);
     destroyexp(exptotal);
     free(exptotal);
+
+#ifdef MPI
+    sacess_set_comm(group_comm);
+    MPI_Comm_free(&run_comm);
+#endif
 
     return predicted_params;
 }

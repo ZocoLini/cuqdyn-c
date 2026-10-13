@@ -63,7 +63,7 @@ MODULE common_functions
             IMPLICIT NONE
             INTEGER, INTENT(IN) :: idp, dim_refset, ndiverse, MODE
             
-#ifdef SACESS_MPI
+#ifdef MPI
             CALL mpibarrieress()            
 #endif
             if (idp .NE. 0) then
@@ -79,7 +79,7 @@ MODULE common_functions
             end if
             
             
-#ifdef SACESS_MPI
+#ifdef MPI
             CALL mpibarrieress()      
             ! To order the ouput messages
             ! OLD: CALL sleepmpi(1)

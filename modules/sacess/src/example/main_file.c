@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef SACESS_MPI
+#ifdef MPI
         #include <mpi.h> 
 #endif
 
@@ -35,7 +35,7 @@ int codigo_ejemplo(int argc, char** argv) {
     int first, init;
    
     
-    #ifdef SACESS_MPI
+    #ifdef MPI
         MPI_Init(&argc, &argv);
         MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
         MPI_Comm_rank(MPI_COMM_WORLD, &id);          
@@ -101,7 +101,7 @@ int codigo_ejemplo(int argc, char** argv) {
     
 #endif    
     
-#ifdef SACESS_MPI
+#ifdef MPI
     MPI_Barrier(MPI_COMM_WORLD);    
 #endif
 // RUNNING THE SOLVER
@@ -122,7 +122,7 @@ int codigo_ejemplo(int argc, char** argv) {
 // DESTROY EXP DATA       
     destroyexp(exptotal);
 
-    #ifdef SACESS_MPI
+    #ifdef MPI
         MPI_Finalize();
     #endif
  

@@ -4,7 +4,7 @@ MODULE modcess
     USE scattersearchfunctions
     USE localsolver
     USE parallelscattersearchfunctions
-#ifdef SACESS_MPI
+#ifdef MPI
    
         
 CONTAINS
@@ -629,7 +629,7 @@ CONTAINS
 !---------------------------------------------------------------------------------------------------------        
 ! GATHER THE RESULTS IN MPI EXECUTION CASE
 !---------------------------------------------------------------------------------------------------------
-#ifdef SACESS_MPI
+#ifdef MPI
         CALL returnminlocelement(exp1, fbest, F02, i, common_vars%idp)
         CALL cooperativebcastelement(exp1,xbest,common_vars%nvar,i)
         CALL returnsumelementlong(exp1, nfuneval, nfunevaltotal)

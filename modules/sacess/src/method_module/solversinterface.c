@@ -28,7 +28,7 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
     const char *systemsBiology = "systemBiology";
 
 // NEW: The MPI build fails with SEGFAULT due to this
-#ifndef SACESS_MPI
+#ifndef MPI
     if ((strcmp(exp1->methodScatterSearch->loptions->solver, "nl2sol") == 0) &&
         (strcmp(exp1->test.bench.type, systemsBiology) != 0))
     {
@@ -56,13 +56,31 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
     //     error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
     // }
 
-    // sacess runs serially whether or not cuqdyn-c was built with MPI: cuqdyn-c
-    // already spends the ranks on the leave-one-out points and calls this from
-    // inside each of them. The parallel path is kept, not deleted, for when the
-    // two are wired onto the same communicator; until then it sits behind
-    // SACESS_MPI, a flag no build defines, and this one goes away with it.
-#ifdef SACESS_MPI
-    error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    // A group of one rank runs the serial solver: the parallel ones need a
+    // master and at least one slave. In an MPI build cuqdyn-c hands each sacess
+    // run its own group through sacess_set_comm, and execution.NPROC is the
+    // size of that group.
+#ifdef MPI
+    if (exp1->execution.NPROC > 1)
+    {
+        // The configs ask for the sequential ScatterSearch; on several ranks
+        // that becomes saCeSS, the cooperative one the <parallelization>
+        // block configures.
+        if (exp1->methodScatterSearch != NULL && getnumversion(exp1) == 0)
+        {
+            exp1->methodScatterSearch->eSSversion = "saCeSS";
+        }
+        error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    }
+    else
+    {
+        // And a parallel method asked for on one rank runs sequentially.
+        if (exp1->methodScatterSearch != NULL)
+        {
+            exp1->methodScatterSearch->eSSversion = "ScatterSearch";
+        }
+        error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    }
 #else
     error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
 #endif
@@ -79,7 +97,7 @@ int execute_parallel_solver(experiment_total *exp, result_solver *result, long m
     int NPROC;
     id = 0;
     NPROC = exp->execution.NPROC;
-#ifdef SACESS_MPI
+#ifdef MPI
     id = exp->execution.idp;
     error = 0;
     int benchmark;

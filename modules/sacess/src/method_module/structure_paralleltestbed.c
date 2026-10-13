@@ -151,6 +151,15 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
 
     exptotal->execution.idp = id;
     exptotal->execution.NPROC = NPROC;
+#ifdef MPI
+    // createtopology_ sets it again for the parallel solvers, but the serial
+    // one never calls it and still reduces its results over it.
+    exptotal->execution.topology.comunicator = sacess_comm;
+    exptotal->execution.topology.left = NULL;
+    exptotal->execution.topology.rigth = NULL;
+    exptotal->execution.st = NULL;
+    exptotal->execution.request_recept = NULL;
+#endif
     exptotal->execution.file = (char *) calloc(300,sizeof(char));
     strcpy(exptotal->execution.file,file);
 
@@ -177,8 +186,13 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
     //   }
     // }
 
-#ifdef SACESS_MPI
-    MPI_Bcast(exptotal->test.output_graph, 1000, MPI_CHAR, 0, MPI_COMM_WORLD);
+#ifdef MPI
+    // Only a group of several ranks needs it, and a single rank may be running
+    // without MPI initialised at all.
+    if (NPROC > 1)
+    {
+        MPI_Bcast(exptotal->test.output_graph, 1000, MPI_CHAR, 0, sacess_comm);
+    }
 #endif
     if (load_configuration_XML(file, exptotal) == 0 ) {
         if (id == 0)
@@ -397,6 +411,13 @@ void destroyexp(experiment_total *exp) {
         free(exp->par_st);
         exp->par_st = NULL;
     }
+#ifdef MPI
+    // Allocated by createtopology_, for the parallel solvers only.
+    free(exp->execution.topology.left);
+    free(exp->execution.topology.rigth);
+    exp->execution.topology.left = NULL;
+    exp->execution.topology.rigth = NULL;
+#endif
     if (exp->param != NULL) {
         free(exp->param);
         exp->param = NULL;

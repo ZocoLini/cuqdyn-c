@@ -7,7 +7,17 @@
 #include <sunmatrix/sunmatrix_dense.h>
 
 #ifdef MPI
+#include <method_module/structure_paralleltestbed.h>
 #include <mpi.h>
+
+/*
+ * saCeSS splits maxevaluation over the ranks of a run, so dozens of ranks on
+ * one problem leave each a handful of evaluations and miss the expected
+ * parameters. The test runs it on groups of up to this many ranks instead,
+ * which still drives the parallel solver (and the serial one, on a group left
+ * with a single rank).
+ */
+#define RANKS_PER_GROUP 3
 #endif
 
 #include "data_reader.h"
@@ -73,6 +83,10 @@ int main(int argc, char **argv)
 #ifdef MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    MPI_Comm group_comm;
+    MPI_Comm_split(MPI_COMM_WORLD, rank / RANKS_PER_GROUP, rank, &group_comm);
+    sacess_set_comm(group_comm);
 #else
     (void) argc;
     (void) argv;
@@ -89,6 +103,8 @@ int main(int argc, char **argv)
     }
 
 #ifdef MPI
+    sacess_set_comm(MPI_COMM_WORLD);
+    MPI_Comm_free(&group_comm);
     MPI_Finalize();
 #endif
 

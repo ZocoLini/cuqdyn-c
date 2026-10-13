@@ -68,3 +68,10 @@ target_link_libraries(sacess
         ${GSL_LIBRARY}
         hdf5
 )
+
+# The MPI build runs the parallel sacess solvers on the group of ranks cuqdyn-c
+# gives each run. PUBLIC because the definition changes the layout of the
+# structures in the headers, which the consumers must see the same way.
+if(CUQDYN_MPI)
+    target_compile_definitions(sacess PUBLIC MPI)
+endif()

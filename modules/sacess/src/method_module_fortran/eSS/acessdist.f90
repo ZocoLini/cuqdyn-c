@@ -5,7 +5,7 @@ MODULE modacessdist
     USE localsolver
     USE parallelscattersearchfunctions
 
-#ifdef SACESS_MPI 
+#ifdef MPI 
         
 CONTAINS
 
