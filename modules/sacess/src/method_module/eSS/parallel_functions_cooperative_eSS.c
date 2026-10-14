@@ -537,7 +537,9 @@ void chargecooperativeparametersfortran_(void *exp1_, int *NP, int *tam, int *id
     exp1[0].execution.enterMigrat = 0;  
     exp1[0].execution.migration = 0;
     exp1[0].execution.ftarget = *ftarget;
-    exp1[0].execution.maxfunevals = *maxfunevals;
+    // maxevaluation is a per-process budget. The stopping checks compare
+    // evaluation_local * NPROC against this total.
+    exp1[0].execution.maxfunevals = *maxfunevals * exp1[0].execution.NPROC;
     exp1[0].execution.max_time_ite_last = 0.0;
     exp1[0].execution.max_eval_ite_last = 0.;
     *idp = exp1[0].execution.idp;
