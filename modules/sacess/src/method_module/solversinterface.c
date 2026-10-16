@@ -28,7 +28,7 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
     const char *systemsBiology = "systemBiology";
 
 // NEW: The MPI build fails with SEGFAULT due to this
-#ifndef SACESS_MPI
+#ifndef MPI
     if ((strcmp(exp1->methodScatterSearch->loptions->solver, "nl2sol") == 0) &&
         (strcmp(exp1->test.bench.type, systemsBiology) != 0))
     {
@@ -56,13 +56,41 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
     //     error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
     // }
 
-    // sacess runs serially whether or not cuqdyn-c was built with MPI: cuqdyn-c
-    // already spends the ranks on the leave-one-out points and calls this from
-    // inside each of them. The parallel path is kept, not deleted, for when the
-    // two are wired onto the same communicator; until then it sits behind
-    // SACESS_MPI, a flag no build defines, and this one goes away with it.
-#ifdef SACESS_MPI
-    error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    // In an MPI build sacess runs over the group of ranks the caller hands each
+    // run, see execution.comm. The parallel methods need more than two of them:
+    // with two, one would be the master and the other its only slave. Below
+    // that the first rank runs the sequential eSS alone and hands its result to
+    // the others. The config itself cannot ask for it, see load_configuration_XML.
+#ifdef MPI
+    if (exp1->execution.NPROC > 2 && exp1->methodScatterSearch != NULL)
+    {
+        error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+    }
+    else
+    {
+        error = 0;
+        if (exp1->execution.idp == 0)
+        {
+            // The sequential eSS still gathers its results over the
+            // communicators, so it is shown a group of just this rank.
+            const MPI_Comm group = exp1->execution.comm;
+            const int nproc = exp1->execution.NPROC;
+
+            exp1->execution.comm = MPI_COMM_SELF;
+            exp1->execution.topology.comunicator = MPI_COMM_SELF;
+            exp1->execution.NPROC = 1;
+
+            error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+
+            exp1->execution.comm = group;
+            exp1->execution.topology.comunicator = group;
+            exp1->execution.NPROC = nproc;
+        }
+
+        MPI_Bcast(&error, 1, MPI_INT, 0, exp1->execution.comm);
+        MPI_Bcast(&result->best_value, 1, MPI_DOUBLE, 0, exp1->execution.comm);
+        MPI_Bcast(result->bestx_value, exp1->test.bench.dim, MPI_DOUBLE, 0, exp1->execution.comm);
+    }
 #else
     error = execute_serial_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
 #endif
@@ -79,7 +107,7 @@ int execute_parallel_solver(experiment_total *exp, result_solver *result, long m
     int NPROC;
     id = 0;
     NPROC = exp->execution.NPROC;
-#ifdef SACESS_MPI
+#ifdef MPI
     id = exp->execution.idp;
     error = 0;
     int benchmark;

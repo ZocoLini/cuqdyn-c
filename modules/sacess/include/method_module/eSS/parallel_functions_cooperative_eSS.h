@@ -1,4 +1,4 @@
-#ifdef SACESS_MPI
+#ifdef MPI
 
 void asynchronousstoppingcriteriaessmaster_(void *, int *, long *, double *, double *, double *, int *);
 void asynchronousstoppingcriteriaessslave_(void *, int *, long *, double *, double *, double *, int *);

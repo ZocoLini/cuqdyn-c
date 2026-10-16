@@ -117,7 +117,7 @@ int returnfailevals_(void *exp_){
 }
 
 int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init,
-    N_Vector texp, SUNMatrix yexp, N_Vector initial_values){
+    N_Vector texp, SUNMatrix yexp, N_Vector initial_values, SacessComm comm){
     int error, counter;
 	exptotal->test.bench.max_dom = NULL;
 	exptotal->test.bench.min_dom = NULL;
@@ -151,6 +151,11 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
 
     exptotal->execution.idp = id;
     exptotal->execution.NPROC = NPROC;
+#ifdef MPI
+    exptotal->execution.comm = comm;
+#else
+    (void) comm;
+#endif
     exptotal->execution.file = (char *) calloc(300,sizeof(char));
     strcpy(exptotal->execution.file,file);
 
@@ -177,8 +182,8 @@ int create_expetiment_struct(const char *file, experiment_total *exptotal, int N
     //   }
     // }
 
-#ifdef SACESS_MPI
-    MPI_Bcast(exptotal->test.output_graph, 1000, MPI_CHAR, 0, MPI_COMM_WORLD);
+#ifdef MPI
+    MPI_Bcast(exptotal->test.output_graph, 1000, MPI_CHAR, 0, exptotal->execution.comm);
 #endif
     if (load_configuration_XML(file, exptotal) == 0 ) {
         if (id == 0)

@@ -5,7 +5,7 @@ MODULE modacessdist
     USE localsolver
     USE parallelscattersearchfunctions
 
-#ifdef SACESS_MPI 
+#ifdef MPI 
         
 CONTAINS
 
@@ -120,7 +120,7 @@ CONTAINS
 
         
         common_vars%parallel = 1
-        CALL slave_information(common_vars%idp, opts1%globaloptions%dim_refset, opts1%globaloptions%ndiverse, 1)
+        CALL slave_information(exp1, common_vars%idp, opts1%globaloptions%dim_refset, opts1%globaloptions%ndiverse, 1)
         time%starttime = initmpi()
         CALL saveinittime(exp1,time%starttime)
         CALL chargecooperativeparametersfortran(exp1, opts1%globaloptions%dim_refset, tam, common_vars%idp, ftarget, maxfunevals)  
@@ -533,9 +533,9 @@ CONTAINS
         CALL  returnavgelementintdouble( exp1, common_vars%iter, results%totaliter, common_vars%NPROC)
         CALL  returnminelement(exp1, results%timevtr, results%totalvtr)
         
-        CALL mpibarrieress()
+        CALL mpibarrieress(exp1)
         CALL ending_solver_message(common_vars%idp, fin)
-        CALL mpibarrieress()  
+        CALL mpibarrieress(exp1)  
         
         cputime1 = calctimeMPI(exp1,time%starttime)
         CALL select_better_solution(results,opts1,refset,xbest,fbest,local_solver_var%use_bestx,nfuneval,cputime1,fin) 
@@ -546,9 +546,9 @@ CONTAINS
 !---------------------------------------------------------------------------------------------------------
         CALL detranslationinterface( xbest, exp1 )
         
-        CALL mpibarrieress() 
+        CALL mpibarrieress(exp1) 
         CALL seed_recount(exp1, common_vars%idp)
-        CALL mpibarrieress()          
+        CALL mpibarrieress(exp1)          
         
         
         CALL updateresultsess(exp1, results1, results%timetotal, nfunevaltotal, fbest, xbest, results%totaliter, results%totalvtr)

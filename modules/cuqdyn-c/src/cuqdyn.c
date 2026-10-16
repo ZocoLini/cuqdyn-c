@@ -18,16 +18,43 @@
 #endif
 
 #ifdef MPI
-static long rank_iterations(const long points, const int nproc, const int rank)
+/// Size of part `part` when `total` is split into `parts` as evenly as possible, the first parts taking the remainder.
+static long share_size(const long total, const long parts, const long part)
 {
-    return points / nproc + (rank < points % nproc ? 1 : 0);
+    return total / parts + (part < total % parts ? 1 : 0);
 }
 
-static long rank_start_index(const long points, const int nproc, const int rank)
+/// Where part `part` of that split starts, 0-based.
+static long share_start(const long total, const long parts, const long part)
 {
-    const long remainder = points % nproc;
+    const long remainder = total % parts;
 
-    return rank * (points / nproc) + (rank < remainder ? rank : remainder) + 1;
+    return part * (total / parts) + (part < remainder ? part : remainder);
+}
+
+typedef struct
+{
+    long n_groups;
+    long group;
+} Groups;
+
+static Groups make_groups(const long refits, const int nproc, const int rank)
+{
+    Groups groups;
+
+    groups.n_groups = refits < nproc ? refits : nproc;
+    if (groups.n_groups < 1)
+    {
+        groups.n_groups = 1;
+    }
+
+    groups.group = 0;
+    while (rank >= share_start(nproc, groups.n_groups, groups.group) + share_size(nproc, groups.n_groups, groups.group))
+    {
+        ++groups.group;
+    }
+
+    return groups;
 }
 #endif
 
@@ -128,6 +155,24 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     SUNMatrix predicted_params_matrix = NULL;
     N_Vector initial_params = New_Serial(config->ode_expr.p_count);
 
+#ifdef MPI
+    // Computed by every rank from nproc and m alone, so it needs no communication.
+    const Groups groups = make_groups(m - 1, nproc, rank);
+    // The group's first rank leads it and reports to rank 0.
+    const int is_leader = rank == share_start(nproc, groups.n_groups, groups.group);
+    // Refits of the group and the first of them, 1-based like the loop index.
+    const long iterations = share_size(m - 1, groups.n_groups, groups.group);
+    const long start_index = share_start(m - 1, groups.n_groups, groups.group) + 1;
+
+    MPI_Comm group_comm;
+    MPI_Comm_split(MPI_COMM_WORLD, (int) groups.group, rank, &group_comm);
+#else
+    const EssComm group_comm = ESS_COMM_WORLD;
+    const int is_leader = 1;
+    const long iterations = m - 1;
+    const long start_index = 1;
+#endif
+
     if (rank == 0)
     {
         resid_loo = NewDenseMatrix(m, n);
@@ -135,23 +180,30 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         // first left at zero, which dragged the median and would wreck the
         // covariance the hybrid method takes from this ensemble.
         predicted_params_matrix = NewDenseMatrix(m - 1, config->ode_expr.p_count);
+    }
 
+    // The full-data fit, spread over every rank.
+    {
         N_Vector texp = copy_vector_remove_indices(scaled_times, create_array((long[]) {}, 0));
         SUNMatrix yexp = copy_matrix_remove_rows(observed_data, create_array((long[]) {}, 0));
 
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
 
         N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition,
-                                                       NULL, data.observed_idx);
+                                                       NULL, data.observed_idx, ESS_COMM_WORLD);
 
         // The solver dimension comes from the sacess config while p_count comes
         // from the cuqdyn config. A mismatch used to overflow initial_params.
+        // Every rank reads the same configs, so they all bail out together.
         if (NV_LENGTH_S(predicted_params) != NV_LENGTH_S(initial_params))
         {
-            fprintf(stderr,
-                    "ERROR: the sacess config declares %ld decision variables but the cuqdyn config declares "
-                    "p_count=%ld. They must match.\n",
-                    NV_LENGTH_S(predicted_params), NV_LENGTH_S(initial_params));
+            if (rank == 0)
+            {
+                fprintf(stderr,
+                        "ERROR: the sacess config declares %ld decision variables but the cuqdyn config declares "
+                        "p_count=%ld. They must match.\n",
+                        NV_LENGTH_S(predicted_params), NV_LENGTH_S(initial_params));
+            }
             N_VDestroy(predicted_params);
             N_VDestroy(texp);
             SUNMatDestroy(yexp);
@@ -163,6 +215,9 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
             SUNMatDestroy(resid_loo);
             SUNMatDestroy(predicted_params_matrix);
             destroy_cuqdyn_data(&data);
+#ifdef MPI
+            MPI_Comm_free(&group_comm);
+#endif
             return NULL;
         }
 
@@ -173,14 +228,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     }
 
 #ifdef MPI
+    // Every refit starts from rank 0's fit, whatever the other ranks ended up with.
     MPI_Bcast(NV_DATA_S(initial_params), NV_LENGTH_S(initial_params), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    const long iterations = rank_iterations(m - 1, nproc, rank);
-    const long start_index = rank_start_index(m - 1, nproc, rank);
-
-#else
-    long iterations = m - 1;
-    long start_index = 1;
 #endif
 
     N_Vector residuals = New_Serial(n);
@@ -196,7 +245,14 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
         N_Vector tmp_initial_condition = copy_vector_remove_indices(initial_condition, create_array((long[]) {}, 0));
 
         N_Vector predicted_params = execute_ess_solver(sacess_conf_file, output_file, texp, yexp, tmp_initial_condition,
-                                                       initial_params, data.observed_idx);
+                                                       initial_params, data.observed_idx, group_comm);
+
+        // Only the leader of a group hands the refit on.
+        if (!is_leader)
+        {
+            N_VDestroy(predicted_params);
+            continue;
+        }
 
         // Saving the ode solution data obtained with the predicted params
         TransposedStates predicted_obs_states = solve_ode(predicted_params, initial_condition, t0, scaled_times, NULL);
@@ -232,16 +288,19 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
             matrix_array_set_index(media_matrix, i - 1, predicted_obs_states);
             set_matrix_row(predicted_params_matrix, predicted_params, i - 1, 0, NV_LENGTH_S(predicted_params));
 #ifdef MPI
-            // Receiving
+            // Receiving from the leaders of the other groups. Group 0 has the
+            // most refits, so rank 0 reaches every step any group does.
             long slaved_index;
             const long step = i - start_index;
 
-            for (int slave = 1; slave < nproc; ++slave)
+            for (long group = 1; group < groups.n_groups; ++group)
             {
-                if (step >= rank_iterations(m - 1, nproc, slave))
+                if (step >= share_size(m - 1, groups.n_groups, group))
                 {
                     continue;
                 }
+
+                const int slave = (int) share_start(nproc, groups.n_groups, group);
 
                 MPI_Recv(&slaved_index, 1, MPI_LONG, slave, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
@@ -275,6 +334,8 @@ CuqdynResult *cuqdyn_algo(const char *data_file, const char *sacess_conf_file, c
     N_VDestroy(residuals);
 
 #ifdef MPI
+    MPI_Comm_free(&group_comm);
+
     printf("%ld iterations of rank %d finalized\n", iterations, rank);
 #endif
 

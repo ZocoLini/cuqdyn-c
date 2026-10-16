@@ -500,8 +500,10 @@ CONTAINS
             else if ( opts1%localoptions%solver == 'misqp' ) then
                 write (*,*)  idp, "Call local solver: misqp - INPUT: Initial point function value: [", f0, "]"
             end if
-#ifdef SACESS_MPI            
-            CALL printlsinitlog( exp1, f0 )
+#ifdef MPI            
+            ! The logs it writes to exist only in the parallel methods; the
+            ! sequential eSS can run in an MPI build too.
+            if (common_vars%parallel .EQ. 1) CALL printlsinitlog( exp1, f0 )
 #endif            
         end if
         
@@ -511,7 +513,7 @@ CONTAINS
         CALL printverboselocaloutput(exp1, size(x0), X, f0, idp)
          
 #ifdef TIMELOCAL     
-#ifdef SACESS_MPI 
+#ifdef MPI 
         cputime1 = calctimeMPI(exp1,time%starttime)
 #else
         CALL SYSTEM_CLOCK(count_rate=clock_rate)
@@ -519,7 +521,7 @@ CONTAINS
 #endif
 #endif 
         
-#ifndef SACESS_MPI
+#ifndef MPI
         WRITE (*, '(A33,F25.10)') 'Call to local solver. Input Fx:', f0        
 #endif        
         last_evals = numeval 
@@ -532,7 +534,7 @@ CONTAINS
         fval = outfunct%value
          
 #ifdef TIMELOCAL    
-#ifdef SACESS_MPI
+#ifdef MPI
         time%localsolvertime = calctimeMPI(exp1,time%starttime)
         time%localsolvertime = time%localsolvertime - cputime1
 #else        
@@ -545,8 +547,10 @@ CONTAINS
         
         if ( opts1%useroptions%iterprint .eq. 1 ) then
             last_evals = numeval - last_evals
-#ifdef SACESS_MPI               
-            CALL printlsendlog( exp1, fval, time%localsolvertime, last_evals )
+#ifdef MPI               
+            if (common_vars%parallel .EQ. 1) then
+                CALL printlsendlog( exp1, fval, time%localsolvertime, last_evals )
+            end if
 #else 
             WRITE (*, '(A31,F25.10)') 'Stop local solver. Output Fx:', fval  
 #endif            
@@ -627,9 +631,11 @@ CONTAINS
             if ( adiccionar_local .eq. 1 ) then 
                  
                 if ( outfunct%value_penalty .LT. refset%fpen(childset%parent_index(I(1))) ) then
-#ifdef SACESS_MPI                       
-                    CALL printlocalsolverinsert(exp1,outfunct%value_penalty,local_solver_var%local_solutions_values,&
-                                 sizelocal, 1, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
+#ifdef MPI                       
+                    if (common_vars%parallel .EQ. 1) then
+                        CALL printlocalsolverinsert(exp1,outfunct%value_penalty,local_solver_var%local_solutions_values,&
+                                     sizelocal, 1, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
+                    end if
 #endif                                 
                     refset%x(:,childset%parent_index(I(1) )) = outfunct%x
                     refset%f(childset%parent_index(I(1) )) = outfunct%value
@@ -638,9 +644,11 @@ CONTAINS
                     if (ALLOCATED (refset%nlc) ) refset%nlc(:,childset%parent_index(I(1) )) = outfunct%nlc
                     refset_change (childset%parent_index(I(1) )) = 0
                 else
-#ifdef SACESS_MPI                       
-                    CALL printlocalsolverinsert(exp1, outfunct%value_penalty, local_solver_var%local_solutions_values, &
-                                sizelocal, 0, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
+#ifdef MPI                       
+                    if (common_vars%parallel .EQ. 1) then
+                        CALL printlocalsolverinsert(exp1, outfunct%value_penalty, local_solver_var%local_solutions_values, &
+                                    sizelocal, 0, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
+                    end if
 #endif                                
                 end if
                 
@@ -680,9 +688,11 @@ CONTAINS
                     end if
                 end if
             else
-#ifdef SACESS_MPI                   
-                CALL printlocalsolverinsert(exp1,outfunct%value_penalty, local_solver_var%local_solutions_values, &
-                                sizelocal, 0, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
+#ifdef MPI                   
+                if (common_vars%parallel .EQ. 1) then
+                    CALL printlocalsolverinsert(exp1,outfunct%value_penalty, local_solver_var%local_solutions_values, &
+                                    sizelocal, 0, outfunct%value_penalty, refset%fpen(childset%parent_index(I(1))))
+                end if
 #endif                                
             end if
         end if

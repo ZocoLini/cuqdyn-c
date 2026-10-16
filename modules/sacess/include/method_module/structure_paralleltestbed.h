@@ -20,9 +20,17 @@ extern "C" {
 
 #include "include_amigo/AMIGO_problem.h"
 
-#ifdef	SACESS_MPI
+#ifdef	MPI
     #include <structure_data/dynamic_list.h>
     #include <mpi.h>
+
+    /// Ranks a run is spread over, given by the caller.
+    typedef MPI_Comm SacessComm;
+    #define SACESS_COMM_WORLD MPI_COMM_WORLD
+#else
+    /// Placeholder so the signatures are the same in every build; a serial run has no ranks to share.
+    typedef int SacessComm;
+    #define SACESS_COMM_WORLD 0
 #endif
 
 //#include <Python.h>
@@ -33,7 +41,7 @@ extern "C" {
         int num_r;
         int *left;
         int num_left;
-        #ifdef SACESS_MPI
+        #ifdef MPI
                 MPI_Comm comunicator;
         #endif
     } topology_data;
@@ -225,7 +233,9 @@ extern "C" {
         int initpath;
         int iteration;
         double *transconst;
-#ifdef SACESS_MPI
+#ifdef MPI
+        /// Every MPI call of the run goes through it, never MPI_COMM_WORLD.
+        MPI_Comm comm;
         list l;
         MPI_Request *request_recept;
         MPI_Request *receptionrequestmaster; // recv in master
@@ -334,7 +344,7 @@ extern "C" {
     } output_function;
 
 
-    int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, SUNMatrix yexp, N_Vector initial_values);
+    int create_expetiment_struct(const char *file, experiment_total *exptotal, int NPROC, int id,  const char *path, int init, N_Vector texp, SUNMatrix yexp, N_Vector initial_values, SacessComm comm);
 
 void init_result_data(result_solver *, int);
 

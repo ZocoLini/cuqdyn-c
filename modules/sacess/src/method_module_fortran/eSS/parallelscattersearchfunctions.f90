@@ -10,7 +10,7 @@ MODULE parallelscattersearchfunctions
     USE omp_lib
 #endif
     
-#ifdef SACESS_MPI
+#ifdef MPI
     
 CONTAINS
 

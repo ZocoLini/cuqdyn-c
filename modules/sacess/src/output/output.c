@@ -14,7 +14,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
-#ifdef SACESS_MPI
+#ifdef MPI
         #include <mpi.h>
 #endif
 
@@ -115,7 +115,7 @@ void initprintfile_(void *exp1_, double *best, int *par, int *idp, double *curre
 
 
 
-#ifdef SACESS_MPI
+#ifdef MPI
     FILE *p4, *p5, *p6;
     p4 = fopen( (const char *) exp1[0].test.log_output, "a");
     p5 = fopen( (const char *) exp1[0].test.log_percentage, "a");
@@ -427,7 +427,7 @@ void printdesadaptationmaster_(void *exp1_, int *origin, int *dest, double *bala
 
 }
 
-#ifdef SACESS_MPI
+#ifdef MPI
 /**
  * @brief this function prints in the logfile a summary about the configuration
  *  and the contribution of the different slaves.
@@ -1050,7 +1050,7 @@ void printverboselocaloutput_(void *exp1_, int *D, double *U, double *fval,int *
     output = exp1->output;
 
     if (exp1->test.verbose != 0) {
-#ifdef SACESS_MPI
+#ifdef MPI
             (*output).st1 = MPI_Wtime();
 #else
             (*output).st1 = clock();
@@ -1070,7 +1070,7 @@ void printverboselocaloutput2_(void *exp1_, double *fval, int *idp) {
     time_local_solver = 0.0;
 
     if (exp1->test.verbose != 0) {
-#ifdef SACESS_MPI
+#ifdef MPI
             (*output).st2 = MPI_Wtime();
             time_local_solver = (double) ((*output).st2 - (*output).st1);
 #else
@@ -1152,7 +1152,7 @@ void verboseiteration_(void *exp1_, int k,  double starttime, double ftarget, do
     exp1 = (experiment_total *) exp1_;
 
     if (exp1->test.verbose != 0) {
-#ifdef SACESS_MPI
+#ifdef MPI
         mediumTime = (double) MPI_Wtime();
         printf("%d-iteracion %d best-coste %.10lf evals %.1ld -- TIME %.10lf s -- ftarget %.20lf\n\n", idp, k, best, evaluation_local,
                 (double) (mediumTime - starttime), ftarget);
@@ -1173,7 +1173,7 @@ void verboseiterationfortran_(void *exp1_, int *k, double *time,  double *ftarge
     exp1 = (experiment_total *) exp1_;
 
     if (exp1->test.verbose != 0) {
-#ifdef SACESS_MPI
+#ifdef MPI
         printf("%d-iteracion %d best-coste %.20lf evals %ld -- TIME %lf s -- ftarget %.20lf\n\n", *idp, *k, *best, *evaluation_local,
                 *time, *ftarget);
 #else
@@ -1427,7 +1427,7 @@ void matlab_plot_file(experiment_total exp1,  char *string,  char *string2, cons
 	lr_free(&lr);
 
         if (end == 1) {
-#if SACESS_MPI
+#if MPI
             j=0;
             fprintf(p4, "vector_TIME_RUN%d = [", j+1);
             for (i = initp; i < NPROC+1; i++) {
@@ -1956,7 +1956,7 @@ void plot_file(experiment_total exp1, int par, int idp, int NPROC) {
     int f,i,end,init,maxsize_aux,maxsize;
 
     if (par == 1) {
-#ifdef SACESS_MPI
+#ifdef MPI
         char color;
         char marca;
 
@@ -1968,7 +1968,7 @@ void plot_file(experiment_total exp1, int par, int idp, int NPROC) {
         string2 = (char *) malloc(100*sizeof(char));
 
         sprintf(string,"%s",exp1.test.output_graph);
-        MPI_Gather(string, 100, MPI_CHAR, vectstring, 100, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Gather(string, 100, MPI_CHAR, vectstring, 100, MPI_CHAR, 0, exp1.execution.comm);
 
         if (idp == 0 ) {
             for (i=0;i<NPROC;i++) {
@@ -1979,7 +1979,7 @@ void plot_file(experiment_total exp1, int par, int idp, int NPROC) {
             }
 
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1.execution.comm);
 
         free(string);
         free(string2);
@@ -1994,7 +1994,7 @@ void plot_file(experiment_total exp1, int par, int idp, int NPROC) {
         string4 = (char *) malloc(100*sizeof(char));
 
 
-        MPI_Gather(string3, 100, MPI_CHAR, vectstring2, 100, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Gather(string3, 100, MPI_CHAR, vectstring2, 100, MPI_CHAR, 0, exp1.execution.comm);
 
         maxsize = 0;
         if (idp == 0 ) {
@@ -2014,7 +2014,7 @@ void plot_file(experiment_total exp1, int par, int idp, int NPROC) {
         }
 
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1.execution.comm);
         free(string3);
         free(string4);
         free(vectstring2);
@@ -2052,7 +2052,7 @@ void plot_file_cess(experiment_total exp1, int par, int idp, int NPROC) {
     int f,i,end,init;
 
     if (par == 1) {
-#ifdef SACESS_MPI
+#ifdef MPI
 
         char color;
         char marca;
@@ -2065,7 +2065,7 @@ void plot_file_cess(experiment_total exp1, int par, int idp, int NPROC) {
         sprintf(string,"%s",exp1.test.output_graph);
         string2 = (char *) malloc(100*sizeof(char));
 
-        MPI_Gather(string, 100, MPI_CHAR, vectstring, 100, MPI_CHAR, 1, MPI_COMM_WORLD);
+        MPI_Gather(string, 100, MPI_CHAR, vectstring, 100, MPI_CHAR, 1, exp1.execution.comm);
 
 
         if (idp == 1 ) {
@@ -2078,7 +2078,7 @@ void plot_file_cess(experiment_total exp1, int par, int idp, int NPROC) {
             }
         }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1.execution.comm);
         free(string);
         free(string2);
         free(vectstring);
@@ -2088,7 +2088,7 @@ void plot_file_cess(experiment_total exp1, int par, int idp, int NPROC) {
         vectstring3 = (char *) malloc(100*NPROC*sizeof(char));
         sprintf(string5,"%s",exp1.test.log_percentage);
         string6 = (char *) malloc(100*sizeof(char));
-        MPI_Gather(string5, 100, MPI_CHAR, vectstring3, 100, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Gather(string5, 100, MPI_CHAR, vectstring3, 100, MPI_CHAR, 0, exp1.execution.comm);
 
 
         if (idp == 0 ) {
@@ -2098,7 +2098,7 @@ void plot_file_cess(experiment_total exp1, int par, int idp, int NPROC) {
                 matlab_plot_file_porcentage(exp1, end, string6, 0);
 //                remove(string6);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1.execution.comm);
 
 
         free(string5);
@@ -2110,7 +2110,7 @@ void plot_file_cess(experiment_total exp1, int par, int idp, int NPROC) {
         sprintf(string3,"%s",exp1.test.output_gant_log);
         string4 = (char *) malloc(100*sizeof(char));
 
-        MPI_Gather(string3, 100, MPI_CHAR, vectstring2, 100, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Gather(string3, 100, MPI_CHAR, vectstring2, 100, MPI_CHAR, 0, exp1.execution.comm);
         maxsize = 0;
 
         if (idp == 0 ) {
@@ -2131,7 +2131,7 @@ void plot_file_cess(experiment_total exp1, int par, int idp, int NPROC) {
         }
 
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1.execution.comm);
         free(string3);
         free(string4);
         free(vectstring2);
@@ -2194,7 +2194,7 @@ void updateresultsandprint_(void *exp1_, void *result_, double *totaltime, long 
 
 
 
-#ifdef SACESS_MPI
+#ifdef MPI
     MPI_Reduce(&(local_s->total_local), &totalL, 1, MPI_DOUBLE, MPI_SUM, 0, exp1->execution.topology.comunicator);
     MPI_Reduce(&(local_s->sucess_local), &sucessL, 1, MPI_DOUBLE, MPI_SUM, 0, exp1->execution.topology.comunicator);
     MPI_Reduce(&(output->st3), &st3, 1, MPI_DOUBLE, MPI_SUM, 0, exp1->execution.topology.comunicator);
@@ -2249,7 +2249,7 @@ void updateresultsandprint_(void *exp1_, void *result_, double *totaltime, long 
         free(bestglobalx  );
         bestglobalx=NULL;
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1->execution.comm);
 
 
 #else
@@ -2311,7 +2311,7 @@ void updateresultsess_(void *exp1_, void *result_, double *totaltime, long *eval
         result->bestx_value[i] = xbest[i];
     }
 
-#ifdef SACESS_MPI
+#ifdef MPI
     MPI_Reduce(&(local_s->total_local), &totalL, 1, MPI_DOUBLE, MPI_SUM, 0, exp1->execution.topology.comunicator);
     MPI_Reduce(&(local_s->sucess_local), &sucessL, 1, MPI_DOUBLE, MPI_SUM, 0, exp1->execution.topology.comunicator);
     MPI_Reduce(&(output->st3), &st3, 1, MPI_DOUBLE, MPI_SUM, 0, exp1->execution.topology.comunicator);
@@ -2361,10 +2361,10 @@ void updateresultsess_(void *exp1_, void *result_, double *totaltime, long *eval
         (*result).time_value = (*result).time_value + *totaltime;
         (*result).eval_value = (*result).eval_value + *evaluation;
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1->execution.comm);
         print_end_file_(exp1,bestglobalx,&bestglobal,result);
         // sleep(2);
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(exp1->execution.comm);
 
         memmove(result->bestx_value, bestglobalx, D*sizeof(double));
 
@@ -2472,7 +2472,7 @@ void graphs_message(experiment_total *exp) {
     printf(" GRAPH PATH               : %s\n", m1);
     printf(" CONVERGENCE GRAPH MATLAB : %s/convergence_id*.csv.m\n", m1);
     printf(" CONVERGENCE GRAPHs CSV   : %s/convergence_id*.csv\n", m1);
-#ifdef SACESS_MPI
+#ifdef MPI
     idsolver = getnumversion(exp);
     memcpy(m2,exp->test.output_gant_log,strlen(exp->test.output_gant_log)-5);
     printf(" GANTT CHART MATLAB       : %s/gantt.m\n", m1);
@@ -2549,9 +2549,9 @@ void plot(experiment_total *exptotal) {
         idsolver = getnumversion(exptotal);
         NPROC=1;
         id=0;
-#ifdef SACESS_MPI
-        MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
-        MPI_Comm_rank(MPI_COMM_WORLD, &id);
+#ifdef MPI
+        MPI_Comm_size(exptotal->execution.comm, &NPROC);
+        MPI_Comm_rank(exptotal->execution.comm, &id);
 
         if ((*exptotal).methodScatterSearch != NULL) {
             if ((idsolver == 1 ) ||

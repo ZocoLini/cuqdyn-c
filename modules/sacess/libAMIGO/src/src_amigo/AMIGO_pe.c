@@ -3,7 +3,7 @@
 #include <method_module/structure_paralleltestbed.h>
 #include <method_module/eSS/parallel_functions_cooperative_eSS.h>
 #include <string.h>
-#ifdef SACESS_MPI
+#ifdef MPI
 #include <mpi.h>
 #endif
 #ifdef SACESS_OPENMP
@@ -30,7 +30,7 @@ int calcramigo_(int *n, int *p, double *x, int *nf, double *r__,
     n_exps = amigo_problem->n_models;
     
     for (i = 0; i < n_exps; ++i) {
-#ifdef SACESS_MPI
+#ifdef MPI
       if (dist_criteria == 1 ) {
         for (j=0;j<*NPROC;j++){
                 dest=j;
@@ -98,7 +98,7 @@ int calcjamigo_(int *n, int* p, double *x, int *nf, double *dr__, int *lty, doub
     n_exps = amigo_problem->n_models;
     t3 = clock();
     for (i = 0; i < n_exps; ++i) {
-#ifdef SACESS_MPI
+#ifdef MPI
       if (dist_criteria == 1 ) {
         for (j=0;j<*NPROC;j++){
                 dest=j;

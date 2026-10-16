@@ -68,3 +68,9 @@ target_link_libraries(sacess
         ${GSL_LIBRARY}
         hdf5
 )
+
+# PUBLIC: the definition changes the layout of the structures in the headers,
+# which everything that includes them has to see the same way.
+if(CUQDYN_MPI)
+    target_compile_definitions(sacess PUBLIC MPI)
+endif()

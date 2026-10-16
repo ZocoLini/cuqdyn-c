@@ -210,7 +210,7 @@ MODULE scattersearchtypes
         INTEGER :: num_left
         INTEGER, DIMENSION(:), ALLOCATABLE :: rigth
         INTEGER, DIMENSION(:), ALLOCATABLE :: left
-#ifdef SACESS_MPI
+#ifdef MPI
 !        MPI_COMM :: comunicator
 #endif
     END TYPE
