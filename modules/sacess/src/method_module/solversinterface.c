@@ -64,7 +64,18 @@ int execute_Solver(experiment_total *exp1, result_solver *result, void *(*functi
 #ifdef MPI
     if (exp1->execution.NPROC > 2 && exp1->methodScatterSearch != NULL)
     {
+        // Each run gets its own copy of the group. The ranks keep sending stop
+        // messages after the others have stopped listening, and on the shared
+        // group the next run would take them as its own and stop at once.
+        const MPI_Comm group = exp1->execution.comm;
+
+        MPI_Comm_dup(group, &exp1->execution.comm);
+
         error = execute_parallel_solver(exp1, result, maxfunevals, exp1->test.VTR, function);
+
+        MPI_Comm_free(&exp1->execution.comm);
+        exp1->execution.comm = group;
+        exp1->execution.topology.comunicator = group;
     }
     else
     {
