@@ -286,7 +286,7 @@ void asynchinitmasterandwindows_(void *exp1_, int *sizeser ) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp1_;       
     int i;
-    
+
      exp1[0].execution.sendrequestslave = (MPI_Request *) malloc(sizeof(MPI_Request));
      exp1[0].execution.sendbufferslave = (double  *) malloc((*sizeser)*  sizeof(double) );
 
@@ -298,6 +298,12 @@ void asynchinitmasterandwindows_(void *exp1_, int *sizeser ) {
      
      exp1[0].execution.adaptation_slave_send = (MPI_Request  *) malloc( sizeof(MPI_Request) );
      exp1[0].execution.adaptation_slave_buffer_send = (int  *) malloc(  sizeof(int) );
+
+     // Null until posted, so the teardown can tell which requests are still live.
+     *exp1[0].execution.sendrequestslave = MPI_REQUEST_NULL;
+     *exp1[0].execution.receptionrequestslave = MPI_REQUEST_NULL;
+     *exp1[0].execution.adaptation_slave_recv = MPI_REQUEST_NULL;
+     *exp1[0].execution.adaptation_slave_send = MPI_REQUEST_NULL;
 
      for (i=0;i<(*sizeser);i++) {
         exp1[0].execution.receptionbufferslave[i] = DBL_MAX;
@@ -322,6 +328,8 @@ void asynchinitmasterandwindows_(void *exp1_, int *sizeser ) {
               exp1[0].execution.adaptation_master_buffer_send[i] = (double *) malloc( 4 * sizeof (double));
               
 	      exp1[0].execution.sendbuffermaster[i] = (double *) malloc((*sizeser)* sizeof (double));
+              exp1[0].execution.sendrequestmaster[i] = MPI_REQUEST_NULL;
+              exp1[0].execution.adaptation_master_send[i] = MPI_REQUEST_NULL;
 
               MPI_Irecv(exp1[0].execution.receptionbuffermaster[i], *sizeser, MPI_DOUBLE,i+1, 150,
                  exp1[0].execution.comm, &exp1[0].execution.receptionrequestmaster[i]);
@@ -425,10 +433,41 @@ void checkadaptsettings_(void *exp1_, int *size_dim, int *ncounter, double *bala
 
 
 
+static void cancelpendingreceive(MPI_Request *request) {
+    if (*request != MPI_REQUEST_NULL) {
+        MPI_Cancel(request);
+        MPI_Wait(request, MPI_STATUS_IGNORE);
+    }
+}
+
+static void releasependingsend(MPI_Request *request) {
+    if (*request != MPI_REQUEST_NULL) {
+        MPI_Request_free(request);
+    }
+}
+
 void destroyasynchinitmasterandwindows_(void *exp1_) {
     experiment_total *exp1;
     exp1 = (experiment_total *) exp1_;        
     int i;
+
+    // The receives posted on these buffers are still pending when the run ends. Freeing the buffers
+    // under them let a late message be written into freed memory, so they are cancelled first.
+    // The sends are released instead of waited on: the peer has cancelled its receive, so a send
+    // that was not delivered eagerly would never complete.
+    cancelpendingreceive(exp1[0].execution.receptionrequestslave);
+    cancelpendingreceive(exp1[0].execution.adaptation_slave_recv);
+    releasependingsend(exp1[0].execution.sendrequestslave);
+    releasependingsend(exp1[0].execution.adaptation_slave_send);
+
+    if (exp1[0].execution.idp == 0) {
+        for (i = 0; i < (exp1[0].execution.NPROC-1); i++) {
+            cancelpendingreceive(&exp1[0].execution.receptionrequestmaster[i]);
+            cancelpendingreceive(&exp1[0].execution.adaptation_master_recv[i]);
+            releasependingsend(&exp1[0].execution.sendrequestmaster[i]);
+            releasependingsend(&exp1[0].execution.adaptation_master_send[i]);
+        }
+    }
 
     // MASTER
     free(exp1[0].execution.sendbufferslave);
@@ -442,16 +481,51 @@ void destroyasynchinitmasterandwindows_(void *exp1_) {
             free(exp1[0].execution.sendbuffermaster[i] );
             free(exp1[0].execution.adaptation_master_buffer_send[i] );
         }
+        free(exp1[0].execution.receptionbuffermaster );
+        exp1[0].execution.receptionbuffermaster = NULL;
+        free(exp1[0].execution.sendbuffermaster );
+        exp1[0].execution.sendbuffermaster = NULL;
+        free(exp1[0].execution.adaptation_master_buffer_recv );
+        exp1[0].execution.adaptation_master_buffer_recv = NULL;
+        free(exp1[0].execution.adaptation_master_buffer_send );
+        exp1[0].execution.adaptation_master_buffer_send = NULL;
         free(exp1[0].execution.receptionrequestmaster );
+        exp1[0].execution.receptionrequestmaster = NULL;
         free(exp1[0].execution.sendrequestmaster );
+        exp1[0].execution.sendrequestmaster = NULL;
         free(exp1[0].execution.adaptation_master_send );
-        free(exp1[0].execution.adaptation_master_recv );      
+        exp1[0].execution.adaptation_master_send = NULL;
+        free(exp1[0].execution.adaptation_master_recv );
+        exp1[0].execution.adaptation_master_recv = NULL;
     }
-    free( exp1[0].execution.adaptation_slave_send );    
-    free( exp1[0].execution.adaptation_slave_recv );          
+    free( exp1[0].execution.adaptation_slave_buffer_recv );
+    exp1[0].execution.adaptation_slave_buffer_recv = NULL;
+    free( exp1[0].execution.adaptation_slave_buffer_send );
+    exp1[0].execution.adaptation_slave_buffer_send = NULL;
+    free( exp1[0].execution.adaptation_slave_send );
+    exp1[0].execution.adaptation_slave_send = NULL;
+    free( exp1[0].execution.adaptation_slave_recv );
+    exp1[0].execution.adaptation_slave_recv = NULL;
     free( exp1[0].execution.receptionrequestslave );
+    exp1[0].execution.receptionrequestslave = NULL;
     free( exp1[0].execution.sendrequestslave );
+    exp1[0].execution.sendrequestslave = NULL;
 
+    // Stopping criteria from initcooperativestoppingcriteriaess_: its receives are cancelled before
+    // st, which they write into, is freed.
+    for (i = 0; i < exp1[0].execution.NPROC; i++) {
+        cancelpendingreceive(&exp1[0].execution.request_recept[i]);
+    }
+    free(exp1[0].execution.request_recept);
+    exp1[0].execution.request_recept = NULL;
+    free(exp1[0].execution.st);
+    exp1[0].execution.st = NULL;
+
+    // Topology from createtopology_.
+    free(exp1[0].execution.topology.left);
+    exp1[0].execution.topology.left = NULL;
+    free(exp1[0].execution.topology.rigth);
+    exp1[0].execution.topology.rigth = NULL;
 }
 
 void chargecooperativeparametersfortran_(void *exp1_, int *NP, int *tam, int *idp, double *ftarget, long *maxfunevals ) {

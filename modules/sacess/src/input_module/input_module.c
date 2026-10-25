@@ -802,6 +802,7 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
         
         while (cur != NULL || exit1 == 0) {
             if ((!xmlStrcmp(cur->name, (const xmlChar *) parallelization))) {
+                xmlFree(value);
                 value = xmlGetProp(cur, (const xmlChar *) name);
                 exit1 = 1;
             }
