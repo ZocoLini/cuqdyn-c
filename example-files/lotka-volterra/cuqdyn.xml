@@ -7,4 +7,6 @@
     <ode_expr y_count="2" p_count="4">
         lotka-volterra
     </ode_expr>
+    <!-- as CUQDyn/Matlab/Lotka-Volterra/CUQDyn1.m: alp = 0.05 -->
+    <alp>0.05</alp>
 </cuqdyn-config>

@@ -6,7 +6,7 @@
 #error "EXAMPLES_DIR must point at example-files/ (set by tests/CMakeLists.txt)"
 #endif
 
-/// Path to a file inside an example folder, so a test only names the model: example_file("sir", "data.txt").
+/// Path to a file inside an example folder, so a test only names the model: example_file("sir-partobs", "data.txt").
 static const char *example_file(const char *model, const char *file)
 {
     static char paths[4][512];
