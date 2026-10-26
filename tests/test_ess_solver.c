@@ -51,7 +51,7 @@ static void run_scenario(const Scenario *scenario)
     N_Vector initial_values = copy_matrix_column(yexp, 0, 0, SM_ROWS_D(yexp));
 
     N_Vector xbest = execute_ess_solver(example_sacess_conf(scenario->model), OUTPUT_PATH, texp, yexp, initial_values,
-                                        NULL, data.observed_idx);
+                                        NULL, data.observed_idx, ESS_COMM_WORLD);
 
     for (int i = 0; i < scenario->n_parameters; ++i)
     {

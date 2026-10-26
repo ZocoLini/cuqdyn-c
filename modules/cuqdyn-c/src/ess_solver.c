@@ -19,7 +19,7 @@
 #endif
 
 N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, SUNMatrix yexp,
-                            N_Vector initial_condition, N_Vector initial_params, int *observed_idx)
+                            N_Vector initial_condition, N_Vector initial_params, int *observed_idx, EssComm comm)
 {
     int error, NPROC_OPENMP;
     experiment_total *exptotal;
@@ -32,8 +32,8 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     CuqdynConf *conf = get_cuqdyn_conf(get_cuqdyn_context());
 
 #ifdef MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(comm, &nproc);
+    MPI_Comm_rank(comm, &rank);
 #else
     nproc = 1;
     rank = 0;
@@ -50,7 +50,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
     for (int i = 0; i < NPROC_OPENMP; i++)
     {
         // PARSE THE OPTIONS OF THE SOLVER
-        create_expetiment_struct(file, &(exptotal[i]), nproc, rank, path, init, texp, yexp, initial_condition);
+        create_expetiment_struct(file, &(exptotal[i]), nproc, rank, path, init, texp, yexp, initial_condition, comm);
         logandtranslation_(&exptotal[i]);
         if (initial_params != NULL)
         {
@@ -79,7 +79,7 @@ N_Vector execute_ess_solver(const char *file, const char *path, N_Vector texp, S
 #else
     exptotal = (experiment_total *) malloc(sizeof(experiment_total));
     init = 1;
-    create_expetiment_struct(file, &exptotal[0], nproc, rank, path, init, texp, yexp, initial_condition);
+    create_expetiment_struct(file, &exptotal[0], nproc, rank, path, init, texp, yexp, initial_condition, comm);
     logandtranslation_(&exptotal[0]);
 
     if (initial_params != NULL)

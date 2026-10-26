@@ -7,10 +7,22 @@
 #include "method_module/structure_paralleltestbed.h"
 #include "sunmatrix/sunmatrix_dense.h"
 
+#ifdef MPI
+#include <mpi.h>
+#endif
+
 #define MODEL "alpha-pinene"
 
-int main()
+int main(int argc, char **argv)
 {
+#ifdef MPI
+    // create_expetiment_struct talks over the communicator it is given.
+    MPI_Init(&argc, &argv);
+#else
+    (void) argc;
+    (void) argv;
+#endif
+
     CuqDynContext context = init_cuqdyn_context_from_file(example_conf(MODEL));
 
     CuqdynData data;
@@ -21,7 +33,8 @@ int main()
     N_Vector initial_values = copy_matrix_row(yexp, 0, 0, SM_ROWS_D(yexp));
 
     experiment_total *exp_total = malloc(sizeof(experiment_total));
-    create_expetiment_struct(example_sacess_conf(MODEL), &exp_total[0], 1, 0, "output", 1, texp, yexp, initial_values);
+    create_expetiment_struct(example_sacess_conf(MODEL), &exp_total[0], 1, 0, "output", 1, texp, yexp, initial_values,
+                             SACESS_COMM_WORLD);
     exp_total[0].observed_idx = data.observed_idx;
 
     double x[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
@@ -36,6 +49,10 @@ int main()
     N_VDestroy(data.initial_values);
     free(data.observed_idx);
     destroy_cuqdyn_context(context);
+
+#ifdef MPI
+    MPI_Finalize();
+#endif
 
     return 0;
 }

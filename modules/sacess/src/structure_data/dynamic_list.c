@@ -4,14 +4,14 @@
  *
  * Created on 14 de enero de 2013, 16:00
  */
-//#ifdef SACESS_MPI
+//#ifdef MPI
 #include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
-#ifdef SACESS_MPI
+#ifdef MPI
 #include <mpi.h>
 #include <structure_data/dynamic_list.h>
 

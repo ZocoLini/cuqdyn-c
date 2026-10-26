@@ -5,7 +5,7 @@ MODULE modsacess
     USE localsolver
     USE parallelscattersearchfunctions
    
-#ifdef SACESS_MPI 
+#ifdef MPI 
         
 CONTAINS
 
@@ -132,7 +132,7 @@ CONTAINS
         CALL chargecooperativeparametersfortran(exp1, opts1%globaloptions%dim_refset, tam, common_vars%idp, ftarget, maxfunevals)  
         CALL createcooperativetopologyess(exp1)
         
-        CALL slave_information(common_vars%idp, opts1%globaloptions%dim_refset, opts1%globaloptions%ndiverse, 0)
+        CALL slave_information(exp1, common_vars%idp, opts1%globaloptions%dim_refset, opts1%globaloptions%ndiverse, 0)
         time%starttime = initmpi()
         CALL saveinittime(exp1,time%starttime)
 
@@ -578,9 +578,9 @@ CONTAINS
           
         end do
 
-        CALL mpibarrieress()
+        CALL mpibarrieress(exp1)
         CALL ending_solver_message(common_vars%idp, fin)
-        CALL mpibarrieress()    
+        CALL mpibarrieress(exp1)    
         
 !---------------------------------------------------------------------------------------------------------
 ! GATHER THE RESULTS IN MPI EXECUTION CASE
@@ -603,9 +603,9 @@ CONTAINS
 
 
 !---------------------------------------------------------------------------------------------------------
-        CALL mpibarrieress() 
+        CALL mpibarrieress(exp1) 
         CALL seed_recount(exp1, common_vars%idp)
-        CALL mpibarrieress()   
+        CALL mpibarrieress(exp1)   
                 
         
         CALL updateresultsess(exp1, results1, results%timetotal, nfunevaltotal, fbest(1), xbest, results%totaliter,results%totalvtr)
@@ -654,14 +654,14 @@ CONTAINS
         if (ALLOCATED(fbest_lastiter)) DEALLOCATE(fbest_lastiter)
         CALL destroy_local_solver_vars(local_solver_var)     
         CALL destroy_migration_master(migration_master) 
-        CALL mpibarrieress()
+        CALL mpibarrieress(exp1)
         CALL destroy_refsettype(solutionset)
-        CALL mpibarrieress()
+        CALL mpibarrieress(exp1)
         CALL destroy_refsettype(refset)
-        CALL mpibarrieress()
+        CALL mpibarrieress(exp1)
         CALL destroy_resultsf(results)
 
-        CALL mpibarrieress()
+        CALL mpibarrieress(exp1)
 
     END FUNCTION sacess
 #endif

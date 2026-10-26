@@ -59,12 +59,13 @@ MODULE common_functions
         END SUBROUTINE destroy_Vector
 
 
-        SUBROUTINE slave_information(idp, dim_refset, ndiverse, MODE)
+        SUBROUTINE slave_information(exp1, idp, dim_refset, ndiverse, MODE)
             IMPLICIT NONE
+            TYPE(C_PTR), INTENT(INOUT) :: exp1
             INTEGER, INTENT(IN) :: idp, dim_refset, ndiverse, MODE
             
-#ifdef SACESS_MPI
-            CALL mpibarrieress()            
+#ifdef MPI
+            CALL mpibarrieress(exp1)            
 #endif
             if (idp .NE. 0) then
                 WRITE(*, '(A10, I3, A20, I4, A15, I5)') "ID SLAVE: ", idp, &
@@ -79,8 +80,8 @@ MODULE common_functions
             end if
             
             
-#ifdef SACESS_MPI
-            CALL mpibarrieress()      
+#ifdef MPI
+            CALL mpibarrieress(exp1)      
             ! To order the ouput messages
             ! OLD: CALL sleepmpi(1)
 #endif              

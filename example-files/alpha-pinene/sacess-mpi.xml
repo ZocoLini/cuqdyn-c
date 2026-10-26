@@ -8,12 +8,12 @@
         <verbose>1</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>2500</maxevaluation>
+            <maxevaluation>12500</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>
     </run>
-    <method name="ScatterSearch">
+    <method name="saCeSS">
         <user_options>
             <weight>default</weight>
             <tolc>default</tolc>

@@ -758,67 +758,30 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
             extract_element_method_ScatterSearch(doc, &root, exptotal->methodScatterSearch);                        
             exptotal->methodDE=NULL;
             
+            // An MPI build asks for one of the parallel methods. execute_Solver
+            // still runs the sequential eSS when a run gets too few ranks for
+            // them, but that is its call, not the config's.
             if (strcmp((const char *) value, "ScatterSearch") == 0) {
                 exptotal->methodScatterSearch->eSSversion = "ScatterSearch";
-                #ifdef SACESS_MPI
+                #ifdef MPI
                 perror(error31);
                 exit(31);
                 #endif
             } 
             else if (strcmp((const char *) value, "CeSS") == 0){
                 exptotal->methodScatterSearch->eSSversion = "CeSS";
-                #ifndef SACESS_MPI
-                perror(error32);
-                exit(32);
-                #endif        
-                #ifndef SACESS_OPENMP
-                perror(error33);
-                exit(33);                
-                #endif
             }  
             else if (strcmp((const char *) value, "saCeSS") == 0){
                 exptotal->methodScatterSearch->eSSversion = "saCeSS";
-                #ifndef SACESS_MPI
-                perror(error32);
-                exit(32);
-                #endif    
-                #ifndef SACESS_OPENMP
-                perror(error33);
-                exit(33);                
-                #endif
             }             
             else if (strcmp((const char *) value, "aCeSS_dist") == 0){
                 exptotal->methodScatterSearch->eSSversion = "aCeSS_dist";
-                #ifndef SACESS_MPI
-                perror(error32);
-                exit(32);
-                #endif   
-                #ifndef SACESS_OPENMP
-                perror(error33);
-                exit(33);                
-                #endif                
             }
             else if (strcmp((const char *) value, "eSSm") == 0){
                 exptotal->methodScatterSearch->eSSversion = "eSSm";
-                #ifndef SACESS_MPI
-                perror(error32);
-                exit(32);
-                #endif       
-                #ifndef SACESS_OPENMP
-                perror(error33);
-                exit(33);                
-                #endif                
             } 
             else if (strcmp((const char *) value, "coSHADE") == 0){
 	        exptotal->methodScatterSearch->eSSversion = "eSSm";
-                #ifndef SACESS_MPI
-		perror(error32);
-		exit(32);
-		#endif
-		#ifndef SACESS_OPENMP
-                perror(error33);
-                exit(33);
-                #endif
             }
             else {
                 perror(error12);
@@ -833,12 +796,13 @@ int load_configuration_XML(char *docname, experiment_total *exptotal){
     // EXTRACT PARALLELIZATION ELEMENTS        
     cur = extract_init_node(init_cur, parallelization);
 
-#if  defined(SACESS_OPENMP) || defined(SACESS_MPI)
+#if  defined(SACESS_OPENMP) || defined(MPI)
     if (cur != NULL) {
         exit1 = 0;
         
         while (cur != NULL || exit1 == 0) {
             if ((!xmlStrcmp(cur->name, (const xmlChar *) parallelization))) {
+                xmlFree(value);
                 value = xmlGetProp(cur, (const xmlChar *) name);
                 exit1 = 1;
             }
