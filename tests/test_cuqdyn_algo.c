@@ -28,12 +28,14 @@ static const Scenario SCENARIOS[] = {
         {"lotka-volterra", "Lotka-Volterra, fully observed", 2, 2, -1},
         {"alpha-pinene", "Alpha-pinene, 5 observed states", 5, 5, -1},
         // Partially observed: the hidden states go through the delta method.
-        {"linear-cascade", "LinearCascade, 1 of 2 states observed", 2, 1, 1},
-        {"linear-cascade3", "LinearCascade3, 1 of 3 states observed", 3, 1, 2},
-        {"lv2-partobs", "Lotka-Volterra, predator hidden", 2, 1, 0},
-        {"sir", "SIR, 2 of 3 states hidden", 3, 1, 1},
+        {"linear-cascade-partobs", "LinearCascade, 1 of 2 states observed", 2, 1, 1},
+        {"linear-cascade3-partobs", "LinearCascade3, 1 of 3 states observed", 3, 1, 2},
+        {"lotka-volterra-partobs", "Lotka-Volterra, predator hidden", 2, 1, 0},
+        {"alpha-pinene-partobs", "Alpha-pinene, 4 of 5 states observed", 5, 4, 0},
+        {"sir-partobs", "SIR, 2 of 3 states hidden", 3, 1, 1},
         // NF-kB is left out of the default run: 15 states and 29 parameters make
-        // it far slower than the rest. example-files/nfkb/ carries its files.
+        // it far slower than the rest. example-files/nfkb-partobs/ carries its
+        // files.
 };
 
 static const int N_SCENARIOS = sizeof(SCENARIOS) / sizeof(SCENARIOS[0]);
