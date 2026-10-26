@@ -7,4 +7,6 @@
     <ode_expr y_count="5" p_count="5">
         alpha-pinene
     </ode_expr>
+    <!-- as CUQDyn/Matlab/Alpha-pinene/CUQDyn1.m: alp = 0.05 -->
+    <alp>0.05</alp>
 </cuqdyn-config>

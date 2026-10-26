@@ -8,7 +8,8 @@
         <verbose>1</verbose>
         <local_search>1</local_search>
         <stopping_criteria>
-            <maxevaluation>14500</maxevaluation>
+            <!-- as run_NFKB_example_CUQDyn1plus.m sets (opts.meigo.maxeval = 2e4) -->
+            <maxevaluation>20000</maxevaluation>
             <maxtime>1e10</maxtime>
             <vtr>0</vtr>
         </stopping_criteria>
@@ -29,7 +30,8 @@
         <local_options>
             <solver>dhc</solver>
             <tol>2</tol>
-            <evalmax>9e3</evalmax>
+            <!-- 100 * n_params, the dhc budget of MEIGO (ssm_localsolver.m:363); read with atoi, so no exponent -->
+            <evalmax>2900</evalmax>
             <iterprint>0</iterprint>
             <n1>1</n1>
             <n2>10</n2>

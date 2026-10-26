@@ -29,7 +29,8 @@
         <local_options>
             <solver>dhc</solver>
             <tol>2</tol>
-            <evalmax>3e3</evalmax>
+            <!-- 100 * n_params, the dhc budget of MEIGO (ssm_localsolver.m:363); read with atoi, so no exponent -->
+            <evalmax>200</evalmax>
             <iterprint>0</iterprint>
             <n1>1</n1>
             <n2>10</n2>
